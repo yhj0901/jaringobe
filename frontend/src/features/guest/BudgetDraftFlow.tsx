@@ -87,25 +87,25 @@ export function BudgetDraftFlow({ open, onClose, onComplete }: BudgetDraftFlowPr
       aria-modal="true"
       aria-labelledby="budget-draft-title"
       tabIndex={-1}
-      className="fixed inset-0 z-50 flex flex-col bg-white p-5 outline-none"
+      className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-white p-5 outline-none"
     >
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 pt-8">
         <header className="flex items-center justify-between">
-          <h2 id="budget-draft-title" className="text-lg font-bold text-gray-900">
+          <h2 id="budget-draft-title" className="text-lg font-extrabold tracking-tight text-navy-900">
             {t('title')}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t('closeLabel')} className="p-2 text-gray-500">
+          <button type="button" onClick={onClose} aria-label={t('closeLabel')} className="rounded-[10px] bg-[#F4F6FB] p-2 text-ink-600">
             ✕
           </button>
         </header>
 
-        <p className="text-sm text-gray-500" aria-live="polite">
+        <p className="text-sm font-semibold text-ink-400" aria-live="polite">
           {t('stepIndicator', { step, total: 3 })}
         </p>
 
         {step === 1 ? (
           <section className="flex flex-col gap-5">
-            <h3 className="text-base font-semibold text-gray-900">{t('step1.title')}</h3>
+            <h3 className="text-base font-bold text-navy-900">{t('step1.title')}</h3>
             <Stepper
               value={householdSize}
               min={HOUSEHOLD_MIN}
@@ -118,7 +118,7 @@ export function BudgetDraftFlow({ open, onClose, onComplete }: BudgetDraftFlowPr
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white"
+              className="rounded-2xl bg-brand-600 px-4 py-3.5 text-sm font-extrabold text-white shadow-cta"
             >
               {t('next')}
             </button>
@@ -127,7 +127,7 @@ export function BudgetDraftFlow({ open, onClose, onComplete }: BudgetDraftFlowPr
 
         {step === 2 ? (
           <section className="flex flex-col gap-4">
-            <h3 className="text-base font-semibold text-gray-900">{t('step2.title')}</h3>
+            <h3 className="text-base font-bold text-navy-900">{t('step2.title')}</h3>
             <div role="radiogroup" aria-label={t('step2.presetsLabel')} className="grid grid-cols-2 gap-2">
               {preset.amounts.map((amount) => (
                 <button
@@ -140,17 +140,17 @@ export function BudgetDraftFlow({ open, onClose, onComplete }: BudgetDraftFlowPr
                     setCustomAmount('');
                     setAmountError(false);
                   }}
-                  className={`rounded-xl border px-4 py-3 text-sm font-semibold ${
+                  className={`rounded-2xl border px-4 py-3 text-sm font-bold ${
                     selectedPreset === amount && customAmount === ''
                       ? 'border-brand-600 bg-brand-50 text-brand-700'
-                      : 'border-gray-300 text-gray-700'
+                      : 'border-[#E1E6EF] bg-white text-ink-600'
                   }`}
                 >
                   <MoneyText money={{ amount, currency: preset.currency }} locale={locale} />
                 </button>
               ))}
             </div>
-            <label className="flex flex-col gap-1 text-sm text-gray-700">
+            <label className="flex flex-col gap-1 text-sm font-semibold text-ink-600">
               {t('step2.customLabel')}
               <input
                 type="text"
@@ -162,7 +162,7 @@ export function BudgetDraftFlow({ open, onClose, onComplete }: BudgetDraftFlowPr
                 }}
                 placeholder={t('step2.customPlaceholder')}
                 aria-invalid={amountError}
-                className="rounded-xl border border-gray-300 px-4 py-3"
+                className="rounded-2xl border border-[#E1E6EF] bg-white px-4 py-3 text-ink-800 focus:border-brand-600 focus:outline-none"
               />
             </label>
             {amountError ? (
@@ -174,14 +174,14 @@ export function BudgetDraftFlow({ open, onClose, onComplete }: BudgetDraftFlowPr
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700"
+                className="flex-1 rounded-2xl bg-[#F0F2F6] px-4 py-3.5 text-sm font-bold text-ink-500"
               >
                 {t('back')}
               </button>
               <button
                 type="button"
                 onClick={goNextFromBudget}
-                className="flex-1 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white"
+                className="flex-1 rounded-2xl bg-brand-600 px-4 py-3.5 text-sm font-extrabold text-white shadow-cta"
               >
                 {t('next')}
               </button>
@@ -191,14 +191,14 @@ export function BudgetDraftFlow({ open, onClose, onComplete }: BudgetDraftFlowPr
 
         {step === 3 ? (
           <section className="flex flex-col gap-4">
-            <h3 className="text-base font-semibold text-gray-900">{t('step3.title')}</h3>
+            <h3 className="text-base font-bold text-navy-900">{t('step3.title')}</h3>
             <div className="grid grid-cols-2 gap-2">
               {MEAL_DIRECTIONS.map((direction) => (
                 <button
                   key={direction}
                   type="button"
                   onClick={() => completeWithDirection(direction)}
-                  className="rounded-xl border border-gray-300 px-4 py-4 text-sm font-semibold text-gray-800 hover:border-brand-600"
+                  className="rounded-2xl border border-[#E1E6EF] bg-white px-4 py-4 text-sm font-bold text-ink-800 hover:border-brand-600 hover:bg-brand-50"
                 >
                   {t(`direction.${direction}`)}
                 </button>
@@ -207,7 +207,7 @@ export function BudgetDraftFlow({ open, onClose, onComplete }: BudgetDraftFlowPr
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="rounded-xl border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700"
+              className="rounded-2xl bg-[#F0F2F6] px-4 py-3.5 text-sm font-bold text-ink-500"
             >
               {t('back')}
             </button>

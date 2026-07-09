@@ -50,8 +50,9 @@ export function BottomSheet({ open, onClose, labelledBy, children }: BottomSheet
       role="dialog"
       aria-labelledby={labelledBy}
       tabIndex={-1}
-      className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-gray-200 bg-white p-5 shadow-2xl outline-none"
+      className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[480px] rounded-t-[26px] bg-white px-5 pb-7 pt-2.5 shadow-sheet outline-none"
     >
+      <div aria-hidden className="mx-auto mb-4 h-[5px] w-10 rounded-full bg-[#E1E6EF]" />
       {children}
     </div>
   );

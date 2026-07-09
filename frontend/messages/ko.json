@@ -21,8 +21,21 @@
     },
     "sampleLabel": "예시",
     "applying": "예산안을 적용하고 있어요…",
+    "header": {
+      "greeting": "안녕하세요",
+      "title": "오늘도",
+      "accent": "GO BE SMART"
+    },
+    "nav": {
+      "label": "주요 메뉴",
+      "home": "홈",
+      "meal": "식단",
+      "fridge": "냉장고",
+      "cart": "장바구니"
+    },
     "budgetMood": {
       "title": "이번 달 예산 무드",
+      "lockLabel": "예산 락",
       "remaining": "남은 예산",
       "saved": "절약",
       "wastePrevented": "폐기 절감"
@@ -111,6 +124,8 @@
     "login": {
       "title": "자린고비",
       "slogan": "GO BE SMART, SAVE BIG.",
+      "tag": "알뜰 식생활 플랫폼",
+      "subtitle": "예산 안에서 알뜰하게,\n버리는 것 없이.\nGO BE SMART, SAVE BIG.",
       "kakao": "카카오로 시작하기",
       "google": "구글로 시작하기",
       "apple": "애플로 시작하기",

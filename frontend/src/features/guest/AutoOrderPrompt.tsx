@@ -15,22 +15,22 @@ export function AutoOrderPrompt({ open, onStart, onLater }: AutoOrderPromptProps
 
   return (
     <BottomSheet open={open} onClose={onLater} labelledBy="auto-order-prompt-title">
-      <h2 id="auto-order-prompt-title" className="mb-2 text-base font-bold text-gray-900">
+      <h2 id="auto-order-prompt-title" className="mb-2 text-base font-extrabold text-navy-900">
         {t('title')}
       </h2>
-      <p className="mb-4 text-sm text-gray-600">{t('description')}</p>
-      <div className="flex gap-3">
+      <p className="mb-4 text-sm leading-relaxed text-ink-500">{t('description')}</p>
+      <div className="flex gap-2.5">
         <button
           type="button"
           onClick={onLater}
-          className="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700"
+          className="flex-1 rounded-[14px] bg-[#F0F2F6] px-4 py-3.5 text-sm font-bold text-ink-500"
         >
           {t('later')}
         </button>
         <button
           type="button"
           onClick={onStart}
-          className="flex-1 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white"
+          className="flex-1 rounded-[14px] bg-brand-600 px-4 py-3.5 text-sm font-extrabold text-white shadow-cta"
         >
           {t('start')}
         </button>
