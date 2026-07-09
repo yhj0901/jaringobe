@@ -7,6 +7,10 @@
     "login": {
       "title": "Sign in — JARINGOBE",
       "description": "Get started in seconds with your Google or Kakao account."
+    },
+    "settings": {
+      "title": "Settings — JARINGOBE",
+      "description": "Manage your account, eating profile, and auto-order store connections."
     }
   },
   "common": {
@@ -24,7 +28,8 @@
     "header": {
       "greeting": "Hello",
       "title": "Today,",
-      "accent": "GO BE SMART"
+      "accent": "GO BE SMART",
+      "settingsLabel": "Open settings"
     },
     "nav": {
       "label": "Primary navigation",
@@ -375,6 +380,95 @@
       "description": "Sign in to pick up your budget and meal plan where you left off.",
       "login": "Sign in",
       "browse": "Just browsing"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "backLabel": "Back to home",
+    "loading": "Loading your settings…",
+    "account": {
+      "section": "Account",
+      "loggedIn": "Signed in",
+      "noEmail": "No email provided",
+      "logout": "Sign out",
+      "logoutConfirm": {
+        "title": "Sign out?",
+        "description": "Sign back in anytime to pick up your budget and meal plan.",
+        "confirm": "Sign out",
+        "cancel": "Cancel"
+      }
+    },
+    "diet": {
+      "section": "My eating profile",
+      "householdTitle": "Household",
+      "preferenceTitle": "Cuisines & diet direction",
+      "budgetTitle": "Monthly budget & lock",
+      "householdSummary": "{count}-person household",
+      "budgetSummary": "{amount} / month",
+      "configured": "Configured · tap to change",
+      "notSet": "Not set up yet"
+    },
+    "edit": {
+      "label": "Edit eating profile",
+      "closeLabel": "Close",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saving": "Saving your settings…",
+      "saveFailed": "We couldn't save your changes. Please try again."
+    },
+    "regenerate": {
+      "title": "Rebuild your meal plan?",
+      "description": "We'll build a new plan around your updated settings. Your current plan will be replaced.",
+      "confirm": "Rebuild",
+      "decline": "Later"
+    },
+    "stores": {
+      "section": "Auto-order store connections",
+      "sub": "We prepare meals and auto-orders from your connected stores. For now, only the connection status is saved.",
+      "connected": "Connected",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "connectLabel": "Connect {store}",
+      "disconnectLabel": "Disconnect {store}",
+      "linkedAccount": "Linked account",
+      "confirmCancel": "Cancel",
+      "connectConfirm": {
+        "title": "Connect {store}",
+        "description": "For now, only the connection status is saved — real account linking and auto-payment are coming soon.",
+        "confirm": "Connect"
+      },
+      "disconnectConfirm": {
+        "title": "Disconnect {store}?",
+        "description": "The connection status will be removed. You can reconnect anytime.",
+        "confirm": "Disconnect"
+      }
+    },
+    "error": {
+      "load": "We couldn't load your settings. Please try again in a moment.",
+      "reload": "Reload",
+      "store": "We couldn't update the connection. Please try again shortly.",
+      "generate": "Meal plan generation failed. Please try again shortly.",
+      "rateLimited": "Too many requests for now. Please try again in a minute.",
+      "logout": "Sign-out failed. Please try again shortly.",
+      "dismiss": "Dismiss"
+    }
+  },
+  "store": {
+    "kurly": {
+      "name": "Market Kurly",
+      "mono": "K"
+    },
+    "coupang": {
+      "name": "Coupang",
+      "mono": "C"
+    },
+    "ssg": {
+      "name": "SSG.COM",
+      "mono": "S"
+    },
+    "naver": {
+      "name": "Naver Shopping",
+      "mono": "N"
     }
   }
 }

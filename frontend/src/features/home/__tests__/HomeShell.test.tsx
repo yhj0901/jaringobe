@@ -83,6 +83,21 @@ describe('HomeShell (FR-101)', () => {
     expect(onLockedNavClick).toHaveBeenCalledTimes(3);
   });
 
+  it('onAvatarClick 제공 시 헤더 GB 아바타가 설정 진입 버튼이 된다 (ui-design 9장)', () => {
+    const onAvatarClick = vi.fn();
+    renderWithIntl(
+      <HomeShell viewModel={getDefaultViewModel('ko')} onAvatarClick={onAvatarClick} />,
+    );
+    const avatar = screen.getByRole('button', { name: '설정 열기' });
+    fireEvent.click(avatar);
+    expect(onAvatarClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('onAvatarClick 미제공 시 아바타는 버튼이 아니다 (기존 동작 불변)', () => {
+    renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} />);
+    expect(screen.queryByRole('button', { name: '설정 열기' })).not.toBeInTheDocument();
+  });
+
   it('냉장고 항목을 임박 순으로 정렬해 표시한다', () => {
     renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} />);
     expect(screen.getByText('가상 냉장고')).toBeInTheDocument();

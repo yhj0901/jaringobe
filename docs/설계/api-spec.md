@@ -130,7 +130,8 @@ Access 재발급 + refresh 회전.
 }
 ```
 
-> `GET/PUT /budget/plans` 등 조회·수정 API 는 budget 본설계에서 확정 (이번 범위 아님).
+### 2-2. `GET /api/v1/budget/plans` — 인증 필요 (v1.3.1 신규)
+내 예산안 현재값 (설정 페이지 요약·부분 수정 병합용). `200` BudgetPlanResponse(locked·cuisines 포함) / `404 BUDGET_PLAN_NOT_FOUND`.
 
 ---
 
@@ -218,7 +219,22 @@ Access 재발급 + refresh 회전.
 
 ---
 
-## 6. 엔드포인트 요약
+## 6. store 연동 상태 (v1.3 신규 — 설정 페이지, 실연동 아님)
+
+### 6-1. `GET /api/v1/stores/connections` — 인증 필요
+KR 4종 전체 상태 반환 (미저장 스토어는 disconnected).
+```json
+{ "connections": [ { "store": "kurly", "status": "connected", "connectedAt": "2026-07-10T00:00:00Z" },
+                   { "store": "coupang", "status": "disconnected", "connectedAt": null } ] }
+```
+
+### 6-2. `PUT /api/v1/stores/connections/{store}` — 인증 필요
+`store ∈ kurly|coupang|ssg|naver`(그 외 404 STORE_NOT_SUPPORTED). body `{ "connected": true|false }` → 200 (upsert).
+> 1단계: 연동 상태 관리만(자격증명 미수집). 실계정 연동·자동 결제는 store 본설계에서 확장.
+
+---
+
+## 7. 엔드포인트 요약
 
 | # | 메서드·경로 | 인증 | 유형 |
 |---|-------------|------|------|
@@ -235,8 +251,11 @@ Access 재발급 + refresh 회전.
 | 11 | `PUT /api/v1/households/me` | 필요 | JSON (v1.2 신규) |
 | 12 | `GET /api/v1/households/me` | 필요 | JSON (v1.2 신규) |
 | 13 | `PUT /api/v1/budget/plans` | 필요 | JSON (v1.2 신규) |
+| 14 | `GET /api/v1/stores/connections` | 필요 | JSON (v1.3 신규) |
+| 15 | `PUT /api/v1/stores/connections/{store}` | 필요 | JSON (v1.3 신규) |
 
 ## 변경 이력
+- 2026-07-10: **v1.3** — store 연동 상태 2종 (설정 페이지, 자격증명 미수집 1단계). UI 대변인 동의
 - 2026-07-09: **v1.2** — household 도메인(PUT/GET /households/me) + PUT /budget/plans(locked·cuisines 확장). 온보딩 3스텝(프로토타입 1:1) 대응. UI 대변인 동의 완료
 - 2026-07-09: **v1.1** — mealplan 도메인 정식 편입(구현 기준: camelCase/uuid/allergies·preferences 요청 필드) + `GET /mealplans/latest` 신규. 팀원 미머지 초안(cbd0623)의 상이점은 구현 우선으로 조정. UI 대변인 동의 완료
 - 2026-07-09: v1 최초 확정 — 공통 규격(camelCase/에러/금액/페이지네이션) + auth 5종 + budget 1종. UI 대변인 동의 완료

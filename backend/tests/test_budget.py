@@ -279,3 +279,30 @@ class TestUpsertBudgetPlan:
         plan = (await db.scalars(select(BudgetPlan))).one()
         assert plan.locked is True
         assert plan.cuisines == []
+
+
+async def test_get_budget_plan(client, respx_mock):
+    """GET /budget/plans — 미설정 404 전용 코드, 설정 후 현재값 반환 (v1.3.1)."""
+    await login(client, respx_mock)
+    res = await client.get("/api/v1/budget/plans")
+    assert res.status_code == 404
+    assert res.json()["detail"]["code"] == "BUDGET_PLAN_NOT_FOUND"
+
+    put = await client.put(
+        "/api/v1/budget/plans",
+        json={
+            "householdSize": 3,
+            "budget": {"amount": "500000", "currency": "KRW"},
+            "mealDirection": "kids",
+            "locked": True,
+            "cuisines": ["korean", "japanese"],
+        },
+    )
+    assert put.status_code in (200, 201)
+
+    res = await client.get("/api/v1/budget/plans")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["mealDirection"] == "kids"
+    assert body["cuisines"] == ["korean", "japanese"]
+    assert body["locked"] is True

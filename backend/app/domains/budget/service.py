@@ -107,3 +107,13 @@ async def upsert_budget_plan(
     await db.refresh(plan)
 
     return _to_response(plan), created
+
+
+async def get_budget_plan(db: AsyncSession, user: User) -> BudgetPlanResponse:
+    """내 예산안 조회 — 없으면 404 (설정 페이지 요약·부분 수정 병합용, api-spec v1.3.1)."""
+    plan = (
+        await db.execute(select(BudgetPlan).where(BudgetPlan.user_id == user.id))
+    ).scalar_one_or_none()
+    if plan is None:
+        raise ApiError(404, "BUDGET_PLAN_NOT_FOUND", "No budget plan for user")
+    return _to_response(plan)

@@ -15,6 +15,9 @@ interface BudgetStepProps {
   onToggleLock: () => void;
   onPrev: () => void;
   onNext: () => void;
+  /** [설정 단일 편집 모드] 버튼 라벨 오버라이드 — 미지정 시 온보딩 "이전"/"다음" (ui-design 9장) */
+  prevLabel?: string;
+  nextLabel?: string;
 }
 
 /** 수준 피드백 아이콘 (프로토타입 isSafe/isCaution/isRisk SVG) */
@@ -64,6 +67,8 @@ export function BudgetStep({
   onToggleLock,
   onPrev,
   onNext,
+  prevLabel,
+  nextLabel,
 }: BudgetStepProps) {
   const t = useTranslations('onboarding');
   const locale = useLocale();
@@ -201,14 +206,14 @@ export function BudgetStep({
           onClick={onPrev}
           className="rounded-2xl bg-[#F0F2F6] px-[22px] py-[17px] text-center text-base font-bold text-ink-500"
         >
-          {t('step2.prev')}
+          {prevLabel ?? t('step2.prev')}
         </button>
         <button
           type="button"
           onClick={onNext}
           className="flex-1 rounded-2xl bg-brand-600 py-[17px] text-center text-base font-bold text-white shadow-cta"
         >
-          {t('step2.next')}
+          {nextLabel ?? t('step2.next')}
         </button>
       </div>
     </div>

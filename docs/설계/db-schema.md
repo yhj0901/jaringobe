@@ -98,6 +98,19 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 
 **`budget_plans` 확장**: `locked boolean NOT NULL DEFAULT true`, `cuisines jsonb NOT NULL DEFAULT '[]'` (enum 배열은 서비스 검증)
 
+## 2-7. store_connections (리비전 0005 — GATE 3 대상)
+
+| 컬럼 | 타입 | 제약 |
+|------|------|------|
+| id | uuid | PK |
+| user_id | uuid | NOT NULL FK→users CASCADE |
+| store | varchar(10) | CHECK in ('kurly','coupang','ssg','naver') |
+| status | varchar(15) | CHECK in ('connected','disconnected') |
+| connected_at | timestamptz | NULL |
+| created_at/updated_at | timestamptz | NOT NULL |
+- **UNIQUE(user_id, store)**, `ix_store_connections_user_id`
+- 자격증명 컬럼 없음 — 실연동 시 store 본설계에서 암호화 참조로 확장 (평문 저장 금지 원칙)
+
 ## 3. 마이그레이션 계획 (인프라 에이전트 실행)
 
 | 리비전 | 내용 | 상태 |
@@ -105,6 +118,7 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 | `0001_initial_auth_budget` | 4테이블 + 인덱스/제약 일괄 생성. `CREATE EXTENSION IF NOT EXISTS pgcrypto` (gen_random_uuid) | **적용·검증 완료** (2026-07-09, 로컬 docker postgres 16 에서 upgrade→downgrade→upgrade 왕복 PASS) |
 | `0002_mealplan` | mealplan 4테이블 + 인덱스 (팀원 작성, down_revision=0001) | **적용 완료** (2026-07-09 서버·로컬) |
 | `0004_household_budget_ext` | household_members 신규 + budget_plans locked/cuisines (down_revision=0003) | **작성·로컬 왕복 검증 PASS** (2026-07-09, GATE 3 통과) |
+| `0005_store_connections` | store_connections 신규 (down_revision=0004) | **작성·로컬 왕복 검증 PASS** (2026-07-10, GATE 3 통과) |
 
 - 롤백: 4테이블 역순 drop (최초 리비전이므로 단순, pgcrypto 확장은 유지)
 - 파일: `backend/alembic/versions/0001_initial_auth_budget.py`

@@ -149,6 +149,7 @@ export function GuestHomeController() {
         onAutoOrderStart={goLogin}
         onRecipeClick={gateOrDraft}
         onLockedNavClick={gateOrDraft}
+        onAvatarClick={() => setGateOpen(true)}
       />
       <RevisitPrompt
         open={revisitOpen}
