@@ -20,14 +20,19 @@ from app.domains.budget.schemas import MoneyOut
 from app.domains.mealplan.generator import generate_meals
 from app.domains.mealplan.models import Meal, MealIngredient, MealPlan
 from app.domains.mealplan.pricing import DBPriceProvider
+from app.domains.fridge import service as fridge_service
+from app.domains.fridge.schemas import NeededItem as FridgeNeed
 from app.domains.mealplan.schemas import (
     BudgetSummary,
     MealIngredientOut,
     MealOut,
+    MealPlanCartResponse,
     MealPlanCreateRequest,
     MealPlanResponse,
     RegenerateRequest,
 )
+from app.domains.store import service as store_service
+from app.domains.store.schemas import NeededItem as StoreNeed
 
 _CENT = Decimal("0.01")
 MAX_BUDGET_RETRIES = 3
@@ -235,3 +240,39 @@ async def regenerate_meal_plan(
     _apply_drafts(plan, drafts, plan.period_start, days, budget.currency)
     await db.commit()
     return _serialize(await _reload(db, plan.id), budget, notes)
+
+
+async def build_shopping_cart(
+    db: AsyncSession, user: User, plan_id, mall: str, max_pages: int
+) -> MealPlanCartResponse:
+    """원스톱: 식단 재료 집계 → 냉장고 감산(shortfall) → 필요 품목만 마트(컬리) 장바구니.
+
+    냉장고 재고는 차감하지 않음(shortfall = 비파괴 계산). 실제 소진은 식사 완료 deduct.
+    """
+    plan = await _reload_or_none(db, plan_id)
+    if plan is None:
+        raise ApiError(404, "NOT_FOUND", "meal plan not found")
+    if plan.user_id != user.id:
+        raise ApiError(403, "FORBIDDEN", "not your resource")
+
+    # 식단 재료 집계 (name+unit 기준 합산)
+    agg: dict[tuple[str, str], list] = {}
+    for meal in plan.meals:
+        for ing in meal.ingredients:
+            key = (ing.name.lower(), ing.unit)
+            if key not in agg:
+                agg[key] = [ing.name, Decimal("0")]
+            agg[key][1] += ing.quantity
+    needed = [FridgeNeed(name=name, quantity=qty, unit=unit)
+              for (_nl, unit), (name, qty) in agg.items()]
+
+    # 식단 − 냉장고 재고 = 필요 품목 (재고 불변)
+    shortfall = await fridge_service.compute_shortfall(db, user.id, needed)
+    to_buy = [
+        StoreNeed(name=line.name, quantity=Decimal(line.to_buy), unit=line.unit)
+        for line in shortfall.items if Decimal(line.to_buy) > 0
+    ]
+
+    # 필요 품목만 마트(컬리) 장바구니
+    cart = await store_service.build_cart(to_buy, mall, max_pages)
+    return MealPlanCartResponse(meal_plan_id=plan.id, needed=shortfall.items, cart=cart)

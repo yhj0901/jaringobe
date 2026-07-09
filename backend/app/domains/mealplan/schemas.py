@@ -12,6 +12,8 @@ from pydantic import Field
 
 from app.core.schema import CamelModel
 from app.domains.budget.schemas import MoneyOut
+from app.domains.fridge.schemas import ShortfallLine
+from app.domains.store.schemas import StoreCartResponse
 
 
 class MealPlanCreateRequest(CamelModel):
@@ -67,3 +69,15 @@ class MealPlanResponse(CamelModel):
 # 내부 전달용(직렬화 아님)
 def money(amount: Decimal, currency: str) -> MoneyOut:
     return MoneyOut(amount=amount, currency=currency)
+
+
+# ---------- 원스톱: 식단 → 냉장고 감산 → 컬리 장바구니 ----------
+class MealPlanCartRequest(CamelModel):
+    mall: Literal["kurly", "all"] = "kurly"
+    max_pages: int = Field(default=5, ge=1, le=10)
+
+
+class MealPlanCartResponse(CamelModel):
+    meal_plan_id: uuid.UUID
+    needed: list[ShortfallLine]   # 식단 재료 − 냉장고 재고 = 필요 품목
+    cart: StoreCartResponse       # 필요 품목의 마트(컬리) 장바구니
