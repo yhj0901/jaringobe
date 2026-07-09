@@ -54,6 +54,12 @@ provider → GET /auth/{provider}/callback?code&state
 - 게스트 상태 서버 전송 금지 (가입 시 이전 1회 제외). 표시 시 React 기본 이스케이프, `dangerouslySetInnerHTML` 금지 ← CWE-79
 - 이전 성공/409 시 즉시 삭제, 422 시 폐기
 
+## 5-1. mealplan 접점 (v1.1 증보)
+
+- **CWE-639**: `/mealplans/{id}`·`/regenerate` 소유자 검증(구현 확인), `latest` 는 user_id 스코프 쿼리로 구조적 차단
+- **CWE-770**: 생성/재생성 유저 5회/분(구현 확인) + 프론트 버튼 비활성. latest(읽기)는 미적용
+- **CWE-79/117**: `allergies`/`preferences` 항목당 30자·최대 10개 서버 검증, **로그 기록 금지**(건강 관련 민감 입력 — 저장소 없음, 요청 전달만)
+
 ## 6. 시크릿 관리
 
 - 전 시크릿 `.env` 전용 (`JWT_SECRET`, provider client secret). `.env.example` 만 커밋, 코드/로그/status JSON 기록 금지
@@ -76,3 +82,4 @@ provider → GET /auth/{provider}/callback?code&state
 
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 4라운드 보안 검토 반영, 합의 완료)
+- 2026-07-09: v1.1 — mealplan 접점 5-1 증보

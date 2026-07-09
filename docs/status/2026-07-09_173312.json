@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-07-09T17:33:12+09:00",
+  "session_topic": "회원홈-식단연결 설계 완료 (api-spec v1.1)",
+  "command": "/설계시작 회원홈-식단연결",
+  "agent": "agents/design.md",
+  "status": "설계 5문서 v1.1 갱신 — GATE 2 승인 대기",
+  "tasks": [
+    {"id": 1, "subject": "실구현 사실 확인(에러코드/인덱스/LLM 폴백) + 팀원 초안(cbd0623) 회수·조정", "status": "completed"},
+    {"id": 2, "subject": "api-spec v1.1: mealplan 4종 편입 + GET /mealplans/latest 신규(404 MEALPLAN_NOT_FOUND)", "status": "completed"},
+    {"id": 3, "subject": "ui-design 7장(member 모드)·db-schema(0002 회수)·security(5-1)·architecture(3-4) 증보", "status": "completed"},
+    {"id": 4, "subject": "GATE 2 승인 → /API시작(latest 1건) + /UI시작(member 홈) 병렬", "status": "pending"}
+  ],
+  "artifacts": ["docs/설계/api-spec.md v1.1", "docs/설계/ui-design.md", "docs/설계/db-schema.md", "docs/설계/security-design.md", "docs/설계/architecture.md"],
+  "key_findings": "DB 변경 없음 확정 — latest 조회는 기존 ix_meal_plans_user_created 커버(GATE 3 비대상). 팀원 초안과 구현 상이점(요청 필드 diet_direction→allergies/preferences, int→uuid)은 구현 우선으로 스펙 확정. LLM 실패는 5xx 아닌 내부 폴백. POST /mealplans 프론트 타임아웃 90초. ViewModel 옵셔널 확장만.",
+  "recommended_actions": "'설계 승인' 후 /API시작(mealplan latest — 팀원 도메인이므로 구현 후 팀원 리뷰 요청 권장) + /UI시작(member 홈) 병렬. 인프라 불필요.",
+  "pending_user_input": "GATE 2 승인 ('설계 승인')"
+}
