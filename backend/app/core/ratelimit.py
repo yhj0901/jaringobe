@@ -34,3 +34,4 @@ class InMemoryRateLimiter:
 
 auth_ip_limiter = InMemoryRateLimiter(limit=10, window_seconds=60)
 budget_user_limiter = InMemoryRateLimiter(limit=5, window_seconds=60)
+mealplan_user_limiter = InMemoryRateLimiter(limit=5, window_seconds=60)
