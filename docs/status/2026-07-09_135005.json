@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-07-09T13:50:05+09:00",
+  "session_topic": "진입 경험 재전환 — 게스트 홈 + 타이밍 프롬프트 기획 (랜딩-예산체험 대체)",
+  "command": "/기획시작 로그인 페이지 부터 만들어보자 (후속 방향 전환 2차)",
+  "agent": "agents/planning.md",
+  "status": "게스트홈-진입경험 기획 완료 (랜딩-예산체험.md 대체·삭제) — GATE 1 승인 대기 (기획서 2건)",
+  "tasks": [
+    {"id": 1, "subject": "로그인 페이지 (소셜 인증) 기획", "status": "completed"},
+    {"id": 2, "subject": "방향 전환 1차: 랜딩+예산 체험", "status": "completed"},
+    {"id": 3, "subject": "방향 전환 2차: 게스트 홈 시나리오 (10초 프롬프트 → 예산안 적용 홈 → 자동주문 시점 가입) 기획서 전면 개정", "status": "completed"},
+    {"id": 4, "subject": "로그인 기획서 참조 갱신 + 옵시디언 미러링", "status": "completed"},
+    {"id": 5, "subject": "GATE 1 승인 → /설계시작 인계", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/기획/게스트홈-진입경험.md",
+    "docs/기획/로그인-소셜인증.md"
+  ],
+  "key_findings": "첫 화면 = 게스트 홈(실제 홈 UI 셸 + 샘플 데이터, '체험 모드' 배지). 체류 10초+스크롤 유휴 시 예산안 제안 바텀시트 1회(아니오 → 재노출 금지, 상시 CTA 대체). 예산안 작성 3스텝(인원/예산/식단 방향) → 홈 전체 정적 샘플 매트릭스로 갱신(AI 호출 없음). 자동주문 제안 시점에 소셜 로그인 → 게스트 예산안 서버 재검증 후 계정 이전 → 온보딩 스킵. localStorage 30일. backend 영향: guest-import API 1건(설계에서 확정). DB 변경 없음(GATE 3 비대상). 홈 셸 컴포넌트는 로그인 후 홈과 공유 전제. 랜딩-예산체험.md 는 삭제됨(볼트 포함).",
+  "recommended_actions": "GATE 1 승인 시 /설계시작 — 설계 대상: 게스트홈-진입경험(프론트 중심 + guest-import API) + 로그인-소셜인증(프론트/백/DB). Next.js 스캐폴딩 설계 포함.",
+  "pending_user_input": "GATE 1 승인 여부 ('기획 승인' — 기획서 2건 일괄)"
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-07-09T14:38:32+09:00",
+  "session_topic": "인프라 — Alembic 초기 리비전 0001 + .env.example 보강 (GATE 3 통과)",
+  "command": "/인프라시작 db-schema.md 기반 초기 리비전 + .env.example 보강",
+  "agent": "agents/infra.md",
+  "status": "GATE 3 통과 — 리비전 0001 로컬 검증 PASS. 다음: /API시작 + /UI시작 병렬",
+  "tasks": [
+    {"id": 1, "subject": "GATE 2 설계 승인", "status": "completed"},
+    {"id": 2, "subject": "GATE 3 DB 승인 → Alembic 초기화(alembic.ini/env.py) + 리비전 0001 작성", "status": "completed"},
+    {"id": 3, "subject": "로컬 docker postgres 16 에서 upgrade→downgrade→upgrade 왕복 검증 PASS", "status": "completed"},
+    {"id": 4, "subject": ".env.example 보강(JWT/카카오/구글/FRONTEND_ORIGIN) + db-schema.md 갱신", "status": "completed"},
+    {"id": 5, "subject": "/API시작 + /UI시작 병렬 진행", "status": "pending"}
+  ],
+  "artifacts": [
+    "backend/alembic.ini",
+    "backend/alembic/env.py",
+    "backend/alembic/versions/0001_initial_auth_budget.py",
+    ".env.example",
+    "docs/설계/db-schema.md"
+  ],
+  "key_findings": "리비전 0001: users/auth_identities/refresh_tokens/budget_plans + pgcrypto. rotated_from FK 는 ON DELETE SET NULL 로 확정(배치 삭제 시 체인 FK 위반 방지 — db-schema.md 반영). 검증은 로컬 docker DB 사용 — 배포 서버(121.78.130.230, 메모리 참조)는 배포 단계에서 반영 예정(사용자 질문 있었음). uv sync 완료(backend 가상환경 준비됨). PR #1 스캐폴딩의 CORS 전체 허용은 백엔드 구현 시 Origin 검증 미들웨어로 교체 필요(설계 인계사항). 백엔드 에이전트 통보: 모델은 0001 스키마 준수, Settings 에 JWT/OAuth/FRONTEND_ORIGIN 키 추가 필요.",
+  "recommended_actions": "/API시작 (auth+budget 구현) 과 /UI시작 (게스트 홈+로그인) 병렬 진행. 완료 후 /QA시작. 커밋은 /커밋 으로 사용자 승인 후 (마이그레이션 포함 커밋은 db: prefix).",
+  "pending_user_input": "구현 병렬 진행 지시 (또는 자동 진행 승인)"
+}
