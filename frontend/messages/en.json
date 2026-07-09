@@ -238,6 +238,7 @@
       "title": "Your budget plan has been moved to your account!",
       "description": "The plan you created in trial mode is now applied. Start budget-fit meal planning right away.",
       "homeCta": "Go home"
-    }
+    },
+    "stubHomeCta": "Go home and get started"
   }
 }
