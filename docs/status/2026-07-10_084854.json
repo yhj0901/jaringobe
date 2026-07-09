@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-07-10T08:48:54+09:00",
+  "session_topic": "설정 페이지 + 스토어 연동 상태(1단계) 배포 완료 (v0.4)",
+  "command": "GATE 1~3 → 병렬 구현 → 배포",
+  "agent": "infra + backend/frontend 서브 에이전트",
+  "status": "PR #24 머지, 서버 0005(head)·stores/connections live, Vercel 배포 완료. /settings 실사용 확인 대기",
+  "tasks": [
+    {"id": 1, "subject": "0005 store_connections (GATE 3 왕복 PASS·서버 적용)", "status": "completed"},
+    {"id": 2, "subject": "백엔드: stores/connections 2종 + GET /budget/plans (181 테스트/96%)", "status": "completed"},
+    {"id": 3, "subject": "프론트: /settings 계정·식생활 편집·재생성·스토어 연동 (302 테스트/99.8%)", "status": "completed"},
+    {"id": 4, "subject": "실사용 검증 (사용자)", "status": "pending"}
+  ],
+  "artifacts": ["frontend/src/features/{settings,store}/", "backend/app/domains/store/connection_*", "docs/기획/설정-스토어연동.md + 설계 v1.3"],
+  "key_findings": "부분 수정 병합 한계를 GET /budget/plans 신설로 해소(예산만 수정해도 방향·선호 보존). 스토어 실계정 연동·자동 결제는 팀원 store 본기획 조율 항목으로 이관(테이블 확장 여지 확보). 로그아웃 UI 최초 제공(visited 마커 → 재방문 알림 동작 시작).",
+  "recommended_actions": "사용자 확인: 홈 GB 아바타 → 설정 → 식생활 수정 → 재생성, 스토어 연동 토글. 다음 후보: store 실연동 본기획(팀원 합동), 회원 탈퇴, 애플 로그인 P1.",
+  "pending_user_input": "설정 페이지 실사용 확인"
+}
