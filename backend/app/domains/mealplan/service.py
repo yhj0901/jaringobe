@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import calendar
 from datetime import timedelta
+from time import monotonic
 from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import select
@@ -40,6 +41,9 @@ from app.domains.store.schemas import NeededItem as StoreNeed
 
 _CENT = Decimal("0.01")
 MAX_BUDGET_RETRIES = 3
+# LLM 재생성 루프의 총 시간 예산(초) — 프론트 타임아웃(90초) 내 응답 보장.
+# 초과 시 재시도를 멈추고 최선의 결과를 반환 (over_budget 201 은 스펙 허용, api-spec §3-2)
+GENERATION_TIME_BUDGET_SECONDS = 55.0
 MEAL_DIRECTION_HINT = {"health": "balanced", "diet": "diet", "hearty": "hearty", "kids": "kids"}
 
 
@@ -92,6 +96,10 @@ async def _generate_within_budget(
     llm_enabled = get_llm().enabled
     best: tuple[list[dict], Decimal] | None = None
     status = "failed"
+    started = monotonic()
+
+    def _time_left() -> bool:
+        return monotonic() - started < GENERATION_TIME_BUDGET_SECONDS
 
     for attempt in range(MAX_BUDGET_RETRIES + 1):
         hint = " ".join(x for x in (budget_hint, allergy_hint) if x)
@@ -100,7 +108,7 @@ async def _generate_within_budget(
             allergies, preferences, hint,
         )
         violations = _check_allergies(drafts, allergies)
-        if violations and attempt < MAX_BUDGET_RETRIES and llm_enabled:
+        if violations and attempt < MAX_BUDGET_RETRIES and llm_enabled and _time_left():
             allergy_hint = f"NEVER include these allergens: {violations}."
             continue
         if violations:
@@ -117,7 +125,7 @@ async def _generate_within_budget(
             f"PREVIOUS PLAN COST {total} {currency}, OVER budget {limit} by {over}. "
             "Make it cheaper."
         )
-        if not llm_enabled:
+        if not llm_enabled or not _time_left():
             break
 
     assert best is not None

@@ -219,3 +219,25 @@ async def test_create_meal_plan_llm_failure_falls_back(client, respx_mock, monke
     res = await client.post("/api/v1/mealplans", json={"days": 3, "mealsPerDay": 3})
     assert res.status_code == 201, res.text
     assert len(res.json()["meals"]) == 9
+
+
+async def test_generation_time_budget_stops_retries(client, respx_mock, monkeypatch):
+    """시간 예산 소진 시 예산 초과여도 재시도 없이 최선 결과로 201 (over_budget 허용)."""
+    from app.domains.mealplan import service as svc
+
+    calls = {"n": 0}
+    orig = svc.generate_meals
+
+    async def counting(*a, **k):
+        calls["n"] += 1
+        return await orig(*a, **k)
+
+    monkeypatch.setattr(svc, "generate_meals", counting)
+    monkeypatch.setattr(svc, "GENERATION_TIME_BUDGET_SECONDS", 0.0)
+    await login(client, respx_mock)
+    # 극소 예산 → 확실한 초과 상황
+    assert (await _create_budget(client, amount="50000")).status_code == 201
+
+    res = await client.post("/api/v1/mealplans", json={"days": 7, "mealsPerDay": 3})
+    assert res.status_code == 201, res.text
+    assert calls["n"] == 1  # 시간 예산 0 → 단일 시도
