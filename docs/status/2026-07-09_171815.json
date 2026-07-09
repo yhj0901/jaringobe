@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-07-09T17:18:15+09:00",
+  "session_topic": "소셜 로그인 프로덕션 활성화 (OAuth 키 등록 + TS-13 PASS)",
+  "command": "(사용자 협업) 카카오·구글 키 발급/등록",
+  "agent": "agents/infra.md + agents/qa.md",
+  "status": "소셜 로그인 라이브 — 카카오·구글 실계정 가입 검증 완료 (users 2, identities 2)",
+  "tasks": [
+    {"id": 1, "subject": "카카오(REST API 키·Secret·Redirect URI — 개편 콘솔: 플랫폼 키>REST API 키 수정) + 구글(OAuth 클라이언트) 발급", "status": "completed"},
+    {"id": 2, "subject": "서버 .env 등록(사용자 직접, 값 비노출) + 백엔드 재생성 + authorize 실키 302 검증", "status": "completed"},
+    {"id": 3, "subject": "TS-13 실브라우저 왕복 PASS → QA 문서 갱신(시나리오테스트 13/13, R-3 완료)", "status": "completed"}
+  ],
+  "artifacts": ["docs/테스트/시나리오테스트.md", "docs/테스트/버그리포트.md"],
+  "key_findings": "카카오 콘솔 개편(2026)으로 Redirect URI 등록 위치가 [앱 설정>플랫폼 키>REST API 키 수정] 으로 이동함. 구글은 테스트 모드(테스트 사용자만 로그인 가능) — 일반 공개 시 앱 게시 필요. v0.1.0 전 기능이 프로덕션에서 동작: 게스트 홈 → 예산안 → 소셜 로그인 → 예산안 이전.",
+  "recommended_actions": "다음 후보: ② mealplan 실데이터 홈 연결 기획(/기획시작), 애플 로그인 P1, 구글 앱 게시(공개 전환), 회원 탈퇴 기획(카카오 웹훅 포함).",
+  "pending_user_input": "다음 작업 선택"
+}
