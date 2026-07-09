@@ -192,6 +192,22 @@ async def create_meal_plan(
     return _serialize(await _reload(db, plan.id), budget, notes)
 
 
+async def get_latest_meal_plan(db: AsyncSession, user: User) -> MealPlanResponse:
+    """인증 유저의 최신 플랜 1건 (ix_meal_plans_user_created 커버, user_id 스코프)."""
+    stmt = (
+        select(MealPlan)
+        .where(MealPlan.user_id == user.id)
+        .order_by(MealPlan.created_at.desc())
+        .limit(1)
+        .options(selectinload(MealPlan.meals).selectinload(Meal.ingredients))
+    )
+    plan = (await db.execute(stmt)).scalar_one_or_none()
+    if plan is None:
+        raise ApiError(404, "MEALPLAN_NOT_FOUND", "no meal plan yet")
+    budget = await _get_budget(db, user)
+    return _serialize(plan, budget, [])
+
+
 async def get_meal_plan(db: AsyncSession, user: User, plan_id) -> MealPlanResponse:
     plan = await _reload_or_none(db, plan_id)
     if plan is None:

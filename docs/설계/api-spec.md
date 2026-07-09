@@ -134,7 +134,62 @@ Access 재발급 + refresh 회전.
 
 ---
 
-## 3. 엔드포인트 요약
+## 3. mealplan 도메인 (v1.1 — 구현 기준 정식 편입)
+
+> 팀원 구현(PR #8)을 계약으로 정식화. 요청/응답은 camelCase, id 는 uuid, 금액은 Money(문자열+통화).
+
+### 3-1. `GET /api/v1/mealplans/latest` — 인증 필요 **(v1.1 신규 — 백엔드 구현 필요)**
+인증 유저의 가장 최근 식단 1건 (`created_at DESC LIMIT 1`, 기존 인덱스 `ix_meal_plans_user_created` 커버).
+
+| HTTP | 내용 |
+|------|------|
+| `200` | `MealPlanResponse` (3-2 와 동일 구조) |
+| `404 MEALPLAN_NOT_FOUND` | 생성 이력 없음 — 프론트 빈 상태 분기 전용 코드 |
+
+### 3-2. `POST /api/v1/mealplans` — 인증 필요 (기존)
+```json
+// 요청 MealPlanCreateRequest
+{ "days": 7, "mealsPerDay": 3, "allergies": ["땅콩"], "preferences": ["한식"] }
+```
+- `days` 1~31, `mealsPerDay` 1~5. `allergies`/`preferences` 는 항목당 30자·최대 10개 (서버 검증, 로그 기록 금지)
+- 예산은 서버가 유저의 `budget_plans` 에서 조회 — 없으면 `409 BUDGET_PLAN_REQUIRED`
+- rate limit: 유저 5회/분 (`429 RATE_LIMITED`)
+- LLM 실패 시 서버 내부 규칙 기반 폴백 생성 (5xx 아님)
+
+```json
+// 201 MealPlanResponse
+{
+  "id": "uuid", "status": "ready",            // ready | over_budget
+  "region": "KR", "currency": "KRW",
+  "periodStart": "2026-07-09", "periodEnd": "2026-07-15",
+  "budgetSummary": {
+    "budget":      { "amount": "700000.00", "currency": "KRW" },
+    "plannedCost": { "amount": "612300.00", "currency": "KRW" },
+    "remaining":   { "amount": "87700.00",  "currency": "KRW" },
+    "withinBudget": true
+  },
+  "meals": [ { "id": "uuid", "planDate": "2026-07-09", "mealType": "breakfast",
+    "recipeName": "계란볶음밥",
+    "ingredients": [ { "id": "uuid", "name": "계란", "quantity": "4", "unit": "ea",
+      "estCost": { "amount": "2000.00", "currency": "KRW" } } ] } ],
+  "notes": []
+}
+```
+- `status=over_budget` 시 `withinBudget=false` + `notes` 에 초과 사유 — 프론트는 초과 배너 + 재생성 유도 (FR-206)
+
+### 3-3. `GET /api/v1/mealplans/{id}` — 인증 필요 (기존)
+- `200` MealPlanResponse / `404 NOT_FOUND` / `403 FORBIDDEN`(타인 소유)
+
+### 3-4. `POST /api/v1/mealplans/{id}/regenerate` — 인증 필요 (기존, 프론트 P1)
+```json
+{ "scope": "all" }   // all | meal (meal 이면 mealId 필수 — 프론트 P2)
+```
+- rate limit 유저 5회/분. `200` 갱신된 MealPlanResponse
+
+
+---
+
+## 4. 엔드포인트 요약
 
 | # | 메서드·경로 | 인증 | 유형 |
 |---|-------------|------|------|
@@ -144,6 +199,11 @@ Access 재발급 + refresh 회전.
 | 4 | `POST /api/v1/auth/logout` | 필요 | JSON |
 | 5 | `GET /api/v1/users/me` | 필요 | JSON |
 | 6 | `POST /api/v1/budget/plans` | 필요 | JSON |
+| 7 | `GET /api/v1/mealplans/latest` | 필요 | JSON (v1.1 신규) |
+| 8 | `POST /api/v1/mealplans` | 필요 | JSON |
+| 9 | `GET /api/v1/mealplans/{id}` | 필요 | JSON |
+| 10 | `POST /api/v1/mealplans/{id}/regenerate` | 필요 | JSON |
 
 ## 변경 이력
+- 2026-07-09: **v1.1** — mealplan 도메인 정식 편입(구현 기준: camelCase/uuid/allergies·preferences 요청 필드) + `GET /mealplans/latest` 신규. 팀원 미머지 초안(cbd0623)의 상이점은 구현 우선으로 조정. UI 대변인 동의 완료
 - 2026-07-09: v1 최초 확정 — 공통 규격(camelCase/에러/금액/페이지네이션) + auth 5종 + budget 1종. UI 대변인 동의 완료

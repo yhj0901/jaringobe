@@ -40,6 +40,15 @@ async def create_meal_plan(
     return await service.create_meal_plan(db, user, payload)
 
 
+# 주의: /mealplans/latest 는 /mealplans/{plan_id} 보다 먼저 선언 (uuid 파싱 충돌 방지)
+@router.get("/mealplans/latest", response_model=MealPlanResponse)
+async def get_latest_meal_plan(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> MealPlanResponse:
+    return await service.get_latest_meal_plan(db, user)
+
+
 @router.get("/mealplans/{plan_id}", response_model=MealPlanResponse)
 async def get_meal_plan(
     plan_id: uuid.UUID,

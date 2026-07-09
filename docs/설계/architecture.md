@@ -110,6 +110,16 @@ GET / → RSC 가 홈 셸 + 기본 샘플 렌더 (SSG 가능)
     422 → 값 폐기(변조 의심) → 일반 온보딩으로
 ```
 
+### 3-4. 회원 홈 (v1.1 — 회원홈-식단연결)
+```
+로그인 홈 진입 → GET /users/me
+  hasBudgetPlan=false → BudgetDraftFlow(재사용) → POST /budget/plans(onboarding)
+  → GET /mealplans/latest
+      404 → 빈 상태 히어로 → 생성 시트 → POST /mealplans (LLM, 폴백 내장) → 표시
+      200 → MealPlanResponse → ViewModel 매핑 → HomeShell(mode=member)
+냉장고/자동주문 카드는 "준비 중" 잠금 (fridge/order 도메인 구현 시 해제)
+```
+
 ## 4. 환경 변수 (.env — 인프라 에이전트가 .env.example 관리)
 
 | 키 | 위치 | 용도 |
@@ -126,3 +136,4 @@ GET / → RSC 가 홈 셸 + 기본 샘플 렌더 (SSG 가능)
 
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 5라운드 합의)
+- 2026-07-09: v1.1 — 회원 홈 흐름(3-4) 추가

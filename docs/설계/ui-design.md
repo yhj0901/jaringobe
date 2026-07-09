@@ -95,5 +95,22 @@ common.money 포맷은 MoneyText 가 Intl.NumberFormat 으로 처리 (키 아님
 ```
 - API 에러 `detail.code` → `auth.error.{code}` 규약으로 자동 매핑, 미정의 코드는 `common.error.fallback`
 
+## 7. 회원 홈 (member 모드) — v1.1 증보
+
+**데이터 어댑터** (`features/mealplan/` 신규 — store/order 디렉토리 생성 금지):
+```
+useMemberHome():
+  GET /users/me → hasBudgetPlan=false → BudgetPlanGate (BudgetDraftFlow 재사용, POST /budget/plans source='onboarding')
+  GET /mealplans/latest → 404 MEALPLAN_NOT_FOUND → EmptyPlanHero (예산 락 히어로 + "내 식단 만들기" CTA)
+                        → 200 → mapPlanToViewModel(MealPlanResponse) → HomeShell (mode: 'member')
+```
+- `mapPlanToViewModel`: meals(planDate·mealType) → weekPlan, budgetSummary → budgetMood. **ViewModel 은 옵셔널 필드 확장만** (게스트 계약 불변): `selectedDate?`, `overBudget?`, `planId?`
+- 컴포넌트 신규: `EmptyPlanHero`, `PlanCreateSheet`(기간 스테퍼 + 알레르기/선호 칩 입력 — 30자/10개 클라이언트 검증), `GenerationLoading`(단계 문구 로테이션 + 스켈레톤, aria-busy), `OverBudgetBanner`(재생성 유도), `LockedFeatureCard`(냉장고/자동주문 "준비 중")
+- `POST /mealplans` 호출은 클라이언트 타임아웃 90초, 버튼 비활성으로 연타 방지. 429 → 대기 안내, 그 외 실패 → 재시도 배너
+- 탭바: 회원도 fridge/cart 는 "준비 중" 안내(가입 게이트 아님), meal 탭은 식단 섹션 스크롤
+
+**i18n 신규 키 체계**: `memberHome.empty.*`, `memberHome.create.*`(시트), `memberHome.loading.step1~3`, `memberHome.overBudget.*`, `memberHome.locked.*`, `mealplan.mealType.{breakfast|lunch|dinner}` — ko/en 동시
+
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 3라운드 UI 교차 검토 반영, 합의 완료)
+- 2026-07-09: v1.1 — 회원 홈(member 모드) 7장 증보 (회원홈-식단연결 기획)

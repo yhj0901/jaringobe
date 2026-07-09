@@ -46,6 +46,9 @@ export const BUDGET_PRESETS = {
   },
 } as const;
 
+/** 인증 httpOnly 쿠키 이름 (api-spec 0장) — 홈 라우트의 회원/게스트 데이터 소스 판정용 */
+export const AUTH_COOKIE_NAMES = ['jaringobe_access', 'jaringobe_refresh'] as const;
+
 /** api-spec 에 정의된 auth 에러/공통 에러 코드 — i18n 매핑 허용 목록 */
 export const KNOWN_ERROR_CODES = [
   'AUTH_PROVIDER_DENIED',

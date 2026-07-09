@@ -6,27 +6,31 @@
 import uuid
 from datetime import date
 from decimal import Decimal
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field
 
 from app.core.schema import CamelModel
 from app.domains.budget.schemas import MoneyOut
 
+# 알레르기/선호 입력 제한 — 항목당 30자, 리스트 최대 10개 (api-spec v1.1 §3-2, security-design 5-1)
+PrefItem = Annotated[str, Field(max_length=30)]
+PrefList = Annotated[list[PrefItem], Field(max_length=10)]
+
 
 class MealPlanCreateRequest(CamelModel):
     days: int = Field(default=7, ge=1, le=31)
     meals_per_day: int = Field(default=3, ge=1, le=5)
     # v0: 알레르기/선호는 저장소가 없어 요청으로 받음(LLM 전달 + 코드 재검증). 안전상 알레르기 우선.
-    allergies: list[str] = Field(default_factory=list)
-    preferences: list[str] = Field(default_factory=list)
+    allergies: PrefList = Field(default_factory=list)
+    preferences: PrefList = Field(default_factory=list)
 
 
 class RegenerateRequest(CamelModel):
     scope: Literal["all", "meal"] = "all"
     meal_id: uuid.UUID | None = None
-    allergies: list[str] = Field(default_factory=list)
-    preferences: list[str] = Field(default_factory=list)
+    allergies: PrefList = Field(default_factory=list)
+    preferences: PrefList = Field(default_factory=list)
 
 
 class MealIngredientOut(CamelModel):

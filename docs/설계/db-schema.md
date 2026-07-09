@@ -72,11 +72,23 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 
 > **확장 예정 (budget 본설계)**: 예산 기간(월 단위 주기), 예산 락 상태, 소진/절약 집계, household 도메인과의 관계 재정의. v0 필드는 게스트 예산안 스키마와 1:1 — 본설계는 이 테이블을 **확장**하며 컬럼 삭제/타입 변경 시 영향도 분석 필수.
 
+## 2-5. mealplan 도메인 (리비전 0002 — 팀원 구현, 문서 회수)
+
+| 테이블 | 요약 |
+|--------|------|
+| `meal_plans` | 유저별 식단 플랜 (status ready/over_budget, region, currency, period, 금액 numeric+통화). `ix_meal_plans_user_created(user_id, created_at)` — **latest 조회 커버(추가 인덱스 불필요)** |
+| `meals` | 플랜별 끼니 (plan_date, meal_type, recipe_name). `ix_meals_plan_date` |
+| `meal_ingredients` | 끼니별 재료 (수량/단위/추정가). `ix_meal_ingredients_meal` |
+| `ingredient_price_refs` | 지역별 기준가 테이블. `ix_price_region_name(region, name)` |
+
+- 상세 명세는 리비전 파일(`0002_mealplan.py`)과 models.py 가 원본 — 본 문서는 요약 유지
+
 ## 3. 마이그레이션 계획 (인프라 에이전트 실행)
 
 | 리비전 | 내용 | 상태 |
 |--------|------|------|
 | `0001_initial_auth_budget` | 4테이블 + 인덱스/제약 일괄 생성. `CREATE EXTENSION IF NOT EXISTS pgcrypto` (gen_random_uuid) | **적용·검증 완료** (2026-07-09, 로컬 docker postgres 16 에서 upgrade→downgrade→upgrade 왕복 PASS) |
+| `0002_mealplan` | mealplan 4테이블 + 인덱스 (팀원 작성, down_revision=0001) | **적용 완료** (2026-07-09 서버·로컬) |
 
 - 롤백: 4테이블 역순 drop (최초 리비전이므로 단순, pgcrypto 확장은 유지)
 - 파일: `backend/alembic/versions/0001_initial_auth_budget.py`
@@ -84,3 +96,4 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 ## 변경 이력
 - 2026-07-09: 최초 작성 — auth 3테이블 + budget_plans v0 (설계 토론 5라운드 합의)
 - 2026-07-09: 리비전 0001 작성·로컬 검증 완료 (GATE 3 통과). rotated_from FK 는 ON DELETE SET NULL 로 확정
+- 2026-07-09: 0002(mealplan, 팀원) 문서 회수 — 회원홈-식단연결 설계는 DB 변경 없음(기존 인덱스 커버)

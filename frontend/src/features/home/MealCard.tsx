@@ -1,5 +1,6 @@
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/shared/ui/Badge';
+import { MoneyText } from '@/shared/ui/MoneyText';
 import type { MealItem, MealSlot } from '@/features/home/types';
 
 interface MealCardProps {
@@ -15,9 +16,14 @@ const SLOT_DOT: Record<MealSlot, string> = {
   dinner: '#15244A',
 };
 
-/** 식단 행 — 슬롯 도트 + 라벨 + 메뉴명 + "예시" 라벨 + 조리법 칩 (FR-101) */
+/**
+ * 식단 행 — 슬롯 도트 + 라벨 + 메뉴명 + "예시" 라벨 + 조리법 칩 (FR-101).
+ * 회원 데이터엔 재료 목록·추정 비용이 옵셔널로 붙는다 (FR-205).
+ */
 export function MealCard({ meal, onRecipeClick }: MealCardProps) {
   const t = useTranslations('guestHome');
+  const tMealType = useTranslations('mealplan.mealType');
+  const locale = useLocale();
 
   return (
     <article className="flex items-center gap-2.5 border-b border-[#F1F3F8] py-3 last:border-b-0">
@@ -26,13 +32,25 @@ export function MealCard({ meal, onRecipeClick }: MealCardProps) {
         className="h-2 w-2 shrink-0 rounded-full"
         style={{ backgroundColor: SLOT_DOT[meal.slot] }}
       />
-      <span className="w-8 shrink-0 text-xs font-bold text-ink-400">
-        {t(`meal.slot.${meal.slot}`)}
+      <span className="w-8 shrink-0 text-xs font-bold text-ink-400">{tMealType(meal.slot)}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-bold text-ink-800">
+          {meal.name}
+          {meal.isSample ? <Badge className="ml-1.5 align-middle">{t('sampleLabel')}</Badge> : null}
+        </span>
+        {meal.ingredients !== undefined && meal.ingredients.length > 0 ? (
+          <span className="mt-0.5 block truncate text-[11.5px] font-medium text-ink-300">
+            {meal.ingredients.join(' · ')}
+          </span>
+        ) : null}
       </span>
-      <span className="min-w-0 flex-1 truncate text-sm font-bold text-ink-800">
-        {meal.name}
-        {meal.isSample ? <Badge className="ml-1.5 align-middle">{t('sampleLabel')}</Badge> : null}
-      </span>
+      {meal.estCost !== undefined ? (
+        <MoneyText
+          money={meal.estCost}
+          locale={locale}
+          className="shrink-0 text-xs font-extrabold tabular-nums text-ink-500"
+        />
+      ) : null}
       <button
         type="button"
         onClick={onRecipeClick}

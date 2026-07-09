@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-07-09T17:24:06+09:00",
+  "session_topic": "회원 홈 식단 연결 기획 (mealplan 프론트 소비자)",
+  "command": "/기획시작 [mealplan] 로그인 후 홈 실데이터 연결",
+  "agent": "agents/planning.md",
+  "status": "기획 완료 — GATE 1 승인 대기",
+  "tasks": [
+    {"id": 1, "subject": "팀원 mealplan API(3종)·미머지 기획 문서(cbd0623) 분석", "status": "completed"},
+    {"id": 2, "subject": "6개 서브 에이전트 토론 4라운드 합의 → docs/기획/회원홈-식단연결.md", "status": "completed"},
+    {"id": 3, "subject": "GATE 1 승인 → /설계시작", "status": "pending"}
+  ],
+  "artifacts": ["docs/기획/회원홈-식단연결.md"],
+  "key_findings": "핵심 gap: 최신 식단 조회 API 부재(GET /mealplans/{id} 뿐) → FR-210 백엔드 요청. api-spec.md 에 mealplan 계약 미반영(팀원 문서 커밋 cbd0623 미머지) → 설계 단계에서 v1.1 정식화+회수 이관. DB 변경 없음(GATE 3 비대상). store 겹침 방지: order/store 파일 미생성, 카드 잠금만. 예산안 없는 가입자는 홈에서 BudgetDraftFlow 재사용(source=onboarding).",
+  "recommended_actions": "'기획 승인' 시 /설계시작 — api-spec v1.1(mealplan 4종+latest), ui-design 증보, 팀원과 latest API 구현 주체 협의.",
+  "pending_user_input": "GATE 1 승인 ('기획 승인')"
+}

@@ -13,11 +13,17 @@ export interface MealItem {
   slot: MealSlot;
   name: string;
   isSample: boolean;
+  /** [member 옵셔널 확장] 재료명 목록 (FR-205) */
+  ingredients?: string[];
+  /** [member 옵셔널 확장] 끼니 추정 비용 — 재료 estCost 합 (FR-205) */
+  estCost?: Money;
 }
 
 export interface DayPlan {
   /** 요일 코드 (mon..sun) — 표기는 i18n */
   day: string;
+  /** [member 옵셔널 확장] 실제 일자 (YYYY-MM-DD) — 주간 스트립 이동 기준 */
+  date?: string;
   meals: MealItem[];
 }
 
@@ -35,6 +41,12 @@ export interface StoreBadge {
 
 export interface HomeViewModel {
   mode: HomeMode;
+  /** [member 옵셔널 확장] 주간 스트립에서 선택된 일자 (YYYY-MM-DD, FR-205) — 게스트 계약 불변 */
+  selectedDate?: string;
+  /** [member 옵셔널 확장] 예산 초과 여부 (budgetSummary.withinBudget=false, FR-206) */
+  overBudget?: boolean;
+  /** [member 옵셔널 확장] 표시 중인 식단 plan id — 재생성(FR-209) 대상 */
+  planId?: string;
   budgetMood: {
     remaining: Money;
     saved: Money;
