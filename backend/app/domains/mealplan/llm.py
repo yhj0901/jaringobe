@@ -8,8 +8,9 @@ import re
 from app.core.config import Settings, get_settings
 
 _JSON_FENCE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
-LLM_TIMEOUT_SECONDS = 25.0
-LLM_MAX_RETRIES = 2
+# 21끼(7일×3끼) JSON 생성은 수십 초 소요 — 프론트 타임아웃(90초) 안에서 단일 시도에 최대한 할애
+LLM_TIMEOUT_SECONDS = 75.0
+LLM_MAX_RETRIES = 0
 
 
 def _extract_json(text: str) -> dict | list:

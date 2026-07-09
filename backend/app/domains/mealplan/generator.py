@@ -126,11 +126,15 @@ async def generate_meals(
     if not llm.enabled:
         return _mock(region, days, meals_per_day)
 
-    data = await llm.complete_json(
-        _SYSTEM,
-        _prompt(region, household_size, meal_direction, days, meals_per_day,
-                allergies, preferences, budget_hint),
-    )
+    try:
+        data = await llm.complete_json(
+            _SYSTEM,
+            _prompt(region, household_size, meal_direction, days, meals_per_day,
+                    allergies, preferences, budget_hint),
+        )
+    except Exception:
+        # api-spec v1.1 §3-2: LLM 실패(타임아웃 포함)는 5xx 가 아니라 규칙 기반 폴백 생성
+        return _mock(region, days, meals_per_day)
     meals_raw = data.get("meals", []) if isinstance(data, dict) else data
     drafts: list[dict] = []
     for m in meals_raw:
