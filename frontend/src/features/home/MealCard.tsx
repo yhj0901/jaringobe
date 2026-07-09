@@ -1,6 +1,6 @@
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/shared/ui/Badge';
-import type { MealItem } from '@/features/home/types';
+import type { MealItem, MealSlot } from '@/features/home/types';
 
 interface MealCardProps {
   meal: MealItem;
@@ -8,23 +8,35 @@ interface MealCardProps {
   onRecipeClick?: () => void;
 }
 
-/** 식단 카드 — 슬롯 라벨 + 메뉴명 + "예시" 라벨 슬롯 (FR-101) */
+/** 슬롯 도트 색 — 디자인 프로토타입의 아침/점심/저녁 마커 */
+const SLOT_DOT: Record<MealSlot, string> = {
+  breakfast: '#F2A93B',
+  lunch: '#2F6BFF',
+  dinner: '#15244A',
+};
+
+/** 식단 행 — 슬롯 도트 + 라벨 + 메뉴명 + "예시" 라벨 + 조리법 칩 (FR-101) */
 export function MealCard({ meal, onRecipeClick }: MealCardProps) {
   const t = useTranslations('guestHome');
 
   return (
-    <article className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-500">
-          {t(`meal.slot.${meal.slot}`)}
-        </span>
-        {meal.isSample ? <Badge tone="neutral">{t('sampleLabel')}</Badge> : null}
-      </div>
-      <p className="text-sm font-semibold text-gray-900">{meal.name}</p>
+    <article className="flex items-center gap-2.5 border-b border-[#F1F3F8] py-3 last:border-b-0">
+      <span
+        aria-hidden
+        className="h-2 w-2 shrink-0 rounded-full"
+        style={{ backgroundColor: SLOT_DOT[meal.slot] }}
+      />
+      <span className="w-8 shrink-0 text-xs font-bold text-ink-400">
+        {t(`meal.slot.${meal.slot}`)}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-sm font-bold text-ink-800">
+        {meal.name}
+        {meal.isSample ? <Badge className="ml-1.5 align-middle">{t('sampleLabel')}</Badge> : null}
+      </span>
       <button
         type="button"
         onClick={onRecipeClick}
-        className="self-start text-xs font-medium text-brand-600 underline underline-offset-2"
+        className="shrink-0 whitespace-nowrap rounded-[9px] bg-brand-50 px-3 py-1.5 text-xs font-extrabold text-brand-600"
       >
         {t('meal.viewRecipe')}
       </button>

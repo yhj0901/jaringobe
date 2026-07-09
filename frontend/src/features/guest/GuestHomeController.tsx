@@ -112,7 +112,7 @@ export function GuestHomeController() {
       {applying ? (
         <div
           role="status"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 text-sm font-medium text-brand-700"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-surface/85 text-sm font-bold text-navy-900 backdrop-blur-sm"
         >
           {t('applying')}
         </div>
@@ -121,6 +121,7 @@ export function GuestHomeController() {
         viewModel={viewModel}
         onAutoOrderStart={goLogin}
         onRecipeClick={() => setGateOpen(true)}
+        onLockedNavClick={() => setGateOpen(true)}
       />
       <EngagementPrompt open={promptOpen} onAccept={handleAccept} onDecline={handleDecline} />
       <BudgetDraftFlow

@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-07-09T16:11:51+09:00",
+  "session_topic": "도메인(jaringobe.cloud)·TLS·협업 체계 구축 완료 — 풀 스택 라이브",
+  "command": "(오케스트레이터 직접) 도메인 연결 + Caddy TLS + 협업 규칙",
+  "agent": "agents/infra.md (배포)",
+  "status": "https://jaringobe.cloud 라이브, https://api.jaringobe.cloud → 백엔드 정상(401 규격 확인). 소셜 로그인만 OAuth 키 대기",
+  "tasks": [
+    {"id": 1, "subject": "가비아 NS → vercel-dns 전환 감지, apex SSL 발급, api A 레코드 추가", "status": "completed"},
+    {"id": 2, "subject": "Caddy 자동 TLS 구성(api.jaringobe.cloud), 백엔드 8000 localhost 전용화, FRONTEND_ORIGIN=https://jaringobe.cloud", "status": "completed"},
+    {"id": 3, "subject": "협업 규칙 하네스 반영(CLAUDE.md/backend.md/infra.md) + PR #5·#6 main 머지", "status": "completed"},
+    {"id": 4, "subject": "공유 DB 정비: 구 jaringobe-db-1 제거(볼륨 보존), docker-db-1 localhost 바인딩, jaringobe_dev 생성", "status": "completed"},
+    {"id": 5, "subject": "카카오/구글 OAuth 키 발급 → 서버 .env 반영 + 콜백 URL(https://jaringobe.cloud/api/v1/auth/{provider}/callback) 등록 → TS-13", "status": "pending"},
+    {"id": 6, "subject": "팀원 브랜치 feature/budget-mealplan 와 main 스키마 정합(budget vs budget_plans) 조율", "status": "pending"}
+  ],
+  "artifacts": [
+    "https://jaringobe.cloud (프론트) / https://api.jaringobe.cloud (백엔드)",
+    "docker/Caddyfile, docker/docker-compose.server.yml (main 반영)",
+    "CLAUDE.md 협업 규칙 + agents/backend.md·infra.md (main 반영)"
+  ],
+  "key_findings": "전체 체인 검증: jaringobe.cloud/api/v1/users/me → 백엔드 401 규격 응답, authorize 302. 팀원과 공유 DB = 서버 docker-db-1(SSH 터널 -L 15432:localhost:5432), 실험용 jaringobe_dev 분리. 주의: 팀원 브랜치의 budget/household/meal 스키마가 main 의 budget_plans(0001)와 개념 중복 — 머지 전 설계 조율 필요(0002 down_revision=0001 확인). 구 배포 볼륨 jaringobe_pgdata 보존.",
+  "recommended_actions": "OAuth 키 발급·등록(로그인 활성화), 팀원 브랜치 스키마 조율(설계 에이전트 재소집 권장), 이후 도메인 기획 계속.",
+  "pending_user_input": "OAuth 키 / 팀원 브랜치 조율 방식"
+}

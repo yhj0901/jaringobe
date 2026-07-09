@@ -62,6 +62,21 @@ describe('HomeShell (FR-101)', () => {
     expect(screen.getByText('Walmart')).toBeInTheDocument();
   });
 
+  it('하단 탭바: 홈은 현재 탭, 잠긴 탭(식단/냉장고/장바구니) 클릭 시 게이트 콜백 (디자인 재현)', () => {
+    const onLockedNavClick = vi.fn();
+    renderWithIntl(
+      <HomeShell viewModel={getDefaultViewModel('ko')} onLockedNavClick={onLockedNavClick} />,
+    );
+
+    const home = screen.getByRole('button', { name: '홈' });
+    expect(home).toHaveAttribute('aria-current', 'page');
+
+    fireEvent.click(screen.getByRole('button', { name: '식단' }));
+    fireEvent.click(screen.getByRole('button', { name: '냉장고' }));
+    fireEvent.click(screen.getByRole('button', { name: '장바구니' }));
+    expect(onLockedNavClick).toHaveBeenCalledTimes(3);
+  });
+
   it('냉장고 항목을 임박 순으로 정렬해 표시한다', () => {
     renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} />);
     expect(screen.getByText('가상 냉장고')).toBeInTheDocument();

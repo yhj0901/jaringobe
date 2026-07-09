@@ -21,8 +21,21 @@
     },
     "sampleLabel": "Sample",
     "applying": "Applying your budget plan…",
+    "header": {
+      "greeting": "Hello",
+      "title": "Today,",
+      "accent": "GO BE SMART"
+    },
+    "nav": {
+      "label": "Primary navigation",
+      "home": "Home",
+      "meal": "Meals",
+      "fridge": "Fridge",
+      "cart": "Cart"
+    },
     "budgetMood": {
       "title": "This month's budget mood",
+      "lockLabel": "Budget lock",
       "remaining": "Remaining",
       "saved": "Saved",
       "wastePrevented": "Waste prevented"
@@ -111,6 +124,8 @@
     "login": {
       "title": "JARINGOBE",
       "slogan": "GO BE SMART, SAVE BIG.",
+      "tag": "Smart frugal eating",
+      "subtitle": "Eat well within budget,\nwaste nothing.\nGO BE SMART, SAVE BIG.",
       "kakao": "Continue with Kakao",
       "google": "Continue with Google",
       "apple": "Continue with Apple",

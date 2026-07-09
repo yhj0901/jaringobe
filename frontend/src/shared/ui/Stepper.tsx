@@ -29,11 +29,11 @@ export function Stepper({
         aria-label={decrementLabel}
         disabled={value <= min}
         onClick={() => onChange(clamp(value - 1))}
-        className="h-11 w-11 rounded-full border border-gray-300 text-xl font-bold disabled:opacity-30"
+        className="h-11 w-11 rounded-full border border-[#D7DEEA] bg-white text-xl font-bold text-ink-600 disabled:opacity-30"
       >
         −
       </button>
-      <output aria-live="polite" className="min-w-10 text-center text-2xl font-bold">
+      <output aria-live="polite" className="min-w-10 text-center text-2xl font-extrabold text-navy-900">
         {value}
       </output>
       <button
@@ -41,7 +41,7 @@ export function Stepper({
         aria-label={incrementLabel}
         disabled={value >= max}
         onClick={() => onChange(clamp(value + 1))}
-        className="h-11 w-11 rounded-full border border-gray-300 text-xl font-bold disabled:opacity-30"
+        className="h-11 w-11 rounded-full border border-[#D7DEEA] bg-white text-xl font-bold text-ink-600 disabled:opacity-30"
       >
         +
       </button>
