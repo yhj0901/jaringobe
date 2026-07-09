@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-07-09T15:19:53+09:00",
+  "session_topic": "게스트 홈 + 소셜 로그인 병렬 구현 완료 (backend + frontend)",
+  "command": "/API시작 + /UI시작 병렬 (오케스트레이터 위임 서브 에이전트)",
+  "agent": "agents/backend.md + agents/frontend.md (병렬)",
+  "status": "구현 완료 — 브랜치 feature/auth-guest-home 미커밋 상태. 다음: /QA시작 → /커밋",
+  "tasks": [
+    {"id": 1, "subject": "GATE 3 통과 + docs/db 커밋·푸시 (chore/design-docs-initial-migration)", "status": "completed"},
+    {"id": 2, "subject": "백엔드: auth+budget 6엔드포인트, CORS→Origin 검증 교체, 92 테스트/커버리지 99%, ruff·mypy PASS", "status": "completed"},
+    {"id": 3, "subject": "프론트: Next.js 스캐폴딩+게스트 홈+로그인, FR-101~110 완료, 103 테스트/커버리지 99.6%, build PASS", "status": "completed"},
+    {"id": 4, "subject": "에스컬레이션 처리: .env.example 에 COOKIE_SECURE·BACKEND_URL 추가, architecture.md 확장점 기록", "status": "completed"},
+    {"id": 5, "subject": "/QA시작 (통합/보안/시나리오)", "status": "pending"},
+    {"id": 6, "subject": "/커밋 (feature/auth-guest-home — 사용자 승인 필요)", "status": "pending"}
+  ],
+  "artifacts": [
+    "backend/app/domains/{auth,budget}/ + core/{security,deps,errors,ratelimit,schema}.py + api/v1/router.py + tests/ (92 tests)",
+    "frontend/ 전체 신규 55파일 (src/features/{home,guest,auth,budget}, messages/{ko,en}.json, 18 테스트 파일)",
+    ".env.example (COOKIE_SECURE, BACKEND_URL 추가)",
+    "docs/설계/architecture.md (rate limit Redis 확장점)"
+  ],
+  "key_findings": "구현 재량 결정: Origin 헤더 부재 시 통과(SameSite 1차 방어 전제), 가입 로캘 Accept-Language 기반(country/currency 는 KR/KRW 고정 — 마트 연동 기획에서 확정 필요), HomeViewModel.autoOrder.recommendedItems 옵셔널 추가, BottomSheet 비모달(설계 우선). rate limit 인메모리 — 멀티 인스턴스 시 Redis 교체. 프론트 커버리지 산정은 features+shared 한정(app/ RSC 는 빌드+런타임 검증 대체). 병렬 작업 영역 충돌 없음 확인.",
+  "recommended_actions": "/QA시작 으로 통합·보안·시나리오 검증 (GATE 4: Critical/High 0건) → /커밋 (feat: prefix, feature/auth-guest-home). QA 전 로컬 통합 확인 원하면 docker db + uvicorn + next dev 로 수동 시나리오 가능.",
+  "pending_user_input": "QA 진행 지시 또는 커밋 승인"
+}
