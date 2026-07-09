@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-07-09T14:22:56+09:00",
+  "session_topic": "예산 락 + AI 식단 자동 생성 — 설계 단계",
+  "command": "/설계시작 (예산 락 + AI 식단, 기획서 기반)",
+  "agent": "agents/design.md",
+  "status": "설계 토론(5관점 5라운드) 합의 완료, 설계 문서 4종 작성 완료. GATE 2 승인 대기.",
+  "tasks": [
+    {"id": 1, "subject": "GATE 1 승인(사용자 '설계로 넘어가자')", "status": "completed"},
+    {"id": 2, "subject": "design.md 로드 + 기획서/사업계획서 재확인", "status": "completed"},
+    {"id": 3, "subject": "5관점 설계 토론(아키텍트/API/DB/UI대변인/보안)", "status": "completed"},
+    {"id": 4, "subject": "architecture.md 작성", "status": "completed"},
+    {"id": 5, "subject": "api-spec.md 작성(계약서)", "status": "completed"},
+    {"id": 6, "subject": "db-schema.md 작성(5테이블)", "status": "completed"},
+    {"id": 7, "subject": "security-design.md 작성(CWE)", "status": "completed"},
+    {"id": 8, "subject": "GATE 2 승인", "status": "pending"},
+    {"id": 9, "subject": "household 테이블 선행 여부 확인 + /인프라시작(GATE3 마이그레이션)", "status": "pending"},
+    {"id": 10, "subject": "/API시작 + /UI시작 구현", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/설계/architecture.md",
+    "docs/설계/api-spec.md",
+    "docs/설계/db-schema.md",
+    "docs/설계/security-design.md",
+    "docs/status/2026-07-09_142256.json"
+  ],
+  "key_findings": "미결 4건 확정: (1)LLM=Claude API anthropic SDK 기본 claude-sonnet-5 env교체, 시스템프롬프트에 예산·알레르기 하드제약+구조화입력, 타임아웃25s+재시도. (2)가격=ingredient_price_ref 지역별시드 + PriceProvider 인터페이스(후속 store 교체). (3)생성=v1 동기(25s), 202+폴링 비동기는 후속. (4)알레르기=건강 민감정보 최소수집·로그금지, household 저장. API 5개(budgets 2, mealplans 3), 응답 snake_case, 금액 {amount(str),currency}, 에러 {detail:{code,message}}. DB 신규 5테이블(budget/meal_plan/meal/meal_ingredient/ingredient_price_ref). 비용산출은 백엔드 결정적(LLM에 금액 위임 안함). 예산초과는 status=over_budget로 투명노출.",
+  "recommended_actions": "GATE 2 승인('설계 승인') 후: household 테이블 선행 존재 여부 확인 → 없으면 auth/household 마이그레이션 먼저 → /인프라시작으로 5테이블 Alembic 마이그레이션(GATE3) → /API시작으로 budget/mealplan 구현. 프로토타입(feature/backend-scaffold)의 LLM 파이프라인·예산검산 로직 재활용.",
+  "pending_user_input": "GATE 2 승인 여부('설계 승인')",
+  "open_dependency": "household 테이블(auth/household 도메인)이 budget/meal_plan FK 대상 — 선행 필요"
+}
