@@ -59,6 +59,8 @@ docker-compose.yml         로컬 개발 환경 (postgres 포함)
 **반드시**
 - 작업 시작 전 `git fetch` → `git pull --ff-only` 실행 (상세: CLAUDE.md "에이전트 공통 — 작업 시작 전 선행 작업")
 - DB 변경 시 오케스트레이터 GATE 3 승인 필수
+- **리비전 작성 전 모든 원격 브랜치의 `backend/alembic/versions/` 확인** — down_revision 선형성 유지, 분기 발생 시 나중 머지 측 리베이스 조정은 인프라 에이전트 전담 (상세: CLAUDE.md "협업 규칙")
+- 공유 개발 DB 는 배포 서버 `docker-db-1` — SSH 터널 접속만 허용, 실험 마이그레이션은 `jaringobe_dev` DB 사용 (운영 `jaringobe` 는 main 머지 후에만)
 - 모든 DDL은 Alembic으로만 실행
 - 롤백(downgrade) 스크립트 필수 포함
 - FK 관계 분석 (특히 CASCADE 여부)

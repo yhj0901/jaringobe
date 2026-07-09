@@ -216,6 +216,17 @@ git pull --ff-only
 4. 수정 명세서에 명시되지 않은 파일/함수 수정 금지
 5. 기존 코드의 리팩토링·변수명 변경·import 정리 등 무관한 변경 금지
 
+### 협업 규칙 (다인 개발 — 반드시)
+
+2인 이상이 backend/DB 를 동시 수정하는 상황을 전제로 한다.
+
+1. **작업 시작·커밋 직전 `git fetch` + `git pull --ff-only`** — 세션 중에도 커밋 전엔 반드시 재동기화. behind 상태로 push 금지
+2. **브랜치 분리**: 서로 다른 기능은 반드시 별도 feature 브랜치. main 직접 커밋 금지. 머지는 PR 로만
+3. **Alembic 리비전 선형성**: 새 리비전 작성 전 `git fetch` 후 **모든 원격 브랜치의 `backend/alembic/versions/`** 를 확인해 down_revision 이 최신 head 를 가리키게 한다. 두 브랜치가 같은 down_revision 을 가리키면 나중에 머지하는 쪽이 리베이스 (조정은 인프라 에이전트 전담)
+4. **DB 스키마 중복 금지**: 같은 개념의 테이블을 브랜치별로 따로 만들지 않는다 (예: budget vs budget_plans). 신규 테이블 전 `docs/설계/db-schema.md` 와 원격 브랜치의 versions/ 를 먼저 확인하고, 겹치면 설계 에이전트 재소집
+5. **공유 개발 DB = 배포 서버의 `docker-db-1`** (docker/docker-compose.server.yml 기동분). 접속은 SSH 터널로만: `ssh -i {pem} -L 15432:localhost:5432 ubuntu@121.78.130.230` 후 `localhost:15432` — DB 포트를 공인망에 열지 않는다
+6. 공유 DB 에 실험적 마이그레이션을 적용할 때는 운영 DB(`jaringobe`)가 아닌 **개발용 DB(`jaringobe_dev`)** 를 사용하고, 운영 DB 마이그레이션은 main 머지 후에만 적용
+
 ### Git Convention
 
 ```
