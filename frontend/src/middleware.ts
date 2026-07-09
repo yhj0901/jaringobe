@@ -4,8 +4,8 @@ import { routing } from '@/i18n/routing';
 
 const intlMiddleware = createMiddleware(routing);
 
-/** 보호 라우트 (현 범위: /onboarding) — 미인증 시 /login?next= 리다이렉트 (ui-design 1장) */
-const PROTECTED_PATHS = ['/onboarding'];
+/** 보호 라우트 (/onboarding + /settings) — 미인증 시 /login?next= 리다이렉트 (ui-design 1·9장) */
+const PROTECTED_PATHS = ['/onboarding', '/settings'];
 
 function stripLocale(pathname: string): string {
   const match = pathname.match(/^\/(ko|en)(\/.*)?$/);

@@ -65,6 +65,9 @@ provider → GET /auth/{provider}/callback?code&state
 - CWE-639: /households/me·PUT /budget/plans 는 인증 유저 본인 스코프만
 - 최소 수집: 구성원은 유형+나이만(이름·실성별 정보 없음). visited 마커는 비식별 boolean 성격
 
+## 5-3. 설정/스토어 연동 접점 (v1.3)
+- CWE-639 본인 스코프(connections) / CWE-20 store·status enum 검증 / **자격증명 미수집**(1단계) — 실연동 시 암호화 저장 설계 필수(store 본설계)
+
 ## 6. 시크릿 관리
 
 - 전 시크릿 `.env` 전용 (`JWT_SECRET`, provider client secret). `.env.example` 만 커밋, 코드/로그/status JSON 기록 금지

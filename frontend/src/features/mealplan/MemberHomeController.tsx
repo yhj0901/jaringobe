@@ -49,6 +49,11 @@ export function MemberHomeController() {
     void home.createPlan(input);
   };
 
+  // ui-design 9장: 회원 홈 헤더 GB 아바타 → 설정 페이지 (FR-401)
+  const goSettings = () => {
+    router.push('/settings');
+  };
+
   const handleLockedNav = (tab: 'meal' | 'fridge' | 'cart') => {
     // FR-208: meal 탭은 식단 섹션 스크롤, fridge/cart 는 "준비 중" 안내 (가입 게이트 아님)
     if (tab === 'meal') {
@@ -167,6 +172,7 @@ export function MemberHomeController() {
           }
           onRecipeClick={showLockedNotice}
           onLockedNavClick={handleLockedNav}
+          onAvatarClick={goSettings}
         />
         {needsOnboarding ? null : (
           <PlanCreateSheet
@@ -202,6 +208,7 @@ export function MemberHomeController() {
         onRegenerateClick={() => setConfirmOpen(true)}
         onRecipeClick={showLockedNotice}
         onLockedNavClick={handleLockedNav}
+        onAvatarClick={goSettings}
       />
       <RegenerateConfirmSheet
         open={confirmOpen}

@@ -205,6 +205,12 @@ describe('GuestHomeController', () => {
     fireEvent.click(fridgeTab);
     expect(screen.getByText('저장하려면 로그인이 필요해요')).toBeInTheDocument();
   });
+
+  it('게스트의 헤더 GB 아바타 클릭 → 가입 게이트 (ui-design 9장 — 설정은 회원 전용)', async () => {
+    await renderController();
+    fireEvent.click(screen.getByRole('button', { name: '설정 열기' }));
+    expect(screen.getByText('저장하려면 로그인이 필요해요')).toBeInTheDocument();
+  });
 });
 
 describe('GuestHomeController 재방문 알림 (FR-316, ui-design 8장)', () => {

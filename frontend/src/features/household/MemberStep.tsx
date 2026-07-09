@@ -22,6 +22,8 @@ interface MemberStepProps {
   onRemove: (id: number) => void;
   onChangeAge: (id: number, delta: 1 | -1) => void;
   onNext: () => void;
+  /** [설정 단일 편집 모드] CTA 라벨 오버라이드 — 미지정 시 온보딩 "다음" (ui-design 9장) */
+  nextLabel?: string;
 }
 
 /**
@@ -35,6 +37,7 @@ export function MemberStep({
   onRemove,
   onChangeAge,
   onNext,
+  nextLabel,
 }: MemberStepProps) {
   const t = useTranslations('onboarding');
   const tType = useTranslations('memberType');
@@ -203,7 +206,7 @@ export function MemberStep({
         onClick={onNext}
         className="mt-3.5 rounded-2xl bg-navy-800 py-[17px] text-center text-base font-bold text-white shadow-[0_10px_24px_rgba(21,36,74,.28)]"
       >
-        {t('step1.next')}
+        {nextLabel ?? t('step1.next')}
       </button>
     </div>
   );

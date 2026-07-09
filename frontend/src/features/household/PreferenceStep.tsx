@@ -14,6 +14,9 @@ interface PreferenceStepProps {
   onSelectDirection: (direction: MealDirection) => void;
   onPrev: () => void;
   onSubmit: () => void;
+  /** [설정 단일 편집 모드] 버튼 라벨 오버라이드 — 미지정 시 온보딩 "이전"/CTA (ui-design 9장) */
+  prevLabel?: string;
+  ctaLabel?: string;
 }
 
 /** 음식 종류 아이콘 (프로토타입 cuisineChips SVG 6종) */
@@ -181,6 +184,8 @@ export function PreferenceStep({
   onSelectDirection,
   onPrev,
   onSubmit,
+  prevLabel,
+  ctaLabel,
 }: PreferenceStepProps) {
   const t = useTranslations('onboarding');
   const tCuisine = useTranslations('cuisine');
@@ -314,7 +319,7 @@ export function PreferenceStep({
           disabled={submitting}
           className="rounded-2xl bg-[#F0F2F6] px-[22px] py-[17px] text-center text-base font-bold text-ink-500 disabled:opacity-60"
         >
-          {t('step3.prev')}
+          {prevLabel ?? t('step3.prev')}
         </button>
         <button
           type="button"
@@ -322,7 +327,7 @@ export function PreferenceStep({
           disabled={submitting}
           className="flex-1 rounded-2xl bg-brand-600 py-[17px] text-center text-base font-bold text-white shadow-cta disabled:opacity-60"
         >
-          {t('step3.cta')}
+          {ctaLabel ?? t('step3.cta')}
         </button>
       </div>
     </div>

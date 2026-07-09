@@ -1,6 +1,7 @@
 import { apiFetch, type ApiResult } from '@/shared/api/client';
 import type { BudgetPlanResponse } from '@/shared/api/types';
 import type {
+  BudgetPlanDetailResponse,
   BudgetPlanUpsertRequest,
   HouseholdMemberInput,
   HouseholdResponse,
@@ -18,6 +19,16 @@ export function putHouseholdMembers(
     method: 'PUT',
     body: JSON.stringify({ members }),
   });
+}
+
+/** GET /api/v1/households/me — 현재 구성원 조회 (api-spec 4-2, FR-402 설정 요약) */
+export function fetchHousehold(): Promise<ApiResult<HouseholdResponse>> {
+  return apiFetch<HouseholdResponse>('/api/v1/households/me');
+}
+
+/** GET /api/v1/budget/plans — 예산안 현재값 (api-spec 2-2 v1.3.1, FR-402 요약·부분 수정 병합) */
+export function fetchBudgetPlan(): Promise<ApiResult<BudgetPlanDetailResponse>> {
+  return apiFetch<BudgetPlanDetailResponse>('/api/v1/budget/plans');
 }
 
 /** PUT /api/v1/budget/plans — 온보딩·수정용 upsert (api-spec 5-1, FR-312/314) */

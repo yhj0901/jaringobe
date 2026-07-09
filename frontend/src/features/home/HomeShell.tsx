@@ -24,6 +24,8 @@ interface HomeShellProps {
   onSelectDate?: (date: string) => void;
   /** [member 옵셔널 확장] 전체 재생성 버튼 (FR-209) */
   onRegenerateClick?: () => void;
+  /** 헤더 GB 아바타 클릭 — 회원: /settings 이동, 게스트: 가입 게이트 (ui-design 9장, FR-401) */
+  onAvatarClick?: () => void;
 }
 
 /** 하단 탭바 아이콘 — 디자인 마크업의 인라인 SVG 재사용 */
@@ -105,6 +107,7 @@ export function HomeShell({
   topSlot,
   onSelectDate,
   onRegenerateClick,
+  onAvatarClick,
 }: HomeShellProps) {
   const t = useTranslations('guestHome');
   const isGuest = viewModel.mode !== 'member';
@@ -124,12 +127,23 @@ export function HomeShell({
               {t('header.title')} <span className="text-brand-600">{t('header.accent')}</span>
             </h1>
           </div>
-          <span
-            aria-hidden
-            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] bg-navy-800 text-[13px] font-extrabold tracking-tight text-white"
-          >
-            GB
-          </span>
+          {onAvatarClick !== undefined ? (
+            <button
+              type="button"
+              aria-label={t('header.settingsLabel')}
+              onClick={onAvatarClick}
+              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] bg-navy-800 text-[13px] font-extrabold tracking-tight text-white"
+            >
+              GB
+            </button>
+          ) : (
+            <span
+              aria-hidden
+              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] bg-navy-800 text-[13px] font-extrabold tracking-tight text-white"
+            >
+              GB
+            </span>
+          )}
         </header>
 
         {topSlot}
