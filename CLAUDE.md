@@ -39,6 +39,20 @@
 - 동일 시각 파일 덮어쓰기 (시계열 손실)
 - status JSON 만 보고 응답 — 항상 워킹 트리·git log 와 교차 확인
 
+## 문서 옵시디언 미러링 (필수)
+
+`docs/` 에 남기는 문서는 옵시디언 볼트에도 동일하게 남긴다.
+
+- **볼트 경로**: `/Users/yangheejun/Documents/Obsidian Vault/자린고비/docs/` (저장소 `docs/` 와 동일한 하위 구조 유지)
+- **대상**: `docs/**/*.md` 마크다운 문서 전체 (`docs/status/*.json` 은 세션 관리용이므로 제외)
+- **시점**: `docs/` 에 .md 파일을 생성·수정한 직후 매번 복사한다 (턴 종료 전 일괄 1회도 허용)
+- **방법**: 경로에 공백이 있으므로 반드시 따옴표 처리
+  ```bash
+  rsync -a --include='*/' --include='*.md' --exclude='*' docs/ "/Users/yangheejun/Documents/Obsidian Vault/자린고비/docs/"
+  ```
+- 저장소에서 문서를 이동/삭제한 경우 미러 쪽도 동일하게 반영한다 (단, 볼트 쪽에서 사용자가 직접 수정한 파일을 발견하면 덮어쓰기 전에 사용자에게 확인)
+- 진실의 원본(source of truth)은 항상 저장소 `docs/` — 볼트는 읽기용 미러
+
 ## 프로젝트 개요
 
 **JARINGOBE(자린고비)** 는 **예산 안에서 식단을 자동 생성하고, 가상 냉장고로 버려지는 식재료를 0으로 만들고, 식재료를 자동 주문하는 알뜰 식생활 플랫폼**입니다. (*GO BE SMART, SAVE BIG.*)

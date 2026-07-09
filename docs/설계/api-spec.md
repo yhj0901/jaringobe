@@ -1,0 +1,149 @@
+# API 스펙 — v1 (프론트↔백엔드 계약서)
+
+> 이 문서는 프론트↔백엔드 계약서다. 변경은 반드시 "API 스펙 변경 프로세스"(agents/design.md)를 따른다.
+> 대상 기능: 소셜 로그인(auth) + 게스트 예산안 이전(budget). UI 대변인 동의 완료 (2026-07-09).
+
+## 0. 공통 규격 (전 API 적용 — 최초 확정)
+
+| 항목 | 규격 |
+|------|------|
+| Base URL | `/api/v1` (프론트는 Next.js rewrites 로 동일 오리진 호출) |
+| 케이스 | 요청/응답 JSON 모두 **camelCase** (Pydantic v2 `alias_generator=to_camel`, `populate_by_name=True`) |
+| 금액 | `{"amount": "500000.00", "currency": "KRW"}` — amount 는 **문자열**(Decimal 직렬화), currency 는 ISO 4217. float 금지 |
+| 시각 | ISO-8601 UTC (`2026-07-09T04:00:00Z`) |
+| 인증 | httpOnly 쿠키 (`jaringobe_access`, `jaringobe_refresh`) — 상세는 `security-design.md`. Authorization 헤더 미사용 |
+| 페이지네이션 | `?page=1&size=20&sort=-createdAt` (본 범위엔 목록 API 없음 — 규격만 선확정) |
+| 에러 응답 | 아래 공통 구조 |
+
+### 에러 공통 구조
+```json
+{ "detail": { "code": "AUTH_INVALID_STATE", "message": "OAuth state validation failed" } }
+```
+- `code`: 기계 판독용 — **프론트가 i18n 키로 매핑**해 사용자 문구 표시 (API 는 노출 문구를 직접 내리지 않는다)
+- `message`: 개발자용 영문 설명 (UI 표시 금지)
+- 검증 오류(422)는 FastAPI 기본 배열에 `code: "VALIDATION_ERROR"` 를 래핑
+
+### 공통 에러 코드
+| HTTP | code | 의미 |
+|------|------|------|
+| 401 | `AUTH_REQUIRED` | 인증 쿠키 없음/만료 |
+| 401 | `AUTH_TOKEN_REVOKED` | 재사용 감지 등으로 폐기된 토큰 |
+| 403 | `FORBIDDEN_ORIGIN` | Origin 검증 실패 |
+| 422 | `VALIDATION_ERROR` | 입력 검증 실패 |
+| 429 | `RATE_LIMITED` | 요청 한도 초과 |
+
+---
+
+## 1. auth 도메인
+
+### 1-1. `GET /api/v1/auth/{provider}/authorize` — 인증 불필요
+소셜 로그인 시작. provider 인가 페이지로 302 리다이렉트. (JSON API 아님 — 브라우저 내비게이션 전용)
+
+| 파라미터 | 타입 | 설명 |
+|----------|------|------|
+| `provider` (path) | `kakao \| google \| apple` | apple 은 P1 (미구현 시 404 `PROVIDER_NOT_SUPPORTED`) |
+| `next` (query, optional) | string | 로그인 완료 후 복귀할 **상대 경로**. 화이트리스트 검증(CWE-601), 기본 `/` |
+
+- 동작: 서명된 `state`(nonce + next + 10분 만료) 생성 → provider 인가 URL 로 302
+
+### 1-2. `GET /api/v1/auth/{provider}/callback` — 인증 불필요
+provider 콜백. 성공 시 쿠키 세팅 후 프론트로 302. (JSON API 아님)
+
+- 성공: `Set-Cookie` (access/refresh) → `302 {next}?login=success`
+- 실패: `302 /login?error={code}` — code:
+
+| error code | 상황 |
+|------------|------|
+| `AUTH_PROVIDER_DENIED` | 사용자가 동의 거부 |
+| `AUTH_INVALID_STATE` | state 검증 실패/만료 |
+| `AUTH_PROVIDER_ERROR` | provider 응답 오류/타임아웃 |
+| `AUTH_EMAIL_CONFLICT_NOTICE` | 동일 이메일 타 provider 계정 존재 — **로그인은 정상 진행**되며 프론트가 안내 배너만 표시 (FR-004). 이 경우 `302 {next}?login=success&notice=AUTH_EMAIL_CONFLICT_NOTICE` |
+
+- 신규/기존 판정은 콜백에서 내리지 않는다 — 프론트는 복귀 후 `GET /users/me` 로 분기
+
+### 1-3. `POST /api/v1/auth/refresh` — refresh 쿠키 필요
+Access 재발급 + refresh 회전.
+
+- 요청 본문: 없음 (쿠키 기반)
+- `200` 응답: `{}` + 신규 쿠키 세트
+- `401 AUTH_TOKEN_REVOKED`: 재사용 감지 → 해당 유저 전 세션 폐기됨. 프론트는 로그인 페이지로
+
+### 1-4. `POST /api/v1/auth/logout` — 인증 필요
+- `204`: refresh 서버측 폐기 + 쿠키 삭제. (access 만료 전 탈취 대비 만료시각까지 무시 목록 처리 여부는 구현 노트 참조)
+
+### 1-5. `GET /api/v1/users/me` — 인증 필요
+로그인 직후 분기 판정용 단일 콜. (auth 도메인 라우터에서 제공)
+
+```json
+// 200 UserMeResponse
+{
+  "id": "8a6f...uuid",
+  "nickname": "자린이",
+  "email": "user@example.com",        // null 가능 (카카오 동의 거부)
+  "profileImageUrl": null,
+  "locale": "ko",
+  "country": "KR",
+  "currency": "KRW",
+  "onboardingCompleted": false,
+  "hasBudgetPlan": false
+}
+```
+
+---
+
+## 2. budget 도메인
+
+### 2-1. `POST /api/v1/budget/plans` — 인증 필요
+예산안 생성. **게스트 예산안 이전(FR-108)** 과 추후 온보딩 생성이 공용으로 사용.
+
+```json
+// 요청 BudgetPlanCreateRequest
+{
+  "householdSize": 4,
+  "budget": { "amount": "700000", "currency": "KRW" },
+  "mealDirection": "kids",            // health | diet | hearty | kids
+  "source": "guest"                   // guest | onboarding
+}
+```
+
+- 서버측 전량 재검증 (CWE-20/602 — 클라이언트 값 불신):
+  - `householdSize`: 1~10 정수
+  - `budget.currency`: `KRW | USD`, `amount`: KRW 50,000~5,000,000 / USD 50~5,000 (Decimal, 소수 2자리 이내)
+  - `mealDirection`: 열거값
+- 응답:
+
+| HTTP | 내용 |
+|------|------|
+| `201` | `BudgetPlanResponse` (아래) |
+| `409 BUDGET_PLAN_EXISTS` | 이미 활성 예산안 보유 — 프론트는 로컬 게스트 데이터 삭제만 수행 |
+| `422 VALIDATION_ERROR` | 범위/열거 위반 — 프론트는 게스트 값 폐기(변조 의심) 후 일반 온보딩 |
+
+```json
+// 201 BudgetPlanResponse
+{
+  "id": "3c9d...uuid",
+  "householdSize": 4,
+  "budget": { "amount": "700000.00", "currency": "KRW" },
+  "mealDirection": "kids",
+  "source": "guest",
+  "createdAt": "2026-07-09T04:00:00Z"
+}
+```
+
+> `GET/PUT /budget/plans` 등 조회·수정 API 는 budget 본설계에서 확정 (이번 범위 아님).
+
+---
+
+## 3. 엔드포인트 요약
+
+| # | 메서드·경로 | 인증 | 유형 |
+|---|-------------|------|------|
+| 1 | `GET /api/v1/auth/{provider}/authorize` | 불필요 | 302 리다이렉트 |
+| 2 | `GET /api/v1/auth/{provider}/callback` | 불필요 | 302 리다이렉트 |
+| 3 | `POST /api/v1/auth/refresh` | refresh 쿠키 | JSON |
+| 4 | `POST /api/v1/auth/logout` | 필요 | JSON |
+| 5 | `GET /api/v1/users/me` | 필요 | JSON |
+| 6 | `POST /api/v1/budget/plans` | 필요 | JSON |
+
+## 변경 이력
+- 2026-07-09: v1 최초 확정 — 공통 규격(camelCase/에러/금액/페이지네이션) + auth 5종 + budget 1종. UI 대변인 동의 완료
