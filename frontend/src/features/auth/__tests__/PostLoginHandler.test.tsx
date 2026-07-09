@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { PostLoginHandler } from '@/features/auth/PostLoginHandler';
 import { useGuestStore, type GuestPlan } from '@/features/guest/store';
-import { GUEST_SCHEMA_VERSION, GUEST_STORAGE_KEY } from '@/shared/config/constants';
+import { readOnboardingPrefill } from '@/features/household/prefill';
+import {
+  GUEST_SCHEMA_VERSION,
+  GUEST_STORAGE_KEY,
+  VISITED_MARKER_KEY,
+} from '@/shared/config/constants';
 import { IntlWrapper } from '@/test/renderWithIntl';
 import type { UserMeResponse } from '@/shared/api/types';
 
@@ -91,21 +96,28 @@ describe('PostLoginHandler (ui-design 5장)', () => {
     expect(fetchMe).not.toHaveBeenCalled();
   });
 
-  it('hasBudgetPlan=true → 쿼리만 제거하고 홈 유지', async () => {
-    mockMe({ hasBudgetPlan: true });
+  it('로그인 성공 시 재방문 마커를 기록한다 (FR-316)', async () => {
+    mockMe({ onboardingCompleted: true, hasBudgetPlan: true });
+    renderHandler('login=success');
+    await waitFor(() => expect(routerMock.replace).toHaveBeenCalled());
+    expect(window.localStorage.getItem(VISITED_MARKER_KEY)).toBe('1');
+  });
+
+  it('onboardingCompleted=true → 쿼리만 제거하고 홈 유지', async () => {
+    mockMe({ onboardingCompleted: true, hasBudgetPlan: true });
     renderHandler('login=success');
     await waitFor(() => expect(routerMock.replace).toHaveBeenCalledWith('/'));
     expect(importGuestPlan).not.toHaveBeenCalled();
   });
 
-  it('게스트 플랜 없음 → 홈 유지 (BudgetPlanGate 가 처리, FR-207)', async () => {
+  it('온보딩 미완료 + 게스트 플랜 없음 → /onboarding 이동 (FR-316)', async () => {
     mockMe({ hasBudgetPlan: false });
     renderHandler('login=success');
-    await waitFor(() => expect(routerMock.replace).toHaveBeenCalled());
-    expect(routerMock.push).not.toHaveBeenCalledWith('/onboarding');
+    await waitFor(() => expect(routerMock.push).toHaveBeenCalledWith('/onboarding'));
+    expect(importGuestPlan).not.toHaveBeenCalled();
   });
 
-  it('이전 성공(201) → 로컬 삭제 + 확인 화면 이동 (FR-108)', async () => {
+  it('이전 성공(201) → 프리필 저장 + 로컬 삭제 + 확인 화면 이동 (FR-108/315)', async () => {
     seedGuestPlan();
     mockMe({ hasBudgetPlan: false });
     vi.mocked(importGuestPlan).mockResolvedValue('created');
@@ -116,27 +128,30 @@ describe('PostLoginHandler (ui-design 5장)', () => {
     );
     expect(importGuestPlan).toHaveBeenCalledWith(GUEST_PLAN);
     expect(useGuestStore.getState().plan).toBeUndefined();
+    // FR-315: STEP2 프리필용 세션 저장
+    expect(readOnboardingPrefill()).toEqual(GUEST_PLAN);
   });
 
-  it('409 기존 예산안 보유 → 로컬 삭제만 하고 홈 유지', async () => {
+  it('409 기존 예산안 보유 → 로컬 삭제 후 온보딩(가구 설정)으로', async () => {
     seedGuestPlan();
     mockMe({ hasBudgetPlan: false });
     vi.mocked(importGuestPlan).mockResolvedValue('already-exists');
     renderHandler('login=success');
 
-    await waitFor(() => expect(routerMock.replace).toHaveBeenCalledWith('/'));
+    await waitFor(() => expect(routerMock.push).toHaveBeenCalledWith('/onboarding'));
     expect(useGuestStore.getState().plan).toBeUndefined();
+    expect(readOnboardingPrefill()).toBeNull();
   });
 
-  it('422 변조 의심 → 게스트 값 폐기 후 일반 온보딩', async () => {
+  it('422 변조 의심 → 게스트 값 폐기 후 일반 온보딩 (프리필 없음)', async () => {
     seedGuestPlan();
     mockMe({ hasBudgetPlan: false });
     vi.mocked(importGuestPlan).mockResolvedValue('invalid');
     renderHandler('login=success');
 
-    await waitFor(() => expect(routerMock.replace).toHaveBeenCalled());
-    expect(routerMock.push).not.toHaveBeenCalledWith('/onboarding');
+    await waitFor(() => expect(routerMock.push).toHaveBeenCalledWith('/onboarding'));
     expect(useGuestStore.getState().plan).toBeUndefined();
+    expect(readOnboardingPrefill()).toBeNull();
   });
 
   it('이전 실패(네트워크 등) → 오류 배너 표시 + 로컬 데이터 유지', async () => {
@@ -161,13 +176,13 @@ describe('PostLoginHandler (ui-design 5장)', () => {
   });
 
   it('notice=AUTH_EMAIL_CONFLICT_NOTICE → 안내 배너를 표시한다 (FR-004)', async () => {
-    mockMe({ hasBudgetPlan: true });
+    mockMe({ onboardingCompleted: true, hasBudgetPlan: true });
     renderHandler('login=success&notice=AUTH_EMAIL_CONFLICT_NOTICE');
     expect(await screen.findByRole('status')).toHaveTextContent(/다른 소셜 계정/);
   });
 
   it('알 수 없는 notice 코드는 무시한다', async () => {
-    mockMe({ hasBudgetPlan: true });
+    mockMe({ onboardingCompleted: true, hasBudgetPlan: true });
     renderHandler('login=success&notice=SOMETHING_ELSE');
     await waitFor(() => expect(routerMock.replace).toHaveBeenCalled());
     expect(screen.queryByRole('status')).not.toBeInTheDocument();

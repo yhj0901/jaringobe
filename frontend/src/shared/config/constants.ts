@@ -24,6 +24,15 @@ export const GUEST_SCHEMA_VERSION = 1;
 export const PROMPT_SHOWN_SESSION_KEY = 'jaringobe.guest.promptShown';
 export const PROMPT_DECLINED_SESSION_KEY = 'jaringobe.guest.promptDeclined';
 
+/** 로그인 이력 마커 (localStorage) — 재방문 게스트 [로그인/구경] 알림 판정 (FR-316, ui-design 8장) */
+export const VISITED_MARKER_KEY = 'jaringobe.visited';
+
+/** 재방문 알림 세션 내 1회 노출 플래그 (sessionStorage, FR-316) */
+export const REVISIT_SHOWN_SESSION_KEY = 'jaringobe.guest.revisitShown';
+
+/** 게스트 이전 직후 온보딩 STEP2 프리필 전달 (sessionStorage, FR-315) */
+export const ONBOARDING_PREFILL_SESSION_KEY = 'jaringobe.onboarding.prefill';
+
 /** 가구 인원 입력 범위 (FR-104, api-spec 서버 검증과 동일) */
 export const HOUSEHOLD_MIN = 1;
 export const HOUSEHOLD_MAX = 10;

@@ -7,6 +7,8 @@ import {
   GUEST_STORAGE_KEY,
   PROMPT_DECLINED_SESSION_KEY,
   PROMPT_DWELL_MS,
+  REVISIT_SHOWN_SESSION_KEY,
+  VISITED_MARKER_KEY,
 } from '@/shared/config/constants';
 import { IntlWrapper } from '@/test/renderWithIntl';
 
@@ -178,5 +180,54 @@ describe('GuestHomeController', () => {
     const fridgeTab = screen.getByRole('button', { name: '냉장고' });
     fireEvent.click(fridgeTab);
     expect(screen.getByText('저장하려면 로그인이 필요해요')).toBeInTheDocument();
+  });
+});
+
+describe('GuestHomeController 재방문 알림 (FR-316, ui-design 8장)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    useGuestStore.setState({ plan: undefined, promptHistory: {}, savedAt: undefined });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('로그인 이력 마커 있으면 [로그인하기/구경하기] 바텀시트 노출 → 로그인하기 → /login', async () => {
+    window.localStorage.setItem(VISITED_MARKER_KEY, '1');
+    await renderController();
+
+    expect(screen.getByText('다시 오셨네요!')).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(REVISIT_SHOWN_SESSION_KEY)).toBe('1');
+    fireEvent.click(screen.getByRole('button', { name: '로그인하기' }));
+    expect(routerMock.push).toHaveBeenCalledWith('/login?next=/');
+  });
+
+  it('구경하기 → 닫힘, 이후 기존 프롬프트 규칙 유지 (10초 프롬프트)', async () => {
+    vi.useFakeTimers();
+    window.localStorage.setItem(VISITED_MARKER_KEY, '1');
+    await renderController();
+
+    fireEvent.click(screen.getByRole('button', { name: '구경하기' }));
+    expect(screen.queryByText('다시 오셨네요!')).not.toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(PROMPT_DWELL_MS + 500);
+    });
+    expect(screen.getByText('예산안을 작성해 보시겠어요?')).toBeInTheDocument();
+  });
+
+  it('세션 내 이미 노출했으면 재노출하지 않는다', async () => {
+    window.localStorage.setItem(VISITED_MARKER_KEY, '1');
+    window.sessionStorage.setItem(REVISIT_SHOWN_SESSION_KEY, '1');
+    await renderController();
+    expect(screen.queryByText('다시 오셨네요!')).not.toBeInTheDocument();
+  });
+
+  it('마커가 없는 신규 게스트에게는 노출하지 않는다', async () => {
+    await renderController();
+    expect(screen.queryByText('다시 오셨네요!')).not.toBeInTheDocument();
   });
 });

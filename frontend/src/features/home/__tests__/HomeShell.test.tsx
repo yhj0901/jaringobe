@@ -46,6 +46,12 @@ describe('HomeShell (FR-101)', () => {
     expect(screen.queryByText('체험 모드')).not.toBeInTheDocument();
   });
 
+  it('hideTrialBadge: 게스트 샘플 셸에서 체험 배지만 숨기고 예시 라벨은 유지한다 (ui-design 8장)', () => {
+    renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} hideTrialBadge />);
+    expect(screen.queryByText('체험 모드')).not.toBeInTheDocument();
+    expect(screen.getAllByText('예시').length).toBeGreaterThanOrEqual(3);
+  });
+
   it('전체 조리법 보기 클릭 시 가입 게이트 콜백을 호출한다 (FR-109)', () => {
     const onRecipeClick = vi.fn();
     renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} onRecipeClick={onRecipeClick} />);
