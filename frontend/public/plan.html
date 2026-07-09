@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARINGOBE 사업계획서 · GO BE SMART, SAVE BIG.</title>
+<meta name="description" content="예산 안에서 식단을 자동으로 짜고, 가상 냉장고로 버려지는 식재료를 0으로 만들고, 식재료를 자동으로 주문하는 알뜰 식생활 플랫폼.">
+<meta property="og:title" content="JARINGOBE 사업계획서">
+<meta property="og:description" content="GO BE SMART, SAVE BIG. — 버리지 말고, 똑똑하게.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  body{margin:0;word-break:keep-all;}
+  *::-webkit-scrollbar{width:0;height:0;}
+  @keyframes gbPulse{0%,100%{opacity:.45;}50%{opacity:1;}}
+  a{text-decoration:none;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* Claude Design "JARINGOBI 사업계획서.dc.html" 1:1 변환 (DC 런타임 → 바닐라 JS 렌더)
+   원본 디자인과의 차이: 프로토타입 링크 → 실제 서비스 홈(/ko, /en) 연결 */
+var STR = {
+  ko: {
+    heroTag: '해커톤 사업계획서',
+    viewPrototype: '프로토타입 보기',
+    heroPillars: '식단 자동 생성 · 식재료 0 · 자동 주문',
+    pitch: '예산 안에서 식단을 자동으로 짜고, 가상 냉장고로 버려지는 식재료를 0으로 만들고, 식재료를 자동으로 주문하는 알뜰 식생활 플랫폼. 스스로 건강하고 똑똑한 식생활을 돕습니다.',
+    s1title: '왜 필요한가',
+    personaTitle: '타깃 사용자',
+    personaBody: '1인 가구부터 5인 대가족까지 — 고물가 시대에 매 끼 메뉴 고민과 장보기에 지친 모든 가정. 대표 페르소나는 성인 2명 + 성장기 자녀 3명(9·7·6세)의 5인 가족입니다.',
+    problemsTitle: '핵심 문제',
+    problems: [
+      '매번 세 끼 메뉴를 고민하는 피로감으로 배달·외식 지출이 큽니다.',
+      '영양가 높은 식사보다 편리한 인스턴트 식품에 의존하게 됩니다.',
+      '남은 식재료가 버려지고, 식비가 어디로 새는지 파악하기 어렵습니다.'
+    ],
+    goalTitle: '우리의 목표',
+    goalBody: '한 달 식비에 ‘예산 락’을 걸고, 영양 있는 집밥으로 가족 건강과 비용을 동시에 잡습니다.',
+    s2title: '해결 방법 · 3가지 핵심',
+    p1t: '예산 내 식단 자동 생성',
+    p1d: '가구 구성·식단 방향(건강·다이어트·든든·아이 입맛)·선호 음식에 맞춰, 연동된 마트의 재료를 검색해 예산 락 안에서 한 달 식단을 자동으로 생성합니다.',
+    p2t: '가상 냉장고로 버리는 재료 0',
+    p2d: '배송 시 재료 자동 등록, 식사 완료 체크 시 자동 차감(Zero-UX). 유통기한이 임박한 재료는 다음 식단에 우선 배치합니다.',
+    p3t: '식재료 자동 주문',
+    p3d: '연동된 마트 계정으로 주 1~2회 예산 내 자동 결제·배송. 냉장고에 남은 재료만큼 다음 주문량을 자동 감산합니다.',
+    s3title: '작동 방식 · 선순환 루프',
+    step1t: '입력', step1d: '가족·예산 락 설정',
+    step2t: 'AI 식단·자동 주문', step2d: '최저가 검색 → 식단 → 자동 결제',
+    step3t: '가상 냉장고', step3d: '식사 완료 시 자동 차감',
+    step4t: '동적 감산', step4d: '예산 방어',
+    loopNote: '남은 재료만큼 다음 주 장보기 비용이 자동 차감되어 월 예산을 완벽하게 방어합니다.',
+    s4title: '구현된 제품',
+    s4sub: '해커톤 기간 동안 한국어·영어 모두 동작하는 인터랙티브 프로토타입을 완성했습니다.',
+    features: [
+      '소셜 로그인 (카카오·구글·애플)',
+      '가구 구성원 설정 (1인~다인 · 유아·어린이·청소년·성인)',
+      '예산 락 + 예산 무드 UI',
+      'AI 식단 + 조리법',
+      '가상 냉장고 자동 차감',
+      '자동 주문 (주 1·2회 선택)',
+      '스토어 연동 (마켓컬리·쿠팡·SSG·네이버 / Walmart·Instacart)',
+      '한국어 · 영어 지원'
+    ],
+    s5title: '시장 · 확장성',
+    krTitle: '국내',
+    krBody: '국내는 아직 공식 자동 결제 API가 없어, 보유한 마트 계정을 연동해 장바구니·주문을 자동화합니다.',
+    usTitle: '글로벌 (미국)',
+    usBody: '잦은 배송의 숨은 비용(수수료·팁)을 방어하기 위해 주 1회 대량 배송 + 식재료 수명 극대화 알고리즘으로 운영합니다. Walmart·Instacart Connect API 연동을 추진합니다.',
+    usResearch: 'Instacart 연동 방식 조사 중',
+    s6title: '비즈니스 모델',
+    bm1tag: '수익원 01 · 현재', bm1t: '구매 전환 중개 수수료',
+    bm1d: '자동 주문 인프라를 통한 대형 이커머스 구매 전환 중개 수수료(건당 2~5%)를 확보합니다.',
+    bm2tag: '수익원 02 · 현재', bm2t: '프리미엄 식단 월 구독',
+    bm2d: '다이어트 전용·벌크업 전용 등 목적별 프리미엄 식단을 월 구독으로 제공합니다.',
+    bm3tag: '수익원 03 · 확장', bm3t: '광고 · 제휴 수입',
+    bm3d: '사용자 기반이 커지면 식품·브랜드 광고와 제휴 노출로 수익을 확대합니다.',
+    bm4tag: '수익원 04 · 확장', bm4t: '자체 리테일 · 다이렉트 쇼핑',
+    bm4d: '규모가 커지면 직접 매입·공급(PB 벌크 포함)해 유통 마진까지 확보합니다.',
+    footerLine: '© 2026 JARINGOBI (자린고비). Hackathon business plan. All rights reserved.',
+    mFather: '父', mMother: '母',
+    krStores: ['마켓컬리', '쿠팡', 'SSG.COM', '네이버'],
+    homeHref: '/ko'
+  },
+  en: {
+    heroTag: 'Hackathon business plan',
+    viewPrototype: 'View prototype',
+    heroPillars: 'Auto plans · Zero waste · Auto-order',
+    pitch: 'A frugal-living platform that auto-builds meal plans within your budget, drives food waste to zero with a virtual fridge, and orders groceries automatically — helping families eat healthier and smarter on their own.',
+    s1title: 'The problem',
+    personaTitle: 'Target users',
+    personaBody: 'From single-person households to families of five — anyone worn out by daily meal decisions and grocery runs amid rising prices. Our primary persona: 2 adults + 3 growing kids (ages 9, 7, 6).',
+    problemsTitle: 'Core problems',
+    problems: [
+      'Decision fatigue over three meals a day drives up delivery and dining-out spend.',
+      'Convenience and instant food win over nutritious home cooking.',
+      'Leftover ingredients get wasted, and it’s hard to see where the food budget leaks.'
+    ],
+    goalTitle: 'Our goal',
+    goalBody: 'Lock a monthly food budget and hit both family health and cost with nutritious home cooking.',
+    s2title: 'The solution · 3 core features',
+    p1t: 'Auto meal plans within budget',
+    p1d: 'Generates a full month of meals inside your budget lock by searching ingredients from linked stores — tailored to household, diet direction (healthy · diet · hearty · kid-friendly), and cuisine preferences.',
+    p2t: 'Zero waste via virtual fridge',
+    p2d: 'Auto-logged on delivery, auto-deducted when you mark a meal eaten (Zero-UX). Soon-to-expire items are prioritized in the next plan.',
+    p3t: 'Automatic grocery ordering',
+    p3d: 'Auto-pays and delivers 1–2×/week within budget via linked store accounts, reducing the next order by whatever’s left in the fridge.',
+    s3title: 'How it works · the loop',
+    step1t: 'Input', step1d: 'Family & budget lock',
+    step2t: 'AI plan · auto-order', step2d: 'Lowest price → plan → auto-pay',
+    step3t: 'Virtual fridge', step3d: 'Auto-deduct when eaten',
+    step4t: 'Dynamic cut', step4d: 'Budget defense',
+    loopNote: 'Leftovers automatically cut next week’s grocery cost, fully defending your monthly budget.',
+    s4title: 'What we’ve built',
+    s4sub: 'During the hackathon we shipped an interactive prototype that works in both Korean and English.',
+    features: [
+      'Social login (Kakao · Google · Apple)',
+      'Household setup (1+ members · toddler·child·teen·adult)',
+      'Budget lock + budget-mood UI',
+      'AI meal plans + recipes',
+      'Virtual fridge auto-deduction',
+      'Auto-order (1× or 2× weekly)',
+      'Store linking (Kurly·Coupang·SSG·Naver / Walmart·Instacart)',
+      'Korean · English support'
+    ],
+    s5title: 'Market · scalability',
+    krTitle: 'Korea',
+    krBody: 'With no official auto-payment API domestically, we automate carts and orders by linking users’ existing grocery accounts.',
+    usTitle: 'Global (US)',
+    usBody: 'To defend against the hidden cost of frequent delivery (fees & tips), we run weekly bulk delivery + an ingredient-shelf-life algorithm. We pursue Walmart and the Instacart Connect API.',
+    usResearch: 'Instacart integration in research',
+    s6title: 'Business model',
+    bm1tag: 'Revenue 01 · Now', bm1t: 'Purchase-conversion commission',
+    bm1d: 'Earn a 2–5% per-order commission on purchase conversions routed through our auto-order infrastructure to major e-commerce.',
+    bm2tag: 'Revenue 02 · Now', bm2t: 'Premium meal-plan subscription',
+    bm2d: 'Goal-specific premium plans (diet, bulk-up, and more) offered as a monthly subscription.',
+    bm3tag: 'Revenue 03 · Scale', bm3t: 'Advertising & partnerships',
+    bm3d: 'As the user base grows, expand revenue through food/brand ads and partnership placements.',
+    bm4tag: 'Revenue 04 · Scale', bm4t: 'Owned retail · direct shopping',
+    bm4d: 'At scale, buy and supply directly (incl. private-label bulk) to capture distribution margin.',
+    footerLine: '© 2026 JARINGOBI. Hackathon business plan. All rights reserved.',
+    mFather: 'F', mMother: 'M',
+    krStores: ['Market Kurly', 'Coupang', 'SSG.COM', 'Naver'],
+    homeHref: '/en'
+  }
+};
+
+var KR_STORE_COLORS = [
+  { c: '#5F0080', b: '#ECE0F2' }, { c: '#2D6FF7', b: '#DCE6FB' },
+  { c: '#F23C2E', b: '#FAD9D6' }, { c: '#03C75A', b: '#CFEFDB' }
+];
+var BM_CARDS = [
+  { grad: 'linear-gradient(150deg,#1C2E58,#0B1B3A)', tagColor: '#5B8CFF' },
+  { grad: 'linear-gradient(150deg,#2453D6,#2F6BFF)', tagColor: '#CFE0FF' },
+  { grad: 'linear-gradient(150deg,#0F8A63,#0A6E4E)', tagColor: '#9DEAC9' },
+  { grad: 'linear-gradient(150deg,#C2761F,#9A5A12)', tagColor: '#F8D9A8' }
+];
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function render(lang) {
+  var t = STR[lang] || STR.ko;
+  var en = lang === 'en';
+  document.documentElement.lang = lang;
+
+  var problemsHtml = t.problems.map(function (p) {
+    return '<div style="display:flex;align-items:flex-start;gap:11px;">' +
+      '<span style="width:22px;height:22px;border-radius:7px;background:#FCEBEA;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#C2453A" stroke-width="2.4" stroke-linecap="round"/></svg></span>' +
+      '<span style="font-size:14.5px;color:#3A4A66;line-height:1.55;">' + esc(p) + '</span></div>';
+  }).join('');
+
+  var featuresHtml = t.features.map(function (f) {
+    return '<span style="display:inline-flex;align-items:center;gap:7px;background:#F4F6FB;border:1px solid #E7EBF3;color:#3A4A66;font-size:13.5px;font-weight:600;padding:9px 14px;border-radius:11px;">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4 10-11" stroke="#0FB07A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' + esc(f) + '</span>';
+  }).join('');
+
+  var krStoresHtml = t.krStores.map(function (name, i) {
+    var c = KR_STORE_COLORS[i];
+    return '<span style="font-size:12px;font-weight:800;color:' + c.c + ';background:#fff;border:1px solid ' + c.b + ';padding:6px 11px;border-radius:99px;">' + esc(name) + '</span>';
+  }).join('');
+
+  var bmHtml = [
+    { tag: t.bm1tag, title: t.bm1t, desc: t.bm1d },
+    { tag: t.bm2tag, title: t.bm2t, desc: t.bm2d },
+    { tag: t.bm3tag, title: t.bm3t, desc: t.bm3d },
+    { tag: t.bm4tag, title: t.bm4t, desc: t.bm4d }
+  ].map(function (bm, i) {
+    var card = BM_CARDS[i];
+    return '<div style="background:' + card.grad + ';border-radius:18px;padding:24px;">' +
+      '<div style="font-size:12.5px;font-weight:700;color:' + card.tagColor + ';margin-bottom:8px;">' + esc(bm.tag) + '</div>' +
+      '<div style="font-size:17px;font-weight:800;letter-spacing:-0.01em;margin-bottom:8px;color:#fff;">' + esc(bm.title) + '</div>' +
+      '<div style="font-size:13.5px;color:rgba(255,255,255,.8);line-height:1.65;">' + esc(bm.desc) + '</div></div>';
+  }).join('');
+
+  var stepCell = function (bg, circleBg, num, title, desc) {
+    return '<div style="flex:1;background:' + bg + ';border-radius:16px;padding:18px 14px;text-align:center;">' +
+      '<div style="width:30px;height:30px;border-radius:50%;background:' + circleBg + ';color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">' + num + '</div>' +
+      '<div style="font-size:14px;font-weight:800;color:#16223B;">' + esc(title) + '</div>' +
+      '<div style="font-size:12px;color:#8A95AD;margin-top:4px;line-height:1.5;">' + esc(desc) + '</div></div>';
+  };
+  var arrow = '<div style="display:flex;align-items:center;color:#C2C9D6;font-weight:800;font-size:18px;">→</div>';
+
+  var langBtn = function (label, active, onclick) {
+    return '<div onclick="' + onclick + '" style="padding:5px 13px;border-radius:99px;font-size:12.5px;font-weight:800;cursor:pointer;background:' +
+      (active ? '#15244A' : 'transparent') + ';color:' + (active ? '#fff' : '#69748C') + ';">' + label + '</div>';
+  };
+
+  document.getElementById('app').innerHTML =
+  '<div style="min-height:100vh;background:#E9ECF1;font-family:\'Pretendard Variable\',Pretendard,-apple-system,system-ui,sans-serif;padding:0 0 70px;">' +
+
+  '<div style="position:sticky;top:0;z-index:20;background:rgba(233,236,241,.86);backdrop-filter:blur(12px);border-bottom:1px solid #DCE1EA;">' +
+    '<div style="max-width:980px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;">' +
+      '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<div style="width:34px;height:34px;border-radius:10px;background:#15244A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:-0.02em;">GB</div>' +
+        '<div style="font-size:16px;font-weight:800;color:#0B1B3A;letter-spacing:-0.01em;">JARIN<span style="color:#2F6BFF;">GO BE</span></div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:2px;background:#fff;border:1px solid #E1E6EF;border-radius:99px;padding:3px;box-shadow:0 1px 2px rgba(16,30,60,.05);">' +
+        langBtn('한국어', !en, "render('ko')") + langBtn('EN', en, "render('en')") +
+      '</div>' +
+    '</div>' +
+  '</div>' +
+
+  '<div style="max-width:980px;margin:0 auto;padding:30px 24px 0;">' +
+
+  /* HERO */
+  '<div style="position:relative;overflow:hidden;background:linear-gradient(155deg,#1C2E58 0%,#0B1B3A 100%);border-radius:28px;padding:48px 44px;color:#fff;box-shadow:0 24px 50px rgba(11,27,58,.28);">' +
+    '<div style="position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(47,107,255,.4),transparent 70%);"></div>' +
+    '<div style="position:relative;">' +
+      '<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:6px 14px;border-radius:99px;font-size:12.5px;font-weight:700;color:#CFE0FF;margin-bottom:22px;">' +
+        '<span style="width:7px;height:7px;border-radius:50%;background:#36E0A6;"></span>' + esc(t.heroTag) + '</div>' +
+      '<div style="font-size:52px;font-weight:800;letter-spacing:-0.03em;line-height:1;">JARIN<span style="color:#5B8CFF;">GO BE</span> <span style="font-size:26px;font-weight:700;color:rgba(255,255,255,.6);">· 자린고비</span></div>' +
+      '<div style="font-size:21px;font-weight:800;color:#36E0A6;letter-spacing:-0.01em;margin-top:18px;">GO BE SMART, SAVE BIG.</div>' +
+      '<div style="font-size:16.5px;color:rgba(255,255,255,.82);line-height:1.65;margin-top:12px;max-width:680px;">' + esc(t.pitch) + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:28px;">' +
+        '<a href="' + t.homeHref + '" style="display:inline-flex;align-items:center;gap:8px;background:#2F6BFF;color:#fff;font-size:15px;font-weight:700;padding:14px 22px;border-radius:13px;box-shadow:0 10px 24px rgba(47,107,255,.4);">' +
+          '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="6" y="2.5" width="12" height="19" rx="3" stroke="#fff" stroke-width="1.8"/><path d="M10.5 18.5h3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+          esc(t.viewPrototype) + '</a>' +
+        '<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);color:#fff;font-size:15px;font-weight:700;padding:14px 22px;border-radius:13px;">' + esc(t.heroPillars) + '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>' +
+
+  /* 01 PROBLEM */
+  '<div style="margin-top:30px;background:#fff;border-radius:24px;padding:36px;box-shadow:0 1px 2px rgba(16,30,60,.04),0 12px 30px rgba(16,30,60,.05);">' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">' +
+      '<span style="font-size:13px;font-weight:800;color:#2F6BFF;background:#EAF0FF;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;">01</span>' +
+      '<span style="font-size:23px;font-weight:800;color:#0B1B3A;letter-spacing:-0.02em;">' + esc(t.s1title) + '</span></div>' +
+    '<div style="display:flex;gap:14px;flex-wrap:wrap;">' +
+      '<div style="flex:1;min-width:280px;background:#F6F8FC;border-radius:18px;padding:22px;">' +
+        '<div style="font-size:13px;font-weight:800;color:#8A95AD;letter-spacing:.02em;margin-bottom:8px;">' + esc(t.personaTitle) + '</div>' +
+        '<div style="font-size:15px;color:#3A4A66;line-height:1.7;">' + esc(t.personaBody) + '</div>' +
+        '<div style="display:flex;gap:6px;margin-top:16px;">' +
+          '<span style="width:38px;height:38px;border-radius:11px;background:#15244A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">' + esc(t.mFather) + '</span>' +
+          '<span style="width:38px;height:38px;border-radius:11px;background:#2F6BFF;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">' + esc(t.mMother) + '</span>' +
+          '<span style="width:38px;height:38px;border-radius:11px;background:#0FB07A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">9</span>' +
+          '<span style="width:38px;height:38px;border-radius:11px;background:#F2A93B;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">7</span>' +
+          '<span style="width:38px;height:38px;border-radius:11px;background:#E0651A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">6</span>' +
+        '</div></div>' +
+      '<div style="flex:1;min-width:280px;">' +
+        '<div style="font-size:13px;font-weight:800;color:#8A95AD;letter-spacing:.02em;margin-bottom:12px;">' + esc(t.problemsTitle) + '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:10px;">' + problemsHtml + '</div></div>' +
+    '</div>' +
+    '<div style="margin-top:18px;display:flex;align-items:flex-start;gap:12px;background:#E6F8F1;border-radius:16px;padding:18px 20px;">' +
+      '<span style="width:30px;height:30px;border-radius:9px;background:#0FB07A;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z" stroke="#fff" stroke-width="1.7" stroke-linejoin="round"/></svg></span>' +
+      '<div><div style="font-size:14px;font-weight:800;color:#0A6E4E;margin-bottom:2px;">' + esc(t.goalTitle) + '</div>' +
+      '<div style="font-size:14.5px;color:#0A8A60;line-height:1.6;">' + esc(t.goalBody) + '</div></div></div>' +
+  '</div>' +
+
+  /* 02 SOLUTION */
+  '<div style="margin-top:24px;background:#fff;border-radius:24px;padding:36px;box-shadow:0 1px 2px rgba(16,30,60,.04),0 12px 30px rgba(16,30,60,.05);">' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">' +
+      '<span style="font-size:13px;font-weight:800;color:#2F6BFF;background:#EAF0FF;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;">02</span>' +
+      '<span style="font-size:23px;font-weight:800;color:#0B1B3A;letter-spacing:-0.02em;">' + esc(t.s2title) + '</span></div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">' +
+      '<div style="background:#F6F8FC;border-radius:18px;padding:24px;border-top:3px solid #2F6BFF;">' +
+        '<span style="width:46px;height:46px;border-radius:13px;background:#EAF0FF;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="3" stroke="#2F6BFF" stroke-width="1.8"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#2F6BFF" stroke-width="1.8" stroke-linecap="round"/></svg></span>' +
+        '<div style="font-size:12px;font-weight:800;color:#2F6BFF;margin-bottom:6px;">01</div>' +
+        '<div style="font-size:16.5px;font-weight:800;color:#0B1B3A;letter-spacing:-0.01em;margin-bottom:8px;">' + esc(t.p1t) + '</div>' +
+        '<div style="font-size:13.5px;color:#5B6B8C;line-height:1.65;">' + esc(t.p1d) + '</div></div>' +
+      '<div style="background:#F6F8FC;border-radius:18px;padding:24px;border-top:3px solid #0FB07A;">' +
+        '<span style="width:46px;height:46px;border-radius:13px;background:#E6F8F1;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="2.5" stroke="#0FB07A" stroke-width="1.8"/><path d="M6 10h12" stroke="#0FB07A" stroke-width="1.8"/><path d="M9 6.5v1.5M9 12.5V14" stroke="#0FB07A" stroke-width="1.8" stroke-linecap="round"/></svg></span>' +
+        '<div style="font-size:12px;font-weight:800;color:#0A8A60;margin-bottom:6px;">02</div>' +
+        '<div style="font-size:16.5px;font-weight:800;color:#0B1B3A;letter-spacing:-0.01em;margin-bottom:8px;">' + esc(t.p2t) + '</div>' +
+        '<div style="font-size:13.5px;color:#5B6B8C;line-height:1.65;">' + esc(t.p2d) + '</div></div>' +
+      '<div style="background:#F6F8FC;border-radius:18px;padding:24px;border-top:3px solid #E0651A;">' +
+        '<span style="width:46px;height:46px;border-radius:13px;background:#FEF3E2;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 8h14l-1 11a2 2 0 0 1-2 1.8H8a2 2 0 0 1-2-1.8L5 8z" stroke="#E0651A" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="#E0651A" stroke-width="1.8" stroke-linecap="round"/><path d="M10.5 13.5l1.5 1.5 3-3" stroke="#E0651A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<div style="font-size:12px;font-weight:800;color:#C2761F;margin-bottom:6px;">03</div>' +
+        '<div style="font-size:16.5px;font-weight:800;color:#0B1B3A;letter-spacing:-0.01em;margin-bottom:8px;">' + esc(t.p3t) + '</div>' +
+        '<div style="font-size:13.5px;color:#5B6B8C;line-height:1.65;">' + esc(t.p3d) + '</div></div>' +
+    '</div>' +
+  '</div>' +
+
+  /* 03 LOOP */
+  '<div style="margin-top:24px;background:#fff;border-radius:24px;padding:36px;box-shadow:0 1px 2px rgba(16,30,60,.04),0 12px 30px rgba(16,30,60,.05);">' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">' +
+      '<span style="font-size:13px;font-weight:800;color:#2F6BFF;background:#EAF0FF;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;">03</span>' +
+      '<span style="font-size:23px;font-weight:800;color:#0B1B3A;letter-spacing:-0.02em;">' + esc(t.s3title) + '</span></div>' +
+    '<div style="display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;">' +
+      stepCell('#F6F8FC', '#64748B', '1', t.step1t, t.step1d) + arrow +
+      stepCell('#EAF0FF', '#2F6BFF', '2', t.step2t, t.step2d) + arrow +
+      stepCell('#E6F8F1', '#0FB07A', '3', t.step3t, t.step3d) + arrow +
+      stepCell('#FEF3E2', '#E0651A', '4', t.step4t, t.step4d) +
+    '</div>' +
+    '<div style="margin-top:16px;display:flex;align-items:center;gap:12px;background:#FFF8EE;border:1px dashed #F2C98C;border-radius:14px;padding:16px 18px;">' +
+      '<span style="font-size:22px;animation:gbPulse 2s infinite;">↩</span>' +
+      '<span style="font-size:14px;color:#C2761F;font-weight:600;line-height:1.55;">' + esc(t.loopNote) + '</span></div>' +
+  '</div>' +
+
+  /* 04 PRODUCT */
+  '<div style="margin-top:24px;background:#fff;border-radius:24px;padding:36px;box-shadow:0 1px 2px rgba(16,30,60,.04),0 12px 30px rgba(16,30,60,.05);">' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">' +
+      '<span style="font-size:13px;font-weight:800;color:#2F6BFF;background:#EAF0FF;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;">04</span>' +
+      '<span style="font-size:23px;font-weight:800;color:#0B1B3A;letter-spacing:-0.02em;">' + esc(t.s4title) + '</span></div>' +
+    '<div style="font-size:14.5px;color:#5B6B8C;line-height:1.6;margin:0 0 20px 52px;">' + esc(t.s4sub) + '</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:9px;">' + featuresHtml + '</div>' +
+    '<a href="' + t.homeHref + '" style="display:inline-flex;align-items:center;gap:8px;margin-top:22px;background:#15244A;color:#fff;font-size:14.5px;font-weight:700;padding:13px 20px;border-radius:12px;">' +
+      esc(t.viewPrototype) +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>' +
+  '</div>' +
+
+  /* 05 MARKET */
+  '<div style="margin-top:24px;background:#fff;border-radius:24px;padding:36px;box-shadow:0 1px 2px rgba(16,30,60,.04),0 12px 30px rgba(16,30,60,.05);">' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">' +
+      '<span style="font-size:13px;font-weight:800;color:#2F6BFF;background:#EAF0FF;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;">05</span>' +
+      '<span style="font-size:23px;font-weight:800;color:#0B1B3A;letter-spacing:-0.02em;">' + esc(t.s5title) + '</span></div>' +
+    '<div style="display:flex;gap:14px;flex-wrap:wrap;">' +
+      '<div style="flex:1;min-width:300px;background:#F6F8FC;border-radius:18px;padding:24px;">' +
+        '<div style="display:flex;align-items:center;gap:9px;margin-bottom:12px;"><span style="font-size:20px;">🇰🇷</span><span style="font-size:16px;font-weight:800;color:#0B1B3A;">' + esc(t.krTitle) + '</span></div>' +
+        '<div style="font-size:14px;color:#3A4A66;line-height:1.7;margin-bottom:14px;">' + esc(t.krBody) + '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:7px;">' + krStoresHtml + '</div></div>' +
+      '<div style="flex:1;min-width:300px;background:#F6F8FC;border-radius:18px;padding:24px;">' +
+        '<div style="display:flex;align-items:center;gap:9px;margin-bottom:12px;"><span style="font-size:20px;">🇺🇸</span><span style="font-size:16px;font-weight:800;color:#0B1B3A;">' + esc(t.usTitle) + '</span></div>' +
+        '<div style="font-size:14px;color:#3A4A66;line-height:1.7;margin-bottom:14px;">' + esc(t.usBody) + '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;">' +
+          '<span style="font-size:12px;font-weight:800;color:#0071CE;background:#fff;border:1px solid #D5E6F7;padding:6px 11px;border-radius:99px;">Walmart</span>' +
+          '<span style="font-size:12px;font-weight:800;color:#43B02A;background:#fff;border:1px solid #D9EFD2;padding:6px 11px;border-radius:99px;">Instacart</span>' +
+          '<span style="font-size:11.5px;font-weight:800;color:#C2761F;background:#FEF3E2;padding:6px 11px;border-radius:99px;">' + esc(t.usResearch) + '</span>' +
+        '</div></div>' +
+    '</div>' +
+  '</div>' +
+
+  /* 06 BUSINESS MODEL */
+  '<div style="margin-top:24px;background:#fff;border-radius:24px;padding:36px;box-shadow:0 1px 2px rgba(16,30,60,.04),0 12px 30px rgba(16,30,60,.05);">' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">' +
+      '<span style="font-size:13px;font-weight:800;color:#2F6BFF;background:#EAF0FF;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;">06</span>' +
+      '<span style="font-size:23px;font-weight:800;color:#0B1B3A;letter-spacing:-0.02em;">' + esc(t.s6title) + '</span></div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;">' + bmHtml + '</div>' +
+  '</div>' +
+
+  /* footer */
+  '<div style="margin-top:30px;text-align:center;">' +
+    '<div style="font-size:18px;font-weight:800;color:#0B1B3A;letter-spacing:-0.01em;">JARIN<span style="color:#2F6BFF;">GO BE</span></div>' +
+    '<div style="font-size:13px;color:#36E0A6;font-weight:700;margin-top:4px;">GO BE SMART, SAVE BIG.</div>' +
+    '<div style="font-size:12px;color:#9AA6BD;margin-top:14px;">' + esc(t.footerLine) + '</div>' +
+  '</div>' +
+
+  '</div></div>';
+}
+
+render((navigator.language || 'ko').toLowerCase().indexOf('en') === 0 ? 'en' : 'ko');
+</script>
+</body>
+</html>
