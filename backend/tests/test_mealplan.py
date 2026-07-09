@@ -241,3 +241,77 @@ async def test_generation_time_budget_stops_retries(client, respx_mock, monkeypa
     res = await client.post("/api/v1/mealplans", json={"days": 7, "mealsPerDay": 3})
     assert res.status_code == 201, res.text
     assert calls["n"] == 1  # 시간 예산 0 → 단일 시도
+
+
+async def test_generation_includes_household_members(client, respx_mock, monkeypatch):
+    """온보딩 구성원(유형·나이)이 생성 프롬프트에 전달된다."""
+    from app.domains.mealplan import service as svc
+
+    captured = {}
+    orig = svc.generate_meals
+
+    async def spy(*a, **k):
+        captured["household_desc"] = a[8] if len(a) > 8 else k.get("household_desc", "")
+        return await orig(*a[:8])
+
+    monkeypatch.setattr(svc, "generate_meals", spy)
+    await login(client, respx_mock)
+    res = await client.put(
+        "/api/v1/households/me",
+        json={"members": [
+            {"memberType": "adult_m", "age": 35},
+            {"memberType": "toddler", "age": 4},
+        ]},
+    )
+    assert res.status_code == 200
+    assert (await _create_budget(client)).status_code == 201
+
+    res = await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 3})
+    assert res.status_code == 201, res.text
+    assert "adult male (age 35)" in captured["household_desc"]
+    assert "toddler (age 4)" in captured["household_desc"]
+
+
+async def test_generator_dedupes_duplicate_meals(client, respx_mock, monkeypatch):
+    """LLM 이 한/영 중복 끼니를 반환해도 (day, meal_type) 당 1끼만 남는다."""
+    from app.domains.mealplan import generator as gen_mod
+
+    class _DupLLM:
+        enabled = True
+
+        async def complete_json(self, *a, **k):
+            return {"meals": [
+                {"day": 1, "meal_type": "breakfast", "name": "콩나물국밥",
+                 "ingredients": [{"name": "콩나물", "quantity": 200, "unit": "g"}]},
+                {"day": 1, "meal_type": "breakfast", "name": "Kongnamul Gukbap",
+                 "ingredients": [{"name": "bean sprouts", "quantity": 200, "unit": "g"}]},
+                {"day": 1, "meal_type": "lunch", "name": "비빔밥",
+                 "ingredients": [{"name": "밥", "quantity": 300, "unit": "g"}]},
+            ]}
+
+    monkeypatch.setattr(gen_mod, "get_llm", lambda: _DupLLM())
+    drafts = await gen_mod.generate_meals("KR", 2, "health", 1, 3, [], [])
+    assert len(drafts) == 2
+    assert drafts[0]["name"] == "콩나물국밥"
+
+
+def test_pricing_fallback_is_quantity_based():
+    """기준가 미등록 재료 폴백이 수량 비례 + 상한(₩8,000)으로 계산된다."""
+    import asyncio
+    from decimal import Decimal
+    from app.domains.mealplan.pricing import DBPriceProvider
+
+    class _NoRowDB:
+        async def execute(self, stmt):
+            class _R:
+                def scalar_one_or_none(self):
+                    return None
+            return _R()
+
+    p = DBPriceProvider(_NoRowDB())
+    cost_g = asyncio.get_event_loop().run_until_complete(
+        p.estimate_cost("콩나물", Decimal(200), "g", "KR", "KRW"))
+    assert Decimal("100") <= cost_g <= Decimal("8000")
+    cost_big = asyncio.get_event_loop().run_until_complete(
+        p.estimate_cost("한우", Decimal(5000), "g", "KR", "KRW"))
+    assert cost_big == Decimal("8000")

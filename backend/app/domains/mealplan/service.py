@@ -79,12 +79,34 @@ async def _price(db, drafts, region, currency) -> Decimal:
     return total.quantize(_CENT, rounding=ROUND_HALF_UP)
 
 
+_MEMBER_TYPE_EN = {
+    "adult_m": "adult male", "adult_f": "adult female",
+    "teen": "teenager", "child": "child", "toddler": "toddler",
+}
+
+
+async def _household_desc(db: AsyncSession, user_id) -> str:
+    """온보딩 구성원(유형·나이)을 LLM 프롬프트용 요약으로 (없으면 빈 문자열)."""
+    from app.domains.household.models import HouseholdMember
+
+    rows = (
+        await db.execute(
+            select(HouseholdMember)
+            .where(HouseholdMember.user_id == user_id)
+            .order_by(HouseholdMember.position)
+        )
+    ).scalars().all()
+    return ", ".join(f"{_MEMBER_TYPE_EN.get(m.member_type, m.member_type)} (age {m.age})" for m in rows)
+
+
 async def _generate_within_budget(
     db: AsyncSession, budget: BudgetPlan, region: str,
     days: int, meals_per_day: int, allergies: list[str], preferences: list[str],
     limit_amount: Decimal | None = None,
 ) -> tuple[list[dict], str, Decimal, list[str]]:
     from app.domains.mealplan.llm import get_llm
+
+    household_desc = await _household_desc(db, budget.user_id)
 
     currency = budget.currency
     direction = MEAL_DIRECTION_HINT.get(budget.meal_direction, "balanced")
@@ -105,7 +127,7 @@ async def _generate_within_budget(
         hint = " ".join(x for x in (budget_hint, allergy_hint) if x)
         drafts = await generate_meals(
             region, budget.household_size, direction, days, meals_per_day,
-            allergies, preferences, hint,
+            allergies, preferences, hint, household_desc,
         )
         violations = _check_allergies(drafts, allergies)
         if violations and attempt < MAX_BUDGET_RETRIES and llm_enabled and _time_left():

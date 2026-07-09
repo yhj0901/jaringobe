@@ -43,5 +43,19 @@ class DBPriceProvider(PriceProvider):
             return (row.unit_price * (quantity / row.pack_qty)).quantize(
                 _CENT, rounding=ROUND_HALF_UP
             )
-        base = _stable_int(name, 1500, 12000) if currency == "KRW" else _stable_int(name, 2, 15)
-        return Decimal(base).quantize(_CENT)
+        # 기준가 미등록 재료: 수량 기반 근사 (재료당 고정 난수는 한 끼를 수만원으로 과대 계산)
+        krw = currency == "KRW"
+        unit_l = unit.lower()
+        if unit_l in ("g", "ml"):
+            per100 = _stable_int(name, 300, 1200) if krw else _stable_int(name, 30, 120)
+            cost = Decimal(per100) * quantity / Decimal(100)
+            if not krw:
+                cost = cost / Decimal(100)  # cents → dollars
+        elif unit_l in ("ea", "개", "pc", "pcs"):
+            per = _stable_int(name, 500, 3000) if krw else _stable_int(name, 1, 4)
+            cost = Decimal(per) * quantity
+        else:
+            cost = Decimal(_stable_int(name, 800, 3000)) if krw else Decimal(_stable_int(name, 1, 4))
+        cap = Decimal(8000) if krw else Decimal(9)
+        floor = Decimal(100) if krw else Decimal("0.2")
+        return min(max(cost, floor), cap).quantize(_CENT, rounding=ROUND_HALF_UP)
