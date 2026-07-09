@@ -41,9 +41,9 @@ from app.domains.store.schemas import NeededItem as StoreNeed
 
 _CENT = Decimal("0.01")
 MAX_BUDGET_RETRIES = 3
-# LLM 재생성 루프의 총 시간 예산(초) — 프론트 타임아웃(90초) 내 응답 보장.
-# 초과 시 재시도를 멈추고 최선의 결과를 반환 (over_budget 201 은 스펙 허용, api-spec §3-2)
-GENERATION_TIME_BUDGET_SECONDS = 55.0
+# 재시도 진입 허용 시한(초). 재시도는 이 시점 이전에만 시작되므로
+# 최악 응답 = 25 + LLM_TIMEOUT(60) = 85초 < 프론트 타임아웃 90초 (api-spec §3-2 over_budget 201 허용)
+GENERATION_TIME_BUDGET_SECONDS = 25.0
 MEAL_DIRECTION_HINT = {"health": "balanced", "diet": "diet", "hearty": "hearty", "kids": "kids"}
 
 

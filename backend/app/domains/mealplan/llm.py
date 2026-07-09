@@ -8,8 +8,9 @@ import re
 from app.core.config import Settings, get_settings
 
 _JSON_FENCE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
-# 21끼(7일×3끼) JSON 생성은 수십 초 소요 — 프론트 타임아웃(90초) 안에서 단일 시도에 최대한 할애
-LLM_TIMEOUT_SECONDS = 75.0
+# 21끼(7일×3끼) JSON 생성은 수십 초 소요. 재시도 예산(service.GENERATION_TIME_BUDGET_SECONDS=25)과
+# 합산해 최악 응답을 85초(<프론트 90초)로 보장: 재시도 진입(≤25s 시점) + 호출 상한 60s
+LLM_TIMEOUT_SECONDS = 60.0
 LLM_MAX_RETRIES = 0
 
 
