@@ -39,6 +39,14 @@ async def create_budget_plan(
     return await service.create_budget_plan(db, user, payload)
 
 
+@router.get("/budget/plans", response_model=BudgetPlanResponse)
+async def get_budget_plan(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> BudgetPlanResponse:
+    return await service.get_budget_plan(db, user)
+
+
 @router.put(
     "/budget/plans",
     response_model=BudgetPlanResponse,
