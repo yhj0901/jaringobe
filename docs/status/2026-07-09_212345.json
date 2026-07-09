@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-07-09T21:23:45+09:00",
+  "session_topic": "가입 온보딩 3스텝 + 진입 순서 재정렬 배포 완료 (v0.3)",
+  "command": "GATE 1~3 통과 → 병렬 구현 → 커밋·배포",
+  "agent": "infra + backend/frontend 서브 에이전트 + 오케스트레이터",
+  "status": "PR #18 머지, 서버 0004(head)·households 라우트 live, Vercel 배포 완료. 실사용 검증(가입→온보딩 3스텝→식단 생성) 사용자 대기",
+  "tasks": [
+    {"id": 1, "subject": "0004 마이그레이션 (household_members + budget locked/cuisines) 왕복 검증·서버 적용", "status": "completed"},
+    {"id": 2, "subject": "백엔드 household+budget PUT (158 테스트/95%)", "status": "completed"},
+    {"id": 3, "subject": "프론트 온보딩 3스텝 프로토타입 1:1 + 진입 순서 (223 테스트/99.9%)", "status": "completed"},
+    {"id": 4, "subject": "실사용 검증: 신규 가입 → 온보딩 → 식단 생성 (사용자)", "status": "pending"}
+  ],
+  "artifacts": ["backend/app/domains/household/", "frontend/src/features/household/", "docs/기획/진입순서-가입온보딩.md + 설계 v1.2"],
+  "key_findings": "온보딩 완료 즉시 식단 생성 연결(체크포인트 재시도). 프론트 재량: 기본 2인 프리셋, visited 마커는 로그인 성공 시 기록, EmptyPlanHero/BudgetPlanGate 미사용 상태로 보존(후속 정리 후보). 팀원 shopping-flow·api-reference 브랜치 활동 중.",
+  "recommended_actions": "사용자 실사용 확인(신규 계정 또는 기존 계정 온보딩) → 문제 없으면 QA 문서 갱신. 미사용 컴포넌트 정리는 다음 chore 로.",
+  "pending_user_input": "가입 → 온보딩 3스텝 → 식단 생성 실사용 확인"
+}

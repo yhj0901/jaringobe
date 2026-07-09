@@ -89,14 +89,24 @@ describe('GuestHomeController', () => {
     expect(screen.getByRole('button', { name: '예산안 만들어보기' })).toBeInTheDocument();
   });
 
-  it('CTA 배너 클릭으로 예산안 플로우를 다시 열 수 있다 (FR-103)', async () => {
+  it('CTA 배너 클릭으로 3스텝 위저드를 다시 열 수 있다 (FR-103)', async () => {
     window.sessionStorage.setItem(PROMPT_DECLINED_SESSION_KEY, '1');
     await renderController();
     fireEvent.click(screen.getByRole('button', { name: '예산안 만들어보기' }));
-    expect(screen.getByText('내 예산안 만들기')).toBeInTheDocument();
+    // 가입 온보딩과 동일한 위저드 (guest 모드 오버레이)
+    expect(screen.getByRole('dialog', { name: '내 예산안 만들기' })).toBeInTheDocument();
+    expect(screen.getByText('STEP 1 / 3')).toBeInTheDocument();
   });
 
-  it('프롬프트 예 → 3스텝 완료 → 홈 갱신 + 자동주문 알림 1회 (FR-104/105/106)', async () => {
+  it('위저드 닫기 버튼 → 오버레이 닫힘', async () => {
+    window.sessionStorage.setItem(PROMPT_DECLINED_SESSION_KEY, '1');
+    await renderController();
+    fireEvent.click(screen.getByRole('button', { name: '예산안 만들어보기' }));
+    fireEvent.click(screen.getByRole('button', { name: '닫기' }));
+    expect(screen.queryByText('STEP 1 / 3')).not.toBeInTheDocument();
+  });
+
+  it('프롬프트 예 → 위저드 3스텝 완료 → 홈 갱신 + 자동주문 알림 1회 (FR-104/105/106)', async () => {
     vi.useFakeTimers();
     await renderController();
 
@@ -104,23 +114,37 @@ describe('GuestHomeController', () => {
       vi.advanceTimersByTime(PROMPT_DWELL_MS + 500);
     });
     fireEvent.click(screen.getByRole('button', { name: '예' }));
-    expect(screen.getByText('내 예산안 만들기')).toBeInTheDocument();
+    expect(screen.getByText('STEP 1 / 3')).toBeInTheDocument();
 
-    // 3스텝: 인원 4 → 70만원 → 아이 입맛
-    fireEvent.click(screen.getByLabelText('인원 늘리기'));
-    fireEvent.click(screen.getByLabelText('인원 늘리기'));
+    // 3스텝: 4인 프리셋 → 슬라이더 70만원 → 아이 입맛
+    fireEvent.click(screen.getByRole('button', { name: '4인' }));
     fireEvent.click(screen.getByRole('button', { name: '다음' }));
-    fireEvent.click(screen.getByRole('radio', { name: '₩700,000' }));
+    fireEvent.change(screen.getByRole('slider', { name: '월 예산' }), {
+      target: { value: '700000' },
+    });
     fireEvent.click(screen.getByRole('button', { name: '다음' }));
-    fireEvent.click(screen.getByRole('button', { name: '아이 입맛' }));
+    fireEvent.click(screen.getByRole('radio', { name: /아이 입맛 위주/ }));
+    fireEvent.click(screen.getByRole('button', { name: '이 조건으로 식단 짜기' }));
 
-    // 적용 연출 후 홈 갱신
+    // 적용 연출 후 홈 갱신 (게스트는 서버 호출 없음 — 생성 로딩 아님)
     await act(async () => {
       vi.advanceTimersByTime(300);
     });
     expect(screen.getByText('준비 완료')).toBeInTheDocument();
     // kids 방향 샘플 식단으로 갱신됨
     expect(screen.getByText('치즈 달걀말이와 주먹밥')).toBeInTheDocument();
+
+    // 스토어에 확장 필드(members/cuisines/locked)까지 저장 — 가입 온보딩 프리필용
+    const savedPlan = useGuestStore.getState().plan;
+    expect(savedPlan).toMatchObject({
+      householdSize: 4,
+      amount: '700000',
+      currency: 'KRW',
+      mealDirection: 'kids',
+      cuisines: [],
+      locked: true,
+    });
+    expect(savedPlan?.members).toHaveLength(4);
 
     // 자동주문 알림 1회 + promptHistory 기록
     expect(screen.getByText('자동주문을 시작해볼까요?')).toBeInTheDocument();
@@ -165,12 +189,12 @@ describe('GuestHomeController', () => {
     expect(routerMock.push).toHaveBeenCalledWith('/login?next=/');
   });
 
-  it('예산안 없을 때 잠긴 탭 클릭 → 가입 게이트 대신 예산안 작성 플로우가 열린다', async () => {
+  it('예산안 없을 때 잠긴 탭 클릭 → 가입 게이트 대신 3스텝 위저드가 열린다', async () => {
     await renderController();
     const fridgeTab = screen.getByRole('button', { name: '냉장고' });
     fireEvent.click(fridgeTab);
-    // BudgetDraftFlow 1단계(인원) 노출, 가입 게이트 문구는 없음
-    expect(screen.getByText('몇 명이 함께 식사하나요?')).toBeInTheDocument();
+    // 위저드 STEP1 노출, 가입 게이트 문구는 없음
+    expect(screen.getByText('STEP 1 / 3')).toBeInTheDocument();
     expect(screen.queryByText('저장하려면 로그인이 필요해요')).not.toBeInTheDocument();
   });
 

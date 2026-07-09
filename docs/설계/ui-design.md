@@ -125,7 +125,10 @@ useMemberHome():
 - 게스트: visited 마커(localStorage `jaringobe.visited`, 로그아웃 시 기록) 있으면 [로그인하기/구경하기] 바텀시트 1회/세션 → 구경하기=게스트. 신규는 기존 10초 프롬프트
 - i18n: `onboarding.step1~3.*`, `memberType.*`, `cuisine.*`, `entry.revisit.*` ko/en 동시
 
+**게스트 체험 통일 (v1.2.1)**: 게스트의 예산 체험도 OnboardingWizard(guest 모드) 사용 — 서버 호출 없음, 완료 시 로컬 저장(GuestPlan 확장: members/cuisines/locked 옵셔널). 가입 시 위저드 3스텝 전체 프리필. BudgetDraftFlow 는 미사용 보존.
+
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 3라운드 UI 교차 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — 회원 홈(member 모드) 7장 증보 (회원홈-식단연결 기획)
 - 2026-07-09: v1.2 — 온보딩 3스텝(프로토타입 1:1)·진입 순서 8장 증보
+- 2026-07-09: v1.2.1 — 게스트 체험을 동일 위저드(guest 모드)로 통일

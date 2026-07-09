@@ -27,13 +27,26 @@ import {
 import { MemberStep } from '@/features/household/MemberStep';
 import { BudgetStep } from '@/features/household/BudgetStep';
 import { PreferenceStep } from '@/features/household/PreferenceStep';
-import type { Cuisine, HouseholdMemberType } from '@/features/household/types';
+import type {
+  Cuisine,
+  HouseholdMemberType,
+  OnboardingResult,
+} from '@/features/household/types';
 import type { MealDirection, Money } from '@/shared/api/types';
 import type { AppLocale } from '@/i18n/routing';
 
 interface OnboardingWizardProps {
-  /** 게스트 예산안 이전 성공 복귀 (?imported=1) — 확인 화면 후 STEP1 진입 (FR-108/315) */
+  /**
+   * member(기본): 완료 시 서버 저장 + 식단 생성 후 홈 이동 (FR-314)
+   * guest: 서버 호출 없음 — 완료 시 onComplete(result) 로 결과만 반환 (게스트 체험 플로우)
+   */
+  mode?: 'member' | 'guest';
+  /** 게스트 예산안 이전 성공 복귀 (?imported=1) — 확인 화면 후 STEP1 진입 (FR-108/315, member 전용) */
   imported?: boolean;
+  /** guest 모드 완료 콜백 — 호출측(게스트 홈)이 적용 연출·스토어 저장 담당 */
+  onComplete?: (result: OnboardingResult) => void;
+  /** guest 모드 닫기 버튼 (오버레이 이탈) */
+  onClose?: () => void;
 }
 
 type WizardStep = 0 | 1 | 2;
@@ -61,7 +74,12 @@ function presetSizeFrom(size: number): PresetSize {
  * 온보딩 위저드 (ui-design 8장, FR-311~315) — 프로토타입 onboardStep 3스텝 1:1.
  * 완료: PUT households/me → PUT budget/plans → POST mealplans → 홈 (FR-314).
  */
-export function OnboardingWizard({ imported = false }: OnboardingWizardProps) {
+export function OnboardingWizard({
+  mode = 'member',
+  imported = false,
+  onComplete,
+  onClose,
+}: OnboardingWizardProps) {
   const t = useTranslations('onboarding');
   const tCuisine = useTranslations('cuisine');
   const locale = useLocale() as AppLocale;
@@ -69,7 +87,7 @@ export function OnboardingWizard({ imported = false }: OnboardingWizardProps) {
 
   const currency = LOCALE_CURRENCY[locale] ?? 'KRW';
 
-  const [intro, setIntro] = useState(imported);
+  const [intro, setIntro] = useState(mode === 'member' && imported);
   const [step, setStep] = useState<WizardStep>(0);
   const [members, setMembers] = useState<WizardMember[]>(() => buildPresetMembers(DEFAULT_PRESET));
   const [budget, setBudget] = useState<number | null>(null);
@@ -84,18 +102,33 @@ export function OnboardingWizard({ imported = false }: OnboardingWizardProps) {
   const checkpointRef = useRef<SubmitCheckpoint>('household');
   const prefillBudgetRef = useRef<number | null>(null);
 
-  // FR-315: 게스트 이전값 프리필 (스킵이 아닌 프리필 — 락·조정 기회 제공)
+  // FR-315: 게스트 이전값 프리필 (스킵이 아닌 프리필 — 락·조정 기회 제공, member 전용)
   useEffect(() => {
+    if (mode !== 'member') return;
     const prefill = readOnboardingPrefill();
     if (prefill === null) return;
-    const size = presetSizeFrom(prefill.householdSize);
-    setMembers(buildPresetMembers(size));
-    nextIdRef.current = size + 1;
+    if (prefill.members !== undefined && prefill.members.length > 0) {
+      // 게스트 위저드 확장분 — 구성원 유형·나이 그대로 복원
+      setMembers(
+        prefill.members.map((member, index) => ({
+          id: index + 1,
+          type: member.memberType,
+          age: member.age,
+        })),
+      );
+      nextIdRef.current = prefill.members.length + 1;
+    } else {
+      const size = presetSizeFrom(prefill.householdSize);
+      setMembers(buildPresetMembers(size));
+      nextIdRef.current = size + 1;
+    }
     setDirection(prefill.mealDirection);
+    if (prefill.cuisines !== undefined) setCuisines(prefill.cuisines);
+    if (prefill.locked !== undefined) setLocked(prefill.locked);
     if (prefill.currency === currency) {
       prefillBudgetRef.current = Number.parseInt(prefill.amount, 10);
     }
-  }, [currency]);
+  }, [mode, currency]);
 
   const applyPreset = useCallback((size: PresetSize) => {
     const preset = buildPresetMembers(size, 1);
@@ -147,8 +180,24 @@ export function OnboardingWizard({ imported = false }: OnboardingWizardProps) {
   }, []);
 
   // FR-314: household → budget → mealplan 순차 저장, 실패 체크포인트부터 재시도
+  // guest 모드: 서버 호출 없이 onComplete 로 결과 반환 (적용 연출은 호출측)
   const submit = useCallback(async () => {
     if (submitting) return;
+    const amount = String(budget ?? budgetRange(size, currency).rec);
+
+    if (mode === 'guest') {
+      onComplete?.({
+        members: members.map((member) => ({ memberType: member.type, age: member.age })),
+        householdSize: size,
+        amount,
+        currency,
+        locked,
+        cuisines,
+        mealDirection: direction,
+      });
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError(null);
 
@@ -172,7 +221,7 @@ export function OnboardingWizard({ imported = false }: OnboardingWizardProps) {
     if (checkpointRef.current === 'budget') {
       const result = await putBudgetPlan({
         householdSize: size,
-        budget: { amount: String(budget ?? budgetRange(size, currency).rec), currency },
+        budget: { amount, currency },
         mealDirection: direction,
         locked,
         cuisines,
@@ -199,7 +248,20 @@ export function OnboardingWizard({ imported = false }: OnboardingWizardProps) {
 
     clearOnboardingPrefill();
     router.replace('/');
-  }, [submitting, members, size, budget, currency, direction, locked, cuisines, tCuisine, router]);
+  }, [
+    submitting,
+    mode,
+    onComplete,
+    members,
+    size,
+    budget,
+    currency,
+    direction,
+    locked,
+    cuisines,
+    tCuisine,
+    router,
+  ]);
 
   if (intro) {
     return (
@@ -253,8 +315,8 @@ export function OnboardingWizard({ imported = false }: OnboardingWizardProps) {
       </div>
     ) : null;
 
-  return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-white px-[22px] pb-[30px] pt-14 sm:my-6 sm:min-h-[720px] sm:rounded-[32px] sm:shadow-card">
+  const stepContent = (
+    <>
       {step === 2 ? errorBanner : null}
       {step === 0 ? (
         <MemberStep
@@ -289,6 +351,40 @@ export function OnboardingWizard({ imported = false }: OnboardingWizardProps) {
           onSubmit={() => void submit()}
         />
       ) : null}
+    </>
+  );
+
+  if (mode === 'guest') {
+    // 게스트 체험 플로우 — 전체 화면 오버레이 (BudgetDraftFlow 대체, 서버 호출 없음)
+    return (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('guestLabel')}
+        className="fixed inset-0 z-50 overflow-y-auto bg-white"
+      >
+        <div className="relative mx-auto flex min-h-full w-full max-w-[480px] flex-col px-[22px] pb-[30px] pt-14">
+          {onClose !== undefined ? (
+            <button
+              type="button"
+              aria-label={t('closeLabel')}
+              onClick={onClose}
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-xl bg-[#F0F2F6]"
+            >
+              <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M6 6l12 12M18 6L6 18" stroke="#5B6B8C" strokeWidth="2.4" strokeLinecap="round" />
+              </svg>
+            </button>
+          ) : null}
+          {stepContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <main className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-white px-[22px] pb-[30px] pt-14 sm:my-6 sm:min-h-[720px] sm:rounded-[32px] sm:shadow-card">
+      {stepContent}
 
       {/* 저장 중 오버레이 (household/budget 단계) */}
       {submitting && !generating ? (

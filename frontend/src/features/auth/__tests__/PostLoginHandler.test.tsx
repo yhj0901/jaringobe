@@ -55,6 +55,13 @@ const GUEST_PLAN: GuestPlan = {
   amount: '500000',
   currency: 'KRW',
   mealDirection: 'health',
+  // 게스트 3스텝 위저드 확장분 — 온보딩 프리필에 그대로 전달되는지 검증 (FR-315)
+  members: [
+    { memberType: 'adult_m', age: 35 },
+    { memberType: 'adult_f', age: 33 },
+  ],
+  cuisines: ['korean'],
+  locked: true,
 };
 
 function seedGuestPlan() {

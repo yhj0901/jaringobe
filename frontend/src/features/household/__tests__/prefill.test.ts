@@ -45,4 +45,42 @@ describe('온보딩 프리필 sessionStorage (FR-315)', () => {
       expect(readOnboardingPrefill()).toBeNull();
     }
   });
+
+  it('확장 필드(members/cuisines/locked) 왕복 — 게스트 위저드 결과 전달 (FR-315)', () => {
+    const extended = {
+      ...PREFILL,
+      members: [
+        { memberType: 'adult_m' as const, age: 35 },
+        { memberType: 'toddler' as const, age: 4 },
+      ],
+      cuisines: ['korean' as const, 'salad' as const],
+      locked: false,
+    };
+    saveOnboardingPrefill(extended);
+    expect(readOnboardingPrefill()).toEqual(extended);
+  });
+
+  it('확장 필드 형식 위반도 전체 폐기한다 — CWE-20', () => {
+    const invalids = [
+      // 유형 열거 위반
+      JSON.stringify({ ...PREFILL, members: [{ memberType: 'alien', age: 5 }] }),
+      // 유형-나이 범위 위반 (유아 0~6)
+      JSON.stringify({ ...PREFILL, members: [{ memberType: 'toddler', age: 30 }] }),
+      // 빈 배열 (1~10명)
+      JSON.stringify({ ...PREFILL, members: [] }),
+      // 10명 초과
+      JSON.stringify({
+        ...PREFILL,
+        members: Array.from({ length: 11 }, () => ({ memberType: 'adult_m', age: 35 })),
+      }),
+      // cuisines 열거 위반
+      JSON.stringify({ ...PREFILL, cuisines: ['korean', 'thai'] }),
+      // locked 타입 위반
+      JSON.stringify({ ...PREFILL, locked: 'yes' }),
+    ];
+    for (const raw of invalids) {
+      window.sessionStorage.setItem(ONBOARDING_PREFILL_SESSION_KEY, raw);
+      expect(readOnboardingPrefill()).toBeNull();
+    }
+  });
 });

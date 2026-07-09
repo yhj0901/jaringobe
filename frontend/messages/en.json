@@ -250,6 +250,8 @@
       "continueCta": "Continue setup"
     },
     "stepIndicator": "STEP {current} / 3",
+    "guestLabel": "Create my budget plan",
+    "closeLabel": "Close",
     "step1": {
       "title1": "Set up your",
       "title2": "household",

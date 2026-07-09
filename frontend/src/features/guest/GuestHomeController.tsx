@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { HomeShell } from '@/features/home/HomeShell';
-import { useGuestStore, type GuestPlan } from '@/features/guest/store';
+import { useGuestStore } from '@/features/guest/store';
 import {
   getDefaultViewModel,
   getSampleViewModel,
@@ -12,7 +12,7 @@ import {
 } from '@/features/guest/sampleMatrix';
 import { useEngagementTiming } from '@/features/guest/useEngagementTiming';
 import { EngagementPrompt } from '@/features/guest/EngagementPrompt';
-import { BudgetDraftFlow } from '@/features/guest/BudgetDraftFlow';
+import { OnboardingWizard } from '@/features/household/OnboardingWizard';
 import { PersistentCtaBanner } from '@/features/guest/PersistentCtaBanner';
 import { AutoOrderPrompt } from '@/features/guest/AutoOrderPrompt';
 import { RevisitPrompt } from '@/features/guest/RevisitPrompt';
@@ -23,6 +23,7 @@ import {
   VISITED_MARKER_KEY,
 } from '@/shared/config/constants';
 import { useRouter, type AppLocale } from '@/i18n/routing';
+import type { OnboardingResult } from '@/features/household/types';
 
 /** 예산안 적용 연출 시간 (FR-105 — 300ms 미만) */
 const APPLY_TRANSITION_MS = 250;
@@ -121,11 +122,12 @@ export function GuestHomeController() {
     setDraftOpen(true);
   };
 
-  const handleComplete = (nextPlan: GuestPlan) => {
+  const handleComplete = (result: OnboardingResult) => {
     // FR-105: 적용 연출(로딩 트랜지션) 후 홈 전체 갱신
+    // OnboardingResult 는 GuestPlan(옵셔널 확장 포함)과 필드 호환 — 그대로 저장
     setDraftOpen(false);
     setApplying(true);
-    setPlan(nextPlan);
+    setPlan(result);
     window.setTimeout(() => setApplying(false), APPLY_TRANSITION_MS);
   };
 
@@ -154,11 +156,14 @@ export function GuestHomeController() {
         onBrowse={() => setRevisitOpen(false)}
       />
       <EngagementPrompt open={promptOpen} onAccept={handleAccept} onDecline={handleDecline} />
-      <BudgetDraftFlow
-        open={draftOpen}
-        onClose={() => setDraftOpen(false)}
-        onComplete={handleComplete}
-      />
+      {/* 게스트 체험도 가입 온보딩과 동일한 3스텝 위저드 사용 (BudgetDraftFlow 대체) */}
+      {draftOpen ? (
+        <OnboardingWizard
+          mode="guest"
+          onComplete={handleComplete}
+          onClose={() => setDraftOpen(false)}
+        />
+      ) : null}
       <AutoOrderPrompt
         open={autoOrderPromptOpen}
         onStart={goLogin}
