@@ -120,6 +120,83 @@
       "kids": "Kid-friendly"
     }
   },
+  "memberHome": {
+    "loading": {
+      "home": "Loading your meal plan…",
+      "title": "Building your budget-fit meal plan",
+      "step1": "Checking your budget and household…",
+      "step2": "Picking ingredients within your budget…",
+      "step3": "Putting your weekly meals together…"
+    },
+    "empty": {
+      "lockLabel": "Budget lock",
+      "title": "Create your meal plan,\nright within budget",
+      "description": "AI prepares a week of meals and recipes that fit your household and budget.",
+      "budgetLabel": "My monthly budget",
+      "cta": "Create my meal plan"
+    },
+    "budgetGate": {
+      "title": "Create a budget plan first",
+      "description": "You need a budget plan before we can build meals that fit your budget.",
+      "cta": "Create a budget plan"
+    },
+    "create": {
+      "title": "Create my meal plan",
+      "daysTitle": "How many days do you need?",
+      "daysLabel": "Plan length",
+      "daysUnit": "{days} days",
+      "daysDecrement": "Decrease days",
+      "daysIncrement": "Increase days",
+      "allergiesLabel": "Allergies (optional)",
+      "allergiesPlaceholder": "e.g. peanuts",
+      "preferencesLabel": "Preferences (optional)",
+      "preferencesPlaceholder": "e.g. Korean food",
+      "add": "Add",
+      "remove": "Remove {item}",
+      "errorTooLong": "Please keep each item under 30 characters.",
+      "errorTooMany": "You can add up to 10 items.",
+      "errorDuplicate": "That item is already added.",
+      "privacyNote": "Allergy info is used only to generate this plan and is never stored.",
+      "submit": "Generate meal plan"
+    },
+    "overBudget": {
+      "title": "This plan is over budget",
+      "description": "Regenerate to fit your meals back within your budget.",
+      "regenerate": "Regenerate within budget"
+    },
+    "regenerateConfirm": {
+      "title": "Regenerate the whole plan?",
+      "description": "Your current plan will be replaced with a new one.",
+      "confirm": "Regenerate",
+      "cancel": "Cancel"
+    },
+    "plan": {
+      "regenerate": "Regenerate"
+    },
+    "locked": {
+      "badge": "Coming soon",
+      "fridgeTitle": "Virtual fridge",
+      "fridgeDescription": "We're preparing a virtual fridge that auto-registers delivered ingredients.",
+      "orderTitle": "Auto grocery orders",
+      "orderDescription": "We're preparing budget-fit automatic grocery ordering.",
+      "notice": "This feature is coming soon!"
+    },
+    "error": {
+      "loadFailed": "We couldn't load your meal plan. Please try again in a moment.",
+      "reload": "Reload",
+      "generateFailed": "Meal plan generation failed. Please try again.",
+      "retry": "Try again",
+      "rateLimited": "Too many requests for now. Please try again in a minute.",
+      "dismiss": "Dismiss"
+    }
+  },
+  "mealplan": {
+    "mealType": {
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner"
+    }
+  },
   "auth": {
     "login": {
       "title": "JARINGOBE",

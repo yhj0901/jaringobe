@@ -1,20 +1,28 @@
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { TrialModeBadge } from '@/features/home/TrialModeBadge';
 import { BudgetMoodCard } from '@/features/home/BudgetMoodCard';
 import { MealPlanSection } from '@/features/home/MealPlanSection';
 import { FridgePreviewCard } from '@/features/home/FridgePreviewCard';
 import { AutoOrderCard } from '@/features/home/AutoOrderCard';
+import { LockedFeatureCard } from '@/features/mealplan/LockedFeatureCard';
 import type { HomeViewModel } from '@/features/home/types';
+
+export type LockedTab = 'meal' | 'fridge' | 'cart';
 
 interface HomeShellProps {
   viewModel: HomeViewModel;
   onAutoOrderStart?: () => void;
   onRecipeClick?: () => void;
-  /** 하단 탭바의 잠긴 탭(식단/냉장고/장바구니) 클릭 — 게스트는 가입 게이트 (FR-109) */
-  onLockedNavClick?: () => void;
+  /** 하단 탭바의 잠긴 탭(식단/냉장고/장바구니) 클릭 — 게스트는 가입 게이트 (FR-109), 회원은 탭별 분기 (FR-208) */
+  onLockedNavClick?: (tab: LockedTab) => void;
+  /** [member 옵셔널 확장] 헤더 아래 배너 슬롯 — 예산 초과/에러 배너 (FR-206) */
+  topSlot?: ReactNode;
+  /** [member 옵셔널 확장] 주간 스트립 일자 이동 (FR-205) */
+  onSelectDate?: (date: string) => void;
+  /** [member 옵셔널 확장] 전체 재생성 버튼 (FR-209) */
+  onRegenerateClick?: () => void;
 }
-
-type LockedTab = 'meal' | 'fridge' | 'cart';
 
 /** 하단 탭바 아이콘 — 디자인 마크업의 인라인 SVG 재사용 */
 function NavIcon({ tab, active }: { tab: 'home' | LockedTab; active: boolean }) {
@@ -91,6 +99,9 @@ export function HomeShell({
   onAutoOrderStart,
   onRecipeClick,
   onLockedNavClick,
+  topSlot,
+  onSelectDate,
+  onRegenerateClick,
 }: HomeShellProps) {
   const t = useTranslations('guestHome');
   const isGuest = viewModel.mode !== 'member';
@@ -118,11 +129,29 @@ export function HomeShell({
           </span>
         </header>
 
+        {topSlot}
+
         <div className="flex flex-col gap-3.5">
           <BudgetMoodCard budgetMood={viewModel.budgetMood} sample={isGuest} />
-          <MealPlanSection weekPlan={viewModel.weekPlan} onRecipeClick={onRecipeClick} />
-          <FridgePreviewCard items={viewModel.fridgePreview} />
-          <AutoOrderCard autoOrder={viewModel.autoOrder} onStart={onAutoOrderStart} />
+          <MealPlanSection
+            weekPlan={viewModel.weekPlan}
+            onRecipeClick={onRecipeClick}
+            selectedDate={viewModel.selectedDate}
+            onSelectDate={onSelectDate}
+            onRegenerate={onRegenerateClick}
+          />
+          {isGuest ? (
+            <>
+              <FridgePreviewCard items={viewModel.fridgePreview} />
+              <AutoOrderCard autoOrder={viewModel.autoOrder} onStart={onAutoOrderStart} />
+            </>
+          ) : (
+            <>
+              {/* FR-208: 회원에게는 냉장고/자동주문을 "준비 중" 잠금 카드로 표시 (게스트 샘플 노출 금지) */}
+              <LockedFeatureCard feature="fridge" />
+              <LockedFeatureCard feature="order" />
+            </>
+          )}
         </div>
       </main>
 
@@ -145,7 +174,7 @@ export function HomeShell({
           <button
             key={tab}
             type="button"
-            onClick={onLockedNavClick}
+            onClick={() => onLockedNavClick?.(tab)}
             className="flex flex-1 flex-col items-center gap-1"
           >
             <NavIcon tab={tab} active={false} />
