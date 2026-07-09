@@ -1,0 +1,5 @@
+# api.jaringobe.cloud — 자동 TLS(Let's Encrypt) + 백엔드 리버스 프록시
+# 80/443 인바운드 개방 필요 (ACME 발급·갱신 포함)
+api.jaringobe.cloud {
+	reverse_proxy backend:8000
+}
