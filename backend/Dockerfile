@@ -10,6 +10,10 @@ COPY pyproject.toml ./
 COPY app ./app
 RUN uv pip install --system .
 
+# Alembic 마이그레이션 (앱 패키지 외 — 설치 후 복사)
+COPY alembic.ini ./
+COPY alembic ./alembic
+
 EXPOSE 8000
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
