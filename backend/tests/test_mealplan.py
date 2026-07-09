@@ -107,3 +107,96 @@ async def test_mealplan_not_found(client, respx_mock):
     await _create_budget(client)
     res = await client.get("/api/v1/mealplans/00000000-0000-0000-0000-000000000000")
     assert res.status_code == 404
+
+
+async def test_latest_mealplan_returns_most_recent(client, respx_mock):
+    await login(client, respx_mock)
+    await _create_budget(client)
+    first_id = (
+        await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 2})
+    ).json()["id"]
+    second_id = (
+        await client.post("/api/v1/mealplans", json={"days": 2, "mealsPerDay": 2})
+    ).json()["id"]
+    assert first_id != second_id
+
+    res = await client.get("/api/v1/mealplans/latest")
+    assert res.status_code == 200, res.text  # /latest 가 {plan_id}(uuid) 로 파싱되면 422 → 순서 검증
+    assert res.json()["id"] == second_id
+
+
+async def test_latest_mealplan_empty_dedicated_code(client, respx_mock):
+    await login(client, respx_mock)
+    await _create_budget(client)
+    res = await client.get("/api/v1/mealplans/latest")
+    assert res.status_code == 404
+    # {id} 조회의 generic NOT_FOUND 와 구분되는 전용 코드 (프론트 빈 상태 분기)
+    assert res.json()["detail"]["code"] == "MEALPLAN_NOT_FOUND"
+
+
+async def test_latest_mealplan_scoped_to_user(client, respx_mock):
+    await login(client, respx_mock, provider_user_id="kakao-1", email="a@example.com")
+    await _create_budget(client)
+    res = await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 2})
+    assert res.status_code == 201
+
+    # 다른 유저로 재로그인 → 타인 플랜 미노출 (404 전용 코드)
+    await login(client, respx_mock, provider_user_id="kakao-2", email="b@example.com")
+    await _create_budget(client)
+    res = await client.get("/api/v1/mealplans/latest")
+    assert res.status_code == 404
+    assert res.json()["detail"]["code"] == "MEALPLAN_NOT_FOUND"
+
+
+async def test_latest_mealplan_requires_auth(client):
+    res = await client.get("/api/v1/mealplans/latest")
+    assert res.status_code == 401
+    assert res.json()["detail"]["code"] == "AUTH_REQUIRED"
+
+
+@pytest.mark.parametrize("field", ["allergies", "preferences"])
+async def test_mealplan_pref_item_too_long_422(client, respx_mock, field):
+    await login(client, respx_mock)
+    await _create_budget(client)
+    res = await client.post(
+        "/api/v1/mealplans", json={"days": 1, "mealsPerDay": 1, field: ["a" * 31]}
+    )
+    assert res.status_code == 422
+
+
+@pytest.mark.parametrize("field", ["allergies", "preferences"])
+async def test_mealplan_pref_list_too_many_422(client, respx_mock, field):
+    await login(client, respx_mock)
+    await _create_budget(client)
+    res = await client.post(
+        "/api/v1/mealplans", json={"days": 1, "mealsPerDay": 1, field: [f"x{i}" for i in range(11)]}
+    )
+    assert res.status_code == 422
+
+
+async def test_mealplan_pref_limits_boundary_ok(client, respx_mock):
+    await login(client, respx_mock)
+    await _create_budget(client)
+    res = await client.post(
+        "/api/v1/mealplans",
+        json={
+            "days": 1,
+            "mealsPerDay": 1,
+            "allergies": ["a" * 30] + [f"x{i}" for i in range(9)],  # 30자 · 10개 경계값
+            "preferences": [f"p{i}" for i in range(10)],
+        },
+    )
+    assert res.status_code == 201
+
+
+async def test_regenerate_pref_limits_422(client, respx_mock):
+    await login(client, respx_mock)
+    await _create_budget(client)
+    plan_id = (
+        await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 1})
+    ).json()["id"]
+    res = await client.post(
+        f"/api/v1/mealplans/{plan_id}/regenerate",
+        json={"scope": "all", "allergies": ["a" * 31]},
+    )
+    assert res.status_code == 422
