@@ -34,6 +34,8 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
     # 공인망 직접 노출 없음 — caddy(https)가 유일한 진입점. 서버 내 디버깅용 localhost 만 바인딩
     ports:
       - "127.0.0.1:8000:8000"
