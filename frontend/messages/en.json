@@ -1,0 +1,151 @@
+{
+  "metadata": {
+    "home": {
+      "title": "JARINGOBE — Meal plans and groceries, automatically within budget",
+      "description": "Auto-generate meal plans within your budget lock and bring food waste to zero with a virtual fridge. Start smarter grocery living with JARINGOBE."
+    },
+    "login": {
+      "title": "Sign in — JARINGOBE",
+      "description": "Get started in seconds with your Google or Kakao account."
+    }
+  },
+  "common": {
+    "error": {
+      "fallback": "Something went wrong. Please try again in a moment."
+    }
+  },
+  "guestHome": {
+    "brand": "JARINGOBE",
+    "trialBadge": {
+      "label": "Trial mode"
+    },
+    "sampleLabel": "Sample",
+    "applying": "Applying your budget plan…",
+    "budgetMood": {
+      "title": "This month's budget mood",
+      "remaining": "Remaining",
+      "saved": "Saved",
+      "wastePrevented": "Waste prevented"
+    },
+    "mealPlan": {
+      "title": "This week's meals",
+      "weekStrip": "Weekly plan days",
+      "day": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
+    },
+    "meal": {
+      "slot": {
+        "breakfast": "Breakfast",
+        "lunch": "Lunch",
+        "dinner": "Dinner"
+      },
+      "viewRecipe": "View full recipe"
+    },
+    "fridge": {
+      "title": "Virtual fridge",
+      "expiryBanner": "Some ingredients are expiring soon. Use them first!",
+      "expiresIn": "{days}d left"
+    },
+    "autoOrder": {
+      "title": "Auto grocery orders",
+      "statusActive": "Ready",
+      "statusInactive": "Standby",
+      "descriptionActive": "Your budget-fit grocery list is ready. Orders can be placed automatically at connected stores.",
+      "descriptionInactive": "Create a budget plan and we'll prepare automatic orders that fit your budget.",
+      "storesLabel": "Connected stores",
+      "recommendedLabel": "Recommended this week",
+      "startCta": "Get started"
+    },
+    "prompt": {
+      "title": "Would you like to create a budget plan?",
+      "accept": "Yes",
+      "decline": "No"
+    },
+    "cta": {
+      "banner": "Try creating a budget plan"
+    },
+    "autoOrderPrompt": {
+      "title": "Ready to start auto ordering?",
+      "description": "Get budget-fit groceries delivered automatically every week. Sign in to get started.",
+      "start": "Get started",
+      "later": "Later"
+    }
+  },
+  "budgetDraft": {
+    "title": "Create my budget plan",
+    "closeLabel": "Close",
+    "stepIndicator": "Step {step} of {total}",
+    "back": "Back",
+    "next": "Next",
+    "step1": {
+      "title": "How many people are eating together?",
+      "label": "Household size",
+      "decrement": "Decrease household size",
+      "increment": "Increase household size"
+    },
+    "step2": {
+      "title": "What's your monthly food budget?",
+      "presetsLabel": "Budget presets",
+      "customLabel": "Custom amount (USD)",
+      "customPlaceholder": "e.g. 450",
+      "invalidRange": "Please enter an amount between $50 and $5,000."
+    },
+    "step3": {
+      "title": "What kind of meals do you want?"
+    },
+    "direction": {
+      "health": "Healthy",
+      "diet": "Diet",
+      "hearty": "Hearty",
+      "kids": "Kid-friendly"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "JARINGOBE",
+      "slogan": "GO BE SMART, SAVE BIG.",
+      "kakao": "Continue with Kakao",
+      "google": "Continue with Google",
+      "apple": "Continue with Apple",
+      "terms": "By continuing, you agree to our Terms of Service and Privacy Policy.",
+      "retryHint": "You can try again with the buttons below."
+    },
+    "error": {
+      "AUTH_PROVIDER_DENIED": "Sign-in consent was cancelled. Please try again.",
+      "AUTH_INVALID_STATE": "The sign-in request expired. Please try again.",
+      "AUTH_PROVIDER_ERROR": "The sign-in provider had an issue. Please try again shortly.",
+      "AUTH_REQUIRED": "Sign-in is required.",
+      "AUTH_TOKEN_REVOKED": "You were signed out for security. Please sign in again.",
+      "FORBIDDEN_ORIGIN": "This request is not allowed.",
+      "VALIDATION_ERROR": "The input is not valid.",
+      "RATE_LIMITED": "Too many requests. Please try again shortly.",
+      "BUDGET_PLAN_EXISTS": "You already have a budget plan.",
+      "PROVIDER_NOT_SUPPORTED": "This sign-in method is not supported yet."
+    },
+    "notice": {
+      "AUTH_EMAIL_CONFLICT_NOTICE": "An account with this email already exists via another social provider. This sign-in created a separate account."
+    },
+    "gate": {
+      "title": "Sign in to save your progress",
+      "description": "Sign in to check off meals, view full recipes, and unlock every feature.",
+      "loginCta": "Sign in",
+      "later": "Later"
+    }
+  },
+  "onboarding": {
+    "title": "Household setup",
+    "stub": "Household onboarding is coming soon.",
+    "imported": {
+      "title": "Your budget plan has been moved to your account!",
+      "description": "The plan you created in trial mode is now applied. Start budget-fit meal planning right away.",
+      "homeCta": "Go home"
+    }
+  }
+}
