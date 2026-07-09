@@ -35,3 +35,18 @@ export interface BudgetPlanUpsertRequest {
   locked: boolean;
   cuisines: Cuisine[];
 }
+
+/**
+ * 위저드 완료 결과 — guest 모드 onComplete 콜백 페이로드 (서버 호출 없음).
+ * member 모드는 위저드가 직접 저장(FR-314)하므로 사용하지 않는다.
+ */
+export interface OnboardingResult {
+  members: HouseholdMemberInput[];
+  householdSize: number;
+  /** 금액 문자열 (Decimal — float 금지) */
+  amount: string;
+  currency: Money['currency'];
+  locked: boolean;
+  cuisines: Cuisine[];
+  mealDirection: MealDirection;
+}

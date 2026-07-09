@@ -6,6 +6,7 @@ import {
   GUEST_TTL_MS,
 } from '@/shared/config/constants';
 import type { MealDirection, Money } from '@/shared/api/types';
+import type { Cuisine, HouseholdMemberInput } from '@/features/household/types';
 
 /**
  * 게스트 상태 (FR-107) — localStorage 30일 보관, PII/토큰 저장 금지 (CWE-922).
@@ -17,6 +18,14 @@ export interface GuestPlan {
   amount: string;
   currency: Money['currency'];
   mealDirection: MealDirection;
+  /**
+   * 게스트 3스텝 위저드 확장 (옵셔널) — 기존 4필드 저장분과 로드 호환이므로
+   * GUEST_SCHEMA_VERSION 은 올리지 않는다 (마이그레이션 불필요).
+   * 가입 이전(POST /budget/plans)은 기존 4필드만 전송 — 확장분은 온보딩 프리필 전용.
+   */
+  members?: HouseholdMemberInput[];
+  cuisines?: Cuisine[];
+  locked?: boolean;
 }
 
 interface GuestStateData {

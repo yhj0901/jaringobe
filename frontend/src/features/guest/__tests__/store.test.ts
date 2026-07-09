@@ -95,3 +95,56 @@ describe('게스트 스토어 (FR-107)', () => {
     expect(Object.keys(parsed.state).sort()).toEqual(['plan', 'promptHistory', 'savedAt']);
   });
 });
+
+describe('게스트 스토어 — 3스텝 위저드 확장 필드 (스키마 하위 호환)', () => {
+  beforeEach(resetStore);
+
+  const EXTENDED_PLAN: GuestPlan = {
+    ...SAMPLE_PLAN,
+    members: [
+      { memberType: 'adult_m', age: 35 },
+      { memberType: 'adult_f', age: 33 },
+      { memberType: 'child', age: 9 },
+      { memberType: 'child', age: 7 },
+    ],
+    cuisines: ['korean', 'salad'],
+    locked: true,
+  };
+
+  it('members/cuisines/locked 확장분이 localStorage 에 함께 저장된다', () => {
+    useGuestStore.getState().setPlan(EXTENDED_PLAN);
+    const parsed = JSON.parse(window.localStorage.getItem(GUEST_STORAGE_KEY) as string) as {
+      state: { plan: GuestPlan };
+    };
+    expect(parsed.state.plan).toEqual(EXTENDED_PLAN);
+  });
+
+  it('확장분 포함 저장분이 rehydrate 로 복원된다', async () => {
+    window.localStorage.setItem(
+      GUEST_STORAGE_KEY,
+      JSON.stringify({
+        state: { plan: EXTENDED_PLAN, promptHistory: {}, savedAt: new Date().toISOString() },
+        version: GUEST_SCHEMA_VERSION,
+      }),
+    );
+    await useGuestStore.persist.rehydrate();
+    expect(useGuestStore.getState().plan).toEqual(EXTENDED_PLAN);
+  });
+
+  it('기존 4필드 저장분(구버전 데이터)도 버전 마이그레이션 없이 로드된다', async () => {
+    // 확장 필드 없는 기존 형식 그대로 seed — 동일 GUEST_SCHEMA_VERSION
+    window.localStorage.setItem(
+      GUEST_STORAGE_KEY,
+      JSON.stringify({
+        state: { plan: SAMPLE_PLAN, promptHistory: {}, savedAt: new Date().toISOString() },
+        version: GUEST_SCHEMA_VERSION,
+      }),
+    );
+    await useGuestStore.persist.rehydrate();
+    const plan = useGuestStore.getState().plan;
+    expect(plan).toEqual(SAMPLE_PLAN);
+    expect(plan?.members).toBeUndefined();
+    expect(plan?.cuisines).toBeUndefined();
+    expect(plan?.locked).toBeUndefined();
+  });
+});

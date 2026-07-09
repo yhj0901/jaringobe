@@ -250,6 +250,8 @@
       "continueCta": "설정 이어서 하기"
     },
     "stepIndicator": "STEP {current} / 3",
+    "guestLabel": "내 예산안 만들기",
+    "closeLabel": "닫기",
     "step1": {
       "title1": "가구 구성원을",
       "title2": "설정하세요",

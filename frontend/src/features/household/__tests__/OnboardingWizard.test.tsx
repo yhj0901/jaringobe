@@ -374,6 +374,114 @@ describe('OnboardingWizard 프리필·이전 확인 화면 (FR-108/315)', () => 
   });
 });
 
+describe('OnboardingWizard guest 모드 — 게스트 체험 플로우 (서버 호출 없음)', () => {
+  it('3스텝 완료 → onComplete 로 결과 반환, API·라우팅·생성 로딩 없음', () => {
+    const onComplete = vi.fn();
+    renderWithIntl(<OnboardingWizard mode="guest" onComplete={onComplete} />);
+
+    // 오버레이 다이얼로그 + 동일한 STEP 문구
+    expect(screen.getByRole('dialog', { name: '내 예산안 만들기' })).toBeInTheDocument();
+    expect(screen.getByText('STEP 1 / 3')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '3인' }));
+    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    fireEvent.change(screen.getByRole('slider', { name: '월 예산' }), {
+      target: { value: '500000' },
+    });
+    fireEvent.click(screen.getByRole('switch', { name: '예산 락' }));
+    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    fireEvent.click(screen.getByRole('button', { name: '한식' }));
+    fireEvent.click(screen.getByRole('radio', { name: /다이어트 위주/ }));
+    fireEvent.click(screen.getByRole('button', { name: '이 조건으로 식단 짜기' }));
+
+    expect(onComplete).toHaveBeenCalledWith({
+      members: [
+        { memberType: 'adult_m', age: 35 },
+        { memberType: 'adult_f', age: 33 },
+        { memberType: 'child', age: 9 },
+      ],
+      householdSize: 3,
+      amount: '500000',
+      currency: 'KRW',
+      locked: false,
+      cuisines: ['korean'],
+      mealDirection: 'diet',
+    });
+
+    // 서버 호출·라우팅·생성 로딩 일절 없음
+    expect(householdMock).not.toHaveBeenCalled();
+    expect(budgetMock).not.toHaveBeenCalled();
+    expect(mealplanMock).not.toHaveBeenCalled();
+    expect(routerMock.replace).not.toHaveBeenCalled();
+    expect(screen.queryByText('예산에 맞는 식단을 만들고 있어요')).not.toBeInTheDocument();
+  });
+
+  it('닫기 버튼 → onClose (onClose 없으면 버튼 미노출)', () => {
+    const onClose = vi.fn();
+    const { unmount } = renderWithIntl(
+      <OnboardingWizard mode="guest" onComplete={vi.fn()} onClose={onClose} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '닫기' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    unmount();
+
+    renderWithIntl(<OnboardingWizard mode="guest" onComplete={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: '닫기' })).not.toBeInTheDocument();
+  });
+
+  it('guest 모드는 온보딩 세션 프리필을 읽지 않는다', () => {
+    saveOnboardingPrefill({
+      householdSize: 4,
+      amount: '700000',
+      currency: 'KRW',
+      mealDirection: 'hearty',
+    });
+    renderWithIntl(<OnboardingWizard mode="guest" onComplete={vi.fn()} />);
+    // 프리필 무시 — 기본 2인
+    expect(screen.getByText('2인 가구')).toBeInTheDocument();
+  });
+});
+
+describe('OnboardingWizard 확장 프리필 — 게스트 위저드 결과 복원 (FR-315)', () => {
+  it('members/cuisines/locked 확장분까지 3스텝 전부 프리필한다', async () => {
+    saveOnboardingPrefill({
+      householdSize: 2,
+      amount: '300000',
+      currency: 'KRW',
+      mealDirection: 'diet',
+      members: [
+        { memberType: 'adult_f', age: 40 },
+        { memberType: 'teen', age: 14 },
+      ],
+      cuisines: ['japanese'],
+      locked: false,
+    });
+    renderWithIntl(<OnboardingWizard />);
+
+    // STEP1: 구성원 유형·나이 그대로 복원 (프리셋 아님)
+    await screen.findByText('성인 여성');
+    expect(screen.getByText('청소년')).toBeInTheDocument();
+    expect(screen.getByText('40세')).toBeInTheDocument();
+    expect(screen.getByText('14세')).toBeInTheDocument();
+
+    goToStep2();
+    // STEP2: 금액 + 락 해제 상태 복원
+    expect(screen.getByRole('slider', { name: '월 예산' })).toHaveValue('300000');
+    expect(screen.getByRole('switch', { name: '예산 락' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    // STEP3: 음식·방향 복원
+    expect(screen.getByRole('button', { name: '일식' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('radio', { name: /다이어트 위주/ })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+  });
+});
+
 describe('OnboardingWizard 로캘 통화 (글로벌)', () => {
   it('en 로캘 → USD 기준 슬라이더($60/$100/$170 × 인원)', () => {
     renderWithIntl(<OnboardingWizard />, 'en');
