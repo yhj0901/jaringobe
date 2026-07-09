@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-07-09T15:40:08+09:00",
+  "session_topic": "Vercel 프론트 배포 완료 (v0.1.0 게스트 홈 라이브)",
+  "command": "(오케스트레이터 직접) Vercel 연동",
+  "agent": "agents/infra.md (배포 에이전트 역할)",
+  "status": "https://jaringobe.vercel.app 프로덕션 라이브. GitHub main 푸시 자동 배포 연결됨. BACKEND_URL 미설정(백엔드 미배포)",
+  "tasks": [
+    {"id": 1, "subject": "PR #3/#4 main 머지 (v0.1.0)", "status": "completed"},
+    {"id": 2, "subject": "Vercel CLI 로그인(사용자) + 프로젝트 jaringobe 생성·GitHub 연결·rootDirectory=frontend", "status": "completed"},
+    {"id": 3, "subject": "프로덕션 배포 + 동작 확인 (/→/ko 307, /ko 200, 체험 모드 렌더)", "status": "completed"},
+    {"id": 4, "subject": "서버(121.78.130.230) 백엔드+DB 배포 후 Vercel env BACKEND_URL 설정 → 소셜 로그인 활성화", "status": "pending"}
+  ],
+  "artifacts": ["https://jaringobe.vercel.app (팀 yhj0901s-projects, 프로젝트 jaringobe)"],
+  "key_findings": "게스트 홈은 서버 없이 완전 동작(정적 매트릭스 설계 덕분). 소셜 로그인은 BACKEND_URL 미설정으로 프로덕션에서 아직 비활성 — 백엔드 https 배포 후 Vercel env 설정 + 백엔드 .env(FRONTEND_ORIGIN=https://jaringobe.vercel.app, COOKIE_SECURE=true) + provider 콘솔 콜백 URL 등록 필요. vercel link 가 .gitignore 2개 수정(미커밋, .vercel/.env.local 제외 추가). 이후 main 푸시는 자동 배포됨.",
+  "recommended_actions": ".gitignore 변경 커밋(다음 커밋에 포함). ③ /인프라시작 으로 서버 배포(docker compose backend+db, https 리버스 프록시/도메인 필요 여부 결정) → TS-13 실 OAuth 테스트.",
+  "pending_user_input": "서버 배포(③) 진행 여부"
+}

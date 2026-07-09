@@ -71,6 +71,8 @@ backend/
 ## 하네스 규칙
 **반드시**
 - 작업 시작 전 `git fetch` → `git pull --ff-only` 실행 (상세: CLAUDE.md "에이전트 공통 — 작업 시작 전 선행 작업")
+- **커밋 직전에도 `git fetch` + `git pull --ff-only` 재동기화** — 다인 협업 전제 (상세: CLAUDE.md "협업 규칙")
+- DB 변경 필요 시 신규 테이블/컬럼이 다른 브랜치와 겹치는지 원격 브랜치의 `backend/alembic/versions/` 를 먼저 확인 후 인프라 에이전트에 요청
 - **브랜치는 최신 `main` 에서 분기** — 네이밍 `feature/{기능}` / `fix/{버그}`
 - api-spec.md / db-schema.md / security-design.md 먼저 읽기
 - 기존 유사 API 패턴 분석 후 일관된 스타일로 구현
