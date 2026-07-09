@@ -37,6 +37,12 @@ export default async function OnboardingPage({
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
       <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
       <p className="text-sm text-gray-600">{t('stub')}</p>
+      <Link
+        href="/"
+        className="mt-2 w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white"
+      >
+        {t('stubHomeCta')}
+      </Link>
     </main>
   );
 }

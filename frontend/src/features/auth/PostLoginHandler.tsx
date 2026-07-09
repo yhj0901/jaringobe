@@ -48,11 +48,8 @@ export function PostLoginHandler() {
       const action = resolvePostLoginAction(me.data, guestPlan !== undefined);
 
       if (action === 'stay') {
+        // 예산안 없어도 홈 유지 — member 홈의 BudgetPlanGate 가 작성 흐름 처리 (FR-207)
         router.replace(pathname);
-        return;
-      }
-      if (action === 'go-onboarding') {
-        router.push('/onboarding');
         return;
       }
 
@@ -67,9 +64,9 @@ export function PostLoginHandler() {
         useGuestStore.getState().clearGuestData();
         router.replace(pathname);
       } else if (result === 'invalid') {
-        // 변조 의심 — 게스트 값 폐기 후 일반 온보딩
+        // 변조 의심 — 게스트 값 폐기 후 홈 유지 (BudgetPlanGate 가 재작성 처리)
         useGuestStore.getState().clearGuestData();
-        router.push('/onboarding');
+        router.replace(pathname);
       } else {
         setFailed(true);
       }

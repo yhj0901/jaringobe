@@ -12,6 +12,7 @@ describe('resolvePostLoginAction (ui-design 5장, FR-108)', () => {
   });
 
   it('hasBudgetPlan=false + 게스트 플랜 없음 → 온보딩', () => {
-    expect(resolvePostLoginAction({ hasBudgetPlan: false }, false)).toBe('go-onboarding');
+    // FR-207: 예산안 없어도 홈 유지 — member 홈 BudgetPlanGate 가 처리
+    expect(resolvePostLoginAction({ hasBudgetPlan: false }, false)).toBe('stay');
   });
 });

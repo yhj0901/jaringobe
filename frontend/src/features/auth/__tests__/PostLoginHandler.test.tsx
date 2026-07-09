@@ -98,10 +98,11 @@ describe('PostLoginHandler (ui-design 5장)', () => {
     expect(importGuestPlan).not.toHaveBeenCalled();
   });
 
-  it('게스트 플랜 없음 → /onboarding 이동', async () => {
+  it('게스트 플랜 없음 → 홈 유지 (BudgetPlanGate 가 처리, FR-207)', async () => {
     mockMe({ hasBudgetPlan: false });
     renderHandler('login=success');
-    await waitFor(() => expect(routerMock.push).toHaveBeenCalledWith('/onboarding'));
+    await waitFor(() => expect(routerMock.replace).toHaveBeenCalled());
+    expect(routerMock.push).not.toHaveBeenCalledWith('/onboarding');
   });
 
   it('이전 성공(201) → 로컬 삭제 + 확인 화면 이동 (FR-108)', async () => {
@@ -133,7 +134,8 @@ describe('PostLoginHandler (ui-design 5장)', () => {
     vi.mocked(importGuestPlan).mockResolvedValue('invalid');
     renderHandler('login=success');
 
-    await waitFor(() => expect(routerMock.push).toHaveBeenCalledWith('/onboarding'));
+    await waitFor(() => expect(routerMock.replace).toHaveBeenCalled());
+    expect(routerMock.push).not.toHaveBeenCalledWith('/onboarding');
     expect(useGuestStore.getState().plan).toBeUndefined();
   });
 
