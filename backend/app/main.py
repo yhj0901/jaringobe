@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from app.api.v1 import budget, household, mealplan
 from app.core.config import get_settings
 from app.core.db import engine
 
@@ -18,6 +19,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(household.router)
+app.include_router(budget.router)
+app.include_router(mealplan.router)
 
 
 @app.get("/health", tags=["meta"])
