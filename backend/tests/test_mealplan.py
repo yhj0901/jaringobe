@@ -200,3 +200,22 @@ async def test_regenerate_pref_limits_422(client, respx_mock):
         json={"scope": "all", "allergies": ["a" * 31]},
     )
     assert res.status_code == 422
+
+
+async def test_create_meal_plan_llm_failure_falls_back(client, respx_mock, monkeypatch):
+    """LLM 예외(타임아웃 등)는 5xx 가 아니라 규칙 기반 폴백으로 201 (api-spec v1.1 §3-2)."""
+    from app.domains.mealplan import generator as gen_mod
+
+    class _FailingLLM:
+        enabled = True
+
+        async def complete_json(self, *a, **k):
+            raise TimeoutError("simulated LLM timeout")
+
+    monkeypatch.setattr(gen_mod, "get_llm", lambda: _FailingLLM())
+    await login(client, respx_mock)
+    assert (await _create_budget(client)).status_code == 201
+
+    res = await client.post("/api/v1/mealplans", json={"days": 3, "mealsPerDay": 3})
+    assert res.status_code == 201, res.text
+    assert len(res.json()["meals"]) == 9
