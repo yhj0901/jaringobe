@@ -147,7 +147,8 @@ describe('GuestHomeController', () => {
     expect(screen.queryByText('자동주문을 시작해볼까요?')).not.toBeInTheDocument();
   });
 
-  it('전체 조리법 보기 → 가입 게이트 모달 → 로그인 이동 (FR-109)', async () => {
+  it('예산안 있는 게스트의 전체 조리법 보기 → 가입 게이트 모달 → 로그인 이동 (FR-109)', async () => {
+    seedPlan(GUEST_PLAN, new Date().toISOString());
     await renderController();
     fireEvent.click(screen.getAllByRole('button', { name: '전체 조리법 보기' })[0] as HTMLElement);
     expect(screen.getByText('저장하려면 로그인이 필요해요')).toBeInTheDocument();
@@ -160,5 +161,22 @@ describe('GuestHomeController', () => {
     await renderController();
     fireEvent.click(screen.getByRole('button', { name: '시작하기' }));
     expect(routerMock.push).toHaveBeenCalledWith('/login?next=/');
+  });
+
+  it('예산안 없을 때 잠긴 탭 클릭 → 가입 게이트 대신 예산안 작성 플로우가 열린다', async () => {
+    await renderController();
+    const fridgeTab = screen.getByRole('button', { name: '냉장고' });
+    fireEvent.click(fridgeTab);
+    // BudgetDraftFlow 1단계(인원) 노출, 가입 게이트 문구는 없음
+    expect(screen.getByText('몇 명이 함께 식사하나요?')).toBeInTheDocument();
+    expect(screen.queryByText('저장하려면 로그인이 필요해요')).not.toBeInTheDocument();
+  });
+
+  it('예산안 있을 때 잠긴 탭 클릭 → 가입 게이트가 열린다', async () => {
+    seedPlan(GUEST_PLAN, new Date().toISOString());
+    await renderController();
+    const fridgeTab = screen.getByRole('button', { name: '냉장고' });
+    fireEvent.click(fridgeTab);
+    expect(screen.getByText('저장하려면 로그인이 필요해요')).toBeInTheDocument();
   });
 });

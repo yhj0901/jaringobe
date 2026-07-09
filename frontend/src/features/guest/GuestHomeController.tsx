@@ -84,6 +84,17 @@ export function GuestHomeController() {
     router.push('/login?next=/');
   };
 
+  // 진입 철학: 예산 짜보기가 항상 로그인보다 먼저 (로그인은 자동주문 시점에만)
+  // 예산안 미작성 게스트의 잠긴 기능 클릭 → 가입 게이트 대신 예산안 작성 유도
+  const gateOrDraft = () => {
+    if (!plan) {
+      setPromptOpen(false);
+      setDraftOpen(true);
+    } else {
+      setGateOpen(true);
+    }
+  };
+
   const handleDecline = () => {
     // FR-103: 세션 내 재노출 금지 + 상시 CTA 배너 대체
     window.sessionStorage.setItem(PROMPT_DECLINED_SESSION_KEY, '1');
@@ -120,8 +131,8 @@ export function GuestHomeController() {
       <HomeShell
         viewModel={viewModel}
         onAutoOrderStart={goLogin}
-        onRecipeClick={() => setGateOpen(true)}
-        onLockedNavClick={() => setGateOpen(true)}
+        onRecipeClick={gateOrDraft}
+        onLockedNavClick={gateOrDraft}
       />
       <EngagementPrompt open={promptOpen} onAccept={handleAccept} onDecline={handleDecline} />
       <BudgetDraftFlow
