@@ -1,9 +1,13 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
+from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.db import engine
+from app.core.errors import ApiError, api_error_handler, error_body, validation_error_handler
+from app.core.ratelimit import auth_ip_limiter
 
 app = FastAPI(
     title="JARINGOBE API",
@@ -11,13 +15,45 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# 프론트(Next.js) 연동용 CORS — 개발 단계 전체 허용, 배포 시 도메인 제한
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS 미허용(기본 차단) — 프론트는 Next.js rewrites 프록시로 동일 오리진 호출 (security-design.md §3)
+
+app.add_exception_handler(ApiError, api_error_handler)
+app.add_exception_handler(RequestValidationError, validation_error_handler)
+
+_STATE_CHANGING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+@app.middleware("http")
+async def verify_origin(request: Request, call_next) -> Response:
+    """상태 변경 메서드의 Origin 헤더 검증 — CSRF 이중 방어 (CWE-352).
+
+    Origin 이 존재하는데 FRONTEND_ORIGIN 과 불일치하면 403 FORBIDDEN_ORIGIN.
+    (비브라우저 클라이언트는 Origin 미전송 — SameSite=Lax 가 1차 방어)
+    """
+    if request.method in _STATE_CHANGING_METHODS:
+        origin = request.headers.get("origin")
+        if origin is not None and origin != get_settings().frontend_origin:
+            return JSONResponse(
+                status_code=403,
+                content=error_body("FORBIDDEN_ORIGIN", "Origin header mismatch"),
+            )
+    return await call_next(request)
+
+
+@app.middleware("http")
+async def rate_limit_auth(request: Request, call_next) -> Response:
+    """/api/v1/auth/* IP 기준 10회/분 (CWE-307)."""
+    if request.url.path.startswith("/api/v1/auth/"):
+        client_ip = request.client.host if request.client else "unknown"
+        if not auth_ip_limiter.allow(client_ip):
+            return JSONResponse(
+                status_code=429,
+                content=error_body("RATE_LIMITED", "Too many auth requests"),
+            )
+    return await call_next(request)
+
+
+app.include_router(api_router)
 
 
 @app.get("/health", tags=["meta"])

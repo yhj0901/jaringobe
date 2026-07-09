@@ -12,6 +12,8 @@ dependencies = [
     "pydantic-settings>=2.3",
     "alembic>=1.13",
     "anthropic>=0.39",
+    "pyjwt>=2.13.0",
+    "httpx>=0.28.1",
 ]
 
 [dependency-groups]
@@ -21,6 +23,8 @@ dev = [
     "httpx>=0.27",
     "ruff>=0.6",
     "mypy>=1.11",
+    "pytest-cov>=7.1.0",
+    "respx>=0.23.1",
 ]
 
 [build-system]
@@ -36,3 +40,9 @@ line-length = 100
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+source = ["app"]
+# SQLAlchemy async 는 내부적으로 greenlet 스위칭을 사용 — 미지정 시 await 이후 라인 누락
+concurrency = ["greenlet", "thread"]

@@ -1,0 +1,151 @@
+{
+  "metadata": {
+    "home": {
+      "title": "자린고비 — 예산 안에서 식단과 장보기를 자동으로",
+      "description": "예산 락 안에서 식단을 자동 생성하고, 가상 냉장고로 버려지는 식재료를 0으로. 자린고비와 함께 알뜰한 식생활을 시작하세요."
+    },
+    "login": {
+      "title": "로그인 — 자린고비",
+      "description": "카카오·구글 계정으로 3초 만에 시작하세요."
+    }
+  },
+  "common": {
+    "error": {
+      "fallback": "일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
+    }
+  },
+  "guestHome": {
+    "brand": "자린고비",
+    "trialBadge": {
+      "label": "체험 모드"
+    },
+    "sampleLabel": "예시",
+    "applying": "예산안을 적용하고 있어요…",
+    "budgetMood": {
+      "title": "이번 달 예산 무드",
+      "remaining": "남은 예산",
+      "saved": "절약",
+      "wastePrevented": "폐기 절감"
+    },
+    "mealPlan": {
+      "title": "이번 주 식단",
+      "weekStrip": "주간 식단 요일",
+      "day": {
+        "mon": "월",
+        "tue": "화",
+        "wed": "수",
+        "thu": "목",
+        "fri": "금",
+        "sat": "토",
+        "sun": "일"
+      }
+    },
+    "meal": {
+      "slot": {
+        "breakfast": "아침",
+        "lunch": "점심",
+        "dinner": "저녁"
+      },
+      "viewRecipe": "전체 조리법 보기"
+    },
+    "fridge": {
+      "title": "가상 냉장고",
+      "expiryBanner": "유통기한이 임박한 재료가 있어요. 먼저 사용해 보세요!",
+      "expiresIn": "{days}일 남음"
+    },
+    "autoOrder": {
+      "title": "식재료 자동주문",
+      "statusActive": "준비 완료",
+      "statusInactive": "대기 중",
+      "descriptionActive": "예산안에 맞춘 장보기 목록이 준비됐어요. 연동 마트에서 자동으로 주문할 수 있어요.",
+      "descriptionInactive": "예산안을 만들면 예산에 맞춘 자동주문을 준비해 드려요.",
+      "storesLabel": "연동 마트",
+      "recommendedLabel": "이번 주 주문 추천",
+      "startCta": "시작하기"
+    },
+    "prompt": {
+      "title": "예산안을 작성해 보시겠어요?",
+      "accept": "예",
+      "decline": "아니오"
+    },
+    "cta": {
+      "banner": "예산안 만들어보기"
+    },
+    "autoOrderPrompt": {
+      "title": "자동주문을 시작해볼까요?",
+      "description": "예산안에 맞춘 식재료를 매주 자동으로 받아보세요. 시작하려면 로그인이 필요해요.",
+      "start": "시작하기",
+      "later": "나중에"
+    }
+  },
+  "budgetDraft": {
+    "title": "내 예산안 만들기",
+    "closeLabel": "닫기",
+    "stepIndicator": "{step} / {total} 단계",
+    "back": "이전",
+    "next": "다음",
+    "step1": {
+      "title": "몇 명이 함께 식사하나요?",
+      "label": "가구 인원",
+      "decrement": "인원 줄이기",
+      "increment": "인원 늘리기"
+    },
+    "step2": {
+      "title": "한 달 식비 예산은 얼마인가요?",
+      "presetsLabel": "예산 프리셋",
+      "customLabel": "직접 입력 (원)",
+      "customPlaceholder": "예: 450000",
+      "invalidRange": "5만원에서 500만원 사이의 금액을 입력해 주세요."
+    },
+    "step3": {
+      "title": "어떤 식단을 원하시나요?"
+    },
+    "direction": {
+      "health": "건강식",
+      "diet": "다이어트",
+      "hearty": "든든한 한 끼",
+      "kids": "아이 입맛"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "자린고비",
+      "slogan": "GO BE SMART, SAVE BIG.",
+      "kakao": "카카오로 시작하기",
+      "google": "구글로 시작하기",
+      "apple": "애플로 시작하기",
+      "terms": "시작하면 이용약관 및 개인정보처리방침에 동의하는 것으로 간주됩니다.",
+      "retryHint": "아래 버튼으로 다시 시도할 수 있어요."
+    },
+    "error": {
+      "AUTH_PROVIDER_DENIED": "로그인 동의가 취소되었어요. 다시 시도해 주세요.",
+      "AUTH_INVALID_STATE": "로그인 요청이 만료되었어요. 다시 시도해 주세요.",
+      "AUTH_PROVIDER_ERROR": "로그인 제공자 쪽에 문제가 있어요. 잠시 후 다시 시도해 주세요.",
+      "AUTH_REQUIRED": "로그인이 필요해요.",
+      "AUTH_TOKEN_REVOKED": "보안을 위해 로그아웃되었어요. 다시 로그인해 주세요.",
+      "FORBIDDEN_ORIGIN": "허용되지 않은 요청이에요.",
+      "VALIDATION_ERROR": "입력값이 올바르지 않아요.",
+      "RATE_LIMITED": "요청이 너무 많아요. 잠시 후 다시 시도해 주세요.",
+      "BUDGET_PLAN_EXISTS": "이미 예산안이 있어요.",
+      "PROVIDER_NOT_SUPPORTED": "아직 지원하지 않는 로그인 방식이에요."
+    },
+    "notice": {
+      "AUTH_EMAIL_CONFLICT_NOTICE": "같은 이메일로 다른 소셜 계정에 이미 가입되어 있어요. 이번 로그인은 새 계정으로 진행됐어요."
+    },
+    "gate": {
+      "title": "저장하려면 로그인이 필요해요",
+      "description": "로그인하면 식단 완료 체크, 전체 조리법 보기 등 모든 기능을 사용할 수 있어요.",
+      "loginCta": "로그인하기",
+      "later": "나중에"
+    }
+  },
+  "onboarding": {
+    "title": "가구 구성 설정",
+    "stub": "가구 구성 온보딩은 준비 중이에요.",
+    "imported": {
+      "title": "예산안을 계정으로 옮겼어요!",
+      "description": "체험 모드에서 만든 예산안이 그대로 적용됐어요. 이제 예산에 맞춘 식단을 시작해 보세요.",
+      "homeCta": "홈으로 가기"
+    }
+  }
+}

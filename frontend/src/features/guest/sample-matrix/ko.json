@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "currency": "KRW",
+  "default": { "householdBand": "3-4", "budgetBand": "p2", "direction": "health" },
+  "stores": [
+    { "id": "kurly", "name": "마켓컬리" },
+    { "id": "coupang", "name": "쿠팡" },
+    { "id": "ssg", "name": "SSG" }
+  ],
+  "directions": {
+    "health": {
+      "weekPlan": [
+        { "day": "mon", "meals": { "breakfast": "현미밥과 달걀국", "lunch": "닭가슴살 야채 비빔밥", "dinner": "고등어구이와 나물 반찬" } },
+        { "day": "tue", "meals": { "breakfast": "두부 채소죽", "lunch": "연어 포케볼", "dinner": "버섯 소불고기 덮밥" } },
+        { "day": "wed", "meals": { "breakfast": "귀리밥과 미역국", "lunch": "훈제오리 샐러드", "dinner": "두부조림과 잡곡밥" } },
+        { "day": "thu", "meals": { "breakfast": "고구마와 그릭요거트", "lunch": "가지 덮밥", "dinner": "삼치구이와 시금치나물" } },
+        { "day": "fri", "meals": { "breakfast": "달걀찜과 현미밥", "lunch": "콩나물 국밥", "dinner": "닭안심 채소볶음" } },
+        { "day": "sat", "meals": { "breakfast": "야채 오믈렛", "lunch": "들기름 메밀국수", "dinner": "저염 된장찌개와 잡곡밥" } },
+        { "day": "sun", "meals": { "breakfast": "단호박죽", "lunch": "참치 야채 김밥", "dinner": "제철 생선구이 정식" } }
+      ],
+      "fridgePreview": [
+        { "name": "시금치", "quantity": "1단", "expiresInDays": 1 },
+        { "name": "두부", "quantity": "2모", "expiresInDays": 2 },
+        { "name": "달걀", "quantity": "10구", "expiresInDays": 6 },
+        { "name": "닭가슴살", "quantity": "500g", "expiresInDays": 3 },
+        { "name": "현미", "quantity": "2kg", "expiresInDays": 30 }
+      ],
+      "orderSuggestion": ["고등어 2손", "연어 300g", "잡곡 1kg", "제철 나물 모둠"]
+    },
+    "diet": {
+      "weekPlan": [
+        { "day": "mon", "meals": { "breakfast": "그릭요거트와 견과", "lunch": "닭가슴살 샐러드", "dinner": "두부면 야채볶음" } },
+        { "day": "tue", "meals": { "breakfast": "사과와 삶은 달걀", "lunch": "곤약 비빔밥", "dinner": "흰살생선 스팀과 채소" } },
+        { "day": "wed", "meals": { "breakfast": "오트밀 두유죽", "lunch": "훈제 닭가슴살 랩", "dinner": "버섯 두부 전골" } },
+        { "day": "thu", "meals": { "breakfast": "바나나와 무가당 요거트", "lunch": "참치 샐러드볼", "dinner": "닭안심 숙주볶음" } },
+        { "day": "fri", "meals": { "breakfast": "방울토마토와 달걀찜", "lunch": "곤약면 비빔국수", "dinner": "연두부와 오이무침" } },
+        { "day": "sat", "meals": { "breakfast": "단백질 쉐이크와 견과", "lunch": "닭가슴살 김밥", "dinner": "채소 듬뿍 밀푀유나베" } },
+        { "day": "sun", "meals": { "breakfast": "그래놀라 요거트볼", "lunch": "두부 스테이크", "dinner": "저칼로리 버섯탕" } }
+      ],
+      "fridgePreview": [
+        { "name": "샐러드 채소", "quantity": "300g", "expiresInDays": 1 },
+        { "name": "닭가슴살", "quantity": "1kg", "expiresInDays": 3 },
+        { "name": "그릭요거트", "quantity": "4개", "expiresInDays": 5 },
+        { "name": "두부면", "quantity": "2팩", "expiresInDays": 7 },
+        { "name": "방울토마토", "quantity": "500g", "expiresInDays": 4 }
+      ],
+      "orderSuggestion": ["곤약면 3팩", "무가당 요거트 6개", "오이 3개", "숙주 2봉"]
+    },
+    "hearty": {
+      "weekPlan": [
+        { "day": "mon", "meals": { "breakfast": "소시지 야채볶음과 밥", "lunch": "제육볶음 정식", "dinner": "김치찌개와 달걀말이" } },
+        { "day": "tue", "meals": { "breakfast": "참치김치볶음밥", "lunch": "돈까스 정식", "dinner": "닭볶음탕" } },
+        { "day": "wed", "meals": { "breakfast": "베이컨 토스트", "lunch": "순두부찌개 정식", "dinner": "불고기 전골" } },
+        { "day": "thu", "meals": { "breakfast": "햄 달걀 볶음밥", "lunch": "치즈 돈불고기 덮밥", "dinner": "감자탕" } },
+        { "day": "fri", "meals": { "breakfast": "어묵 우동", "lunch": "고추장 불백 정식", "dinner": "삼겹살 구이와 쌈채소" } },
+        { "day": "sat", "meals": { "breakfast": "떡만둣국", "lunch": "짜장 덮밥", "dinner": "닭갈비와 볶음밥" } },
+        { "day": "sun", "meals": { "breakfast": "황태해장국", "lunch": "카레라이스", "dinner": "LA갈비와 잡채" } }
+      ],
+      "fridgePreview": [
+        { "name": "돼지 앞다리살", "quantity": "600g", "expiresInDays": 2 },
+        { "name": "김치", "quantity": "1kg", "expiresInDays": 20 },
+        { "name": "달걀", "quantity": "15구", "expiresInDays": 8 },
+        { "name": "양파", "quantity": "3개", "expiresInDays": 10 },
+        { "name": "쌈채소", "quantity": "200g", "expiresInDays": 1 }
+      ],
+      "orderSuggestion": ["삼겹살 1kg", "닭볶음탕용 닭 1마리", "감자 1kg", "우동면 4개"]
+    },
+    "kids": {
+      "weekPlan": [
+        { "day": "mon", "meals": { "breakfast": "치즈 달걀말이와 주먹밥", "lunch": "어린이 카레라이스", "dinner": "떡갈비와 계란찜" } },
+        { "day": "tue", "meals": { "breakfast": "바나나 팬케이크", "lunch": "새우볶음밥", "dinner": "순한 닭백숙" } },
+        { "day": "wed", "meals": { "breakfast": "옥수수 콘스프와 빵", "lunch": "소고기 야채죽", "dinner": "돈까스와 채소 스틱" } },
+        { "day": "thu", "meals": { "breakfast": "딸기잼 토스트와 우유", "lunch": "달걀 오므라이스", "dinner": "불고기 덮밥" } },
+        { "day": "fri", "meals": { "breakfast": "치즈 주먹밥", "lunch": "잔치국수", "dinner": "순한 미트볼 파스타" } },
+        { "day": "sat", "meals": { "breakfast": "달걀 샌드위치", "lunch": "김치 없는 김밥", "dinner": "간장 치킨과 밥" } },
+        { "day": "sun", "meals": { "breakfast": "단호박 수프", "lunch": "소고기 무국과 밥", "dinner": "새우까스와 옥수수" } }
+      ],
+      "fridgePreview": [
+        { "name": "우유", "quantity": "1L", "expiresInDays": 2 },
+        { "name": "슬라이스 치즈", "quantity": "10장", "expiresInDays": 12 },
+        { "name": "달걀", "quantity": "10구", "expiresInDays": 7 },
+        { "name": "다진 소고기", "quantity": "400g", "expiresInDays": 1 },
+        { "name": "옥수수콘", "quantity": "1캔", "expiresInDays": 60 }
+      ],
+      "orderSuggestion": ["어린이 카레 2팩", "미트볼 500g", "식빵 1봉", "딸기 500g"]
+    }
+  },
+  "budgetMood": {
+    "p1": {
+      "1": { "remaining": "132000", "saved": "41000", "wastePrevented": "12000" },
+      "2": { "remaining": "118000", "saved": "38000", "wastePrevented": "11000" },
+      "3-4": { "remaining": "96000", "saved": "33000", "wastePrevented": "9000" },
+      "5plus": { "remaining": "74000", "saved": "26000", "wastePrevented": "8000" }
+    },
+    "p2": {
+      "1": { "remaining": "228000", "saved": "64000", "wastePrevented": "18000" },
+      "2": { "remaining": "204000", "saved": "59000", "wastePrevented": "16000" },
+      "3-4": { "remaining": "176000", "saved": "52000", "wastePrevented": "14000" },
+      "5plus": { "remaining": "143000", "saved": "45000", "wastePrevented": "12000" }
+    },
+    "p3": {
+      "1": { "remaining": "331000", "saved": "88000", "wastePrevented": "24000" },
+      "2": { "remaining": "305000", "saved": "81000", "wastePrevented": "22000" },
+      "3-4": { "remaining": "262000", "saved": "72000", "wastePrevented": "19000" },
+      "5plus": { "remaining": "214000", "saved": "61000", "wastePrevented": "16000" }
+    },
+    "p4": {
+      "1": { "remaining": "487000", "saved": "121000", "wastePrevented": "33000" },
+      "2": { "remaining": "452000", "saved": "112000", "wastePrevented": "30000" },
+      "3-4": { "remaining": "391000", "saved": "98000", "wastePrevented": "26000" },
+      "5plus": { "remaining": "322000", "saved": "84000", "wastePrevented": "22000" }
+    }
+  }
+}

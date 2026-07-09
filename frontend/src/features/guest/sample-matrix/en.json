@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "currency": "USD",
+  "default": { "householdBand": "3-4", "budgetBand": "p2", "direction": "health" },
+  "stores": [
+    { "id": "walmart", "name": "Walmart" },
+    { "id": "instacart", "name": "Instacart" }
+  ],
+  "directions": {
+    "health": {
+      "weekPlan": [
+        { "day": "mon", "meals": { "breakfast": "Oatmeal with berries", "lunch": "Grilled chicken salad", "dinner": "Baked salmon with quinoa" } },
+        { "day": "tue", "meals": { "breakfast": "Greek yogurt parfait", "lunch": "Turkey avocado wrap", "dinner": "Stir-fried tofu with brown rice" } },
+        { "day": "wed", "meals": { "breakfast": "Veggie egg scramble", "lunch": "Lentil soup with whole-grain bread", "dinner": "Herb roasted chicken with broccoli" } },
+        { "day": "thu", "meals": { "breakfast": "Whole-grain toast with avocado", "lunch": "Tuna salad bowl", "dinner": "Shrimp and vegetable skillet" } },
+        { "day": "fri", "meals": { "breakfast": "Banana oat pancakes", "lunch": "Quinoa veggie bowl", "dinner": "Grilled cod with sweet potato" } },
+        { "day": "sat", "meals": { "breakfast": "Spinach mushroom omelet", "lunch": "Chicken barley soup", "dinner": "Turkey chili with brown rice" } },
+        { "day": "sun", "meals": { "breakfast": "Butternut squash porridge", "lunch": "Mediterranean chickpea salad", "dinner": "Sheet-pan chicken and vegetables" } }
+      ],
+      "fridgePreview": [
+        { "name": "Baby spinach", "quantity": "10 oz", "expiresInDays": 1 },
+        { "name": "Chicken breast", "quantity": "2 lb", "expiresInDays": 3 },
+        { "name": "Greek yogurt", "quantity": "32 oz", "expiresInDays": 5 },
+        { "name": "Eggs", "quantity": "1 dozen", "expiresInDays": 10 },
+        { "name": "Quinoa", "quantity": "1 lb", "expiresInDays": 60 }
+      ],
+      "orderSuggestion": ["Salmon fillets 1 lb", "Broccoli crowns 2", "Brown rice 2 lb", "Seasonal greens mix"]
+    },
+    "diet": {
+      "weekPlan": [
+        { "day": "mon", "meals": { "breakfast": "Egg white scramble", "lunch": "Chicken caesar salad (light)", "dinner": "Zucchini noodles with turkey meatballs" } },
+        { "day": "tue", "meals": { "breakfast": "Cottage cheese with berries", "lunch": "Cauliflower rice bowl", "dinner": "Steamed white fish with greens" } },
+        { "day": "wed", "meals": { "breakfast": "Protein smoothie", "lunch": "Grilled chicken lettuce wraps", "dinner": "Tofu vegetable stir-fry" } },
+        { "day": "thu", "meals": { "breakfast": "Hard-boiled eggs and apple", "lunch": "Tuna salad lettuce cups", "dinner": "Baked chicken with asparagus" } },
+        { "day": "fri", "meals": { "breakfast": "Overnight oats (no sugar)", "lunch": "Shrimp and cucumber salad", "dinner": "Egg drop soup with tofu" } },
+        { "day": "sat", "meals": { "breakfast": "Avocado egg cups", "lunch": "Turkey and veggie roll-ups", "dinner": "Mushroom hot pot" } },
+        { "day": "sun", "meals": { "breakfast": "Chia pudding", "lunch": "Grilled chicken and slaw", "dinner": "Baked cod with green beans" } }
+      ],
+      "fridgePreview": [
+        { "name": "Salad greens", "quantity": "12 oz", "expiresInDays": 1 },
+        { "name": "Chicken breast", "quantity": "2 lb", "expiresInDays": 3 },
+        { "name": "Cottage cheese", "quantity": "16 oz", "expiresInDays": 6 },
+        { "name": "Zucchini", "quantity": "4", "expiresInDays": 4 },
+        { "name": "Cherry tomatoes", "quantity": "1 pint", "expiresInDays": 4 }
+      ],
+      "orderSuggestion": ["Cauliflower rice 2 bags", "Egg whites 32 oz", "Cucumbers 3", "Asparagus 1 bunch"]
+    },
+    "hearty": {
+      "weekPlan": [
+        { "day": "mon", "meals": { "breakfast": "Bacon and eggs with toast", "lunch": "Cheeseburger with side salad", "dinner": "Meatloaf with mashed potatoes" } },
+        { "day": "tue", "meals": { "breakfast": "Sausage breakfast burrito", "lunch": "Philly cheesesteak sandwich", "dinner": "Spaghetti and meatballs" } },
+        { "day": "wed", "meals": { "breakfast": "Buttermilk pancakes", "lunch": "BBQ pulled pork sandwich", "dinner": "Beef stew with crusty bread" } },
+        { "day": "thu", "meals": { "breakfast": "Ham and cheese omelet", "lunch": "Chicken pot pie", "dinner": "Baked mac and cheese with ham" } },
+        { "day": "fri", "meals": { "breakfast": "Biscuits and gravy", "lunch": "Loaded baked potato", "dinner": "Fried chicken with corn" } },
+        { "day": "sat", "meals": { "breakfast": "French toast", "lunch": "Chili cheese fries", "dinner": "Grilled steak with roasted potatoes" } },
+        { "day": "sun", "meals": { "breakfast": "Breakfast casserole", "lunch": "Roast beef sandwich", "dinner": "Pot roast with vegetables" } }
+      ],
+      "fridgePreview": [
+        { "name": "Ground beef", "quantity": "2 lb", "expiresInDays": 2 },
+        { "name": "Cheddar cheese", "quantity": "16 oz", "expiresInDays": 14 },
+        { "name": "Eggs", "quantity": "18 count", "expiresInDays": 9 },
+        { "name": "Russet potatoes", "quantity": "5 lb", "expiresInDays": 21 },
+        { "name": "Lettuce", "quantity": "1 head", "expiresInDays": 1 }
+      ],
+      "orderSuggestion": ["Chuck roast 3 lb", "Bacon 1 lb", "Pasta 2 lb", "Sandwich rolls 8"]
+    },
+    "kids": {
+      "weekPlan": [
+        { "day": "mon", "meals": { "breakfast": "Cheese scrambled eggs", "lunch": "Mac and cheese with peas", "dinner": "Chicken tenders with corn" } },
+        { "day": "tue", "meals": { "breakfast": "Banana pancakes", "lunch": "Grilled cheese and tomato soup", "dinner": "Mild turkey meatballs with rice" } },
+        { "day": "wed", "meals": { "breakfast": "Yogurt with granola", "lunch": "Turkey and cheese roll-ups", "dinner": "Baked fish sticks with mashed potatoes" } },
+        { "day": "thu", "meals": { "breakfast": "PB&J toast with milk", "lunch": "Cheese quesadilla", "dinner": "Mini burgers with oven fries" } },
+        { "day": "fri", "meals": { "breakfast": "Cheese rice balls", "lunch": "Chicken noodle soup", "dinner": "Mild meatball pasta" } },
+        { "day": "sat", "meals": { "breakfast": "Egg sandwich", "lunch": "Ham and cheese sliders", "dinner": "Honey soy chicken with rice" } },
+        { "day": "sun", "meals": { "breakfast": "Pumpkin soup with bread", "lunch": "Beef and veggie rice bowl", "dinner": "Popcorn shrimp with corn" } }
+      ],
+      "fridgePreview": [
+        { "name": "Whole milk", "quantity": "1 gal", "expiresInDays": 2 },
+        { "name": "String cheese", "quantity": "12 pack", "expiresInDays": 15 },
+        { "name": "Eggs", "quantity": "1 dozen", "expiresInDays": 8 },
+        { "name": "Ground turkey", "quantity": "1 lb", "expiresInDays": 1 },
+        { "name": "Frozen corn", "quantity": "1 bag", "expiresInDays": 90 }
+      ],
+      "orderSuggestion": ["Chicken tenders 2 lb", "Meatballs 1 lb", "Sandwich bread 1 loaf", "Strawberries 1 lb"]
+    }
+  },
+  "budgetMood": {
+    "p1": {
+      "1": { "remaining": "132", "saved": "41", "wastePrevented": "12" },
+      "2": { "remaining": "118", "saved": "38", "wastePrevented": "11" },
+      "3-4": { "remaining": "96", "saved": "33", "wastePrevented": "9" },
+      "5plus": { "remaining": "74", "saved": "26", "wastePrevented": "8" }
+    },
+    "p2": {
+      "1": { "remaining": "228", "saved": "64", "wastePrevented": "18" },
+      "2": { "remaining": "204", "saved": "59", "wastePrevented": "16" },
+      "3-4": { "remaining": "176", "saved": "52", "wastePrevented": "14" },
+      "5plus": { "remaining": "143", "saved": "45", "wastePrevented": "12" }
+    },
+    "p3": {
+      "1": { "remaining": "331", "saved": "88", "wastePrevented": "24" },
+      "2": { "remaining": "305", "saved": "81", "wastePrevented": "22" },
+      "3-4": { "remaining": "262", "saved": "72", "wastePrevented": "19" },
+      "5plus": { "remaining": "214", "saved": "61", "wastePrevented": "16" }
+    },
+    "p4": {
+      "1": { "remaining": "487", "saved": "121", "wastePrevented": "33" },
+      "2": { "remaining": "452", "saved": "112", "wastePrevented": "30" },
+      "3-4": { "remaining": "391", "saved": "98", "wastePrevented": "26" },
+      "5plus": { "remaining": "322", "saved": "84", "wastePrevented": "22" }
+    }
+  }
+}
