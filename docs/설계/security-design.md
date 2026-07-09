@@ -60,6 +60,11 @@ provider → GET /auth/{provider}/callback?code&state
 - **CWE-770**: 생성/재생성 유저 5회/분(구현 확인) + 프론트 버튼 비활성. latest(읽기)는 미적용
 - **CWE-79/117**: `allergies`/`preferences` 항목당 30자·최대 10개 서버 검증, **로그 기록 금지**(건강 관련 민감 입력 — 저장소 없음, 요청 전달만)
 
+## 5-2. household/온보딩 접점 (v1.2)
+- CWE-20/602: members 서버 전량 재검증(유형 enum·유형별 나이 범위·1~10명), cuisines enum·개수(≤6), locked boolean
+- CWE-639: /households/me·PUT /budget/plans 는 인증 유저 본인 스코프만
+- 최소 수집: 구성원은 유형+나이만(이름·실성별 정보 없음). visited 마커는 비식별 boolean 성격
+
 ## 6. 시크릿 관리
 
 - 전 시크릿 `.env` 전용 (`JWT_SECRET`, provider client secret). `.env.example` 만 커밋, 코드/로그/status JSON 기록 금지
@@ -83,3 +88,4 @@ provider → GET /auth/{provider}/callback?code&state
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 4라운드 보안 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — mealplan 접점 5-1 증보
+- 2026-07-09: v1.2 — household/온보딩 접점 5-2 증보

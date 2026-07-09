@@ -189,7 +189,36 @@ Access 재발급 + refresh 회전.
 
 ---
 
-## 4. 엔드포인트 요약
+## 4. household 도메인 (v1.2 신규 — 온보딩)
+
+### 4-1. `PUT /api/v1/households/me` — 인증 필요
+구성원 전체 교체 저장 (replace-all).
+```json
+{ "members": [ { "memberType": "adult_m", "age": 35 }, { "memberType": "toddler", "age": 4 } ] }
+```
+- `memberType ∈ adult_m|adult_f|teen|child|toddler`, 나이 범위 서버 재검증(성인 20~99/청소년 13~19/어린이 7~12/유아 0~6), 1~10명
+- `200 { "members": [...], "size": 2 }`. household+budget_plan 모두 존재하게 되면 서버가 `onboarding_completed_at` 세팅
+- 프리셋·기본 나이(성인남 35/성인여 33/청소년 15/어린이 9/유아 4)는 프론트 상수
+
+### 4-2. `GET /api/v1/households/me` — 인증 필요
+- `200` 위 구조 / `404 HOUSEHOLD_NOT_FOUND`
+
+## 5. budget 확장 (v1.2)
+
+### 5-1. `PUT /api/v1/budget/plans` — 인증 필요 (온보딩·수정용 upsert)
+```json
+{ "householdSize": 5, "budget": { "amount": "450000", "currency": "KRW" },
+  "mealDirection": "health", "locked": true,
+  "cuisines": ["korean", "japanese"] }
+```
+- `cuisines ∈ korean|western|japanese|chinese|comfort|salad` (0~6개), `locked` boolean
+- 없으면 생성 `201`, 있으면 갱신 `200`. 검증은 POST 와 동일 + 확장 필드
+- 기존 `POST /budget/plans`(게스트 이전)는 유지 — locked 기본 true, cuisines 기본 []
+- 예산 슬라이더 기준(프론트 상수): KR 1인 최소 ₩80,000·권장 ₩130,000·최대 ₩220,000 / US $60·$100·$170
+
+---
+
+## 6. 엔드포인트 요약
 
 | # | 메서드·경로 | 인증 | 유형 |
 |---|-------------|------|------|
@@ -203,7 +232,11 @@ Access 재발급 + refresh 회전.
 | 8 | `POST /api/v1/mealplans` | 필요 | JSON |
 | 9 | `GET /api/v1/mealplans/{id}` | 필요 | JSON |
 | 10 | `POST /api/v1/mealplans/{id}/regenerate` | 필요 | JSON |
+| 11 | `PUT /api/v1/households/me` | 필요 | JSON (v1.2 신규) |
+| 12 | `GET /api/v1/households/me` | 필요 | JSON (v1.2 신규) |
+| 13 | `PUT /api/v1/budget/plans` | 필요 | JSON (v1.2 신규) |
 
 ## 변경 이력
+- 2026-07-09: **v1.2** — household 도메인(PUT/GET /households/me) + PUT /budget/plans(locked·cuisines 확장). 온보딩 3스텝(프로토타입 1:1) 대응. UI 대변인 동의 완료
 - 2026-07-09: **v1.1** — mealplan 도메인 정식 편입(구현 기준: camelCase/uuid/allergies·preferences 요청 필드) + `GET /mealplans/latest` 신규. 팀원 미머지 초안(cbd0623)의 상이점은 구현 우선으로 조정. UI 대변인 동의 완료
 - 2026-07-09: v1 최초 확정 — 공통 규격(camelCase/에러/금액/페이지네이션) + auth 5종 + budget 1종. UI 대변인 동의 완료

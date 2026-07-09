@@ -83,17 +83,34 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 
 - 상세 명세는 리비전 파일(`0002_mealplan.py`)과 models.py 가 원본 — 본 문서는 요약 유지
 
+## 2-6. household + budget 확장 (리비전 0004 — GATE 3 대상)
+
+**`household_members` 신규**
+| 컬럼 | 타입 | 제약 |
+|------|------|------|
+| id | uuid | PK gen_random_uuid() |
+| user_id | uuid | NOT NULL FK→users ON DELETE CASCADE |
+| member_type | varchar(10) | CHECK in ('adult_m','adult_f','teen','child','toddler') |
+| age | smallint | CHECK 0~99 (유형-나이 정합은 서비스 검증) |
+| position | smallint | NOT NULL (표시 순서) |
+| created_at | timestamptz | NOT NULL default now() |
+- `ix_household_members_user_id`
+
+**`budget_plans` 확장**: `locked boolean NOT NULL DEFAULT true`, `cuisines jsonb NOT NULL DEFAULT '[]'` (enum 배열은 서비스 검증)
+
 ## 3. 마이그레이션 계획 (인프라 에이전트 실행)
 
 | 리비전 | 내용 | 상태 |
 |--------|------|------|
 | `0001_initial_auth_budget` | 4테이블 + 인덱스/제약 일괄 생성. `CREATE EXTENSION IF NOT EXISTS pgcrypto` (gen_random_uuid) | **적용·검증 완료** (2026-07-09, 로컬 docker postgres 16 에서 upgrade→downgrade→upgrade 왕복 PASS) |
 | `0002_mealplan` | mealplan 4테이블 + 인덱스 (팀원 작성, down_revision=0001) | **적용 완료** (2026-07-09 서버·로컬) |
+| `0004_household_budget_ext` | household_members 신규 + budget_plans locked/cuisines (down_revision=0003) | **작성·로컬 왕복 검증 PASS** (2026-07-09, GATE 3 통과) |
 
 - 롤백: 4테이블 역순 drop (최초 리비전이므로 단순, pgcrypto 확장은 유지)
 - 파일: `backend/alembic/versions/0001_initial_auth_budget.py`
 
 ## 변경 이력
+- 2026-07-09: v1.2 — 2-6 household_members + budget_plans 확장 설계 (리비전 0004 계획)
 - 2026-07-09: 최초 작성 — auth 3테이블 + budget_plans v0 (설계 토론 5라운드 합의)
 - 2026-07-09: 리비전 0001 작성·로컬 검증 완료 (GATE 3 통과). rotated_from FK 는 ON DELETE SET NULL 로 확정
 - 2026-07-09: 0002(mealplan, 팀원) 문서 회수 — 회원홈-식단연결 설계는 DB 변경 없음(기존 인덱스 커버)
