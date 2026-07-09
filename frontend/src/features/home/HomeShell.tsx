@@ -12,6 +12,8 @@ export type LockedTab = 'meal' | 'fridge' | 'cart';
 
 interface HomeShellProps {
   viewModel: HomeViewModel;
+  /** [member 옵셔널 확장] 회원 샘플 홈 — 체험 배지 숨김, "예시" 라벨은 유지 (ui-design 8장) */
+  hideTrialBadge?: boolean;
   onAutoOrderStart?: () => void;
   onRecipeClick?: () => void;
   /** 하단 탭바의 잠긴 탭(식단/냉장고/장바구니) 클릭 — 게스트는 가입 게이트 (FR-109), 회원은 탭별 분기 (FR-208) */
@@ -96,6 +98,7 @@ const LOCKED_TABS: LockedTab[] = ['meal', 'fridge', 'cart'];
  */
 export function HomeShell({
   viewModel,
+  hideTrialBadge = false,
   onAutoOrderStart,
   onRecipeClick,
   onLockedNavClick,
@@ -115,7 +118,7 @@ export function HomeShell({
               <span className="text-[13px] font-semibold text-ink-400">
                 {t('header.greeting')}
               </span>
-              {isGuest ? <TrialModeBadge /> : null}
+              {isGuest && !hideTrialBadge ? <TrialModeBadge /> : null}
             </div>
             <h1 className="text-xl font-extrabold tracking-tight text-navy-900">
               {t('header.title')} <span className="text-brand-600">{t('header.accent')}</span>

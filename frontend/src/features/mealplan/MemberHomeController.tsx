@@ -1,26 +1,29 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { HomeShell } from '@/features/home/HomeShell';
 import { MEAL_SECTION_ID } from '@/features/home/MealPlanSection';
 import { GuestHomeController } from '@/features/guest/GuestHomeController';
+import { getDefaultViewModel } from '@/features/guest/sampleMatrix';
 import { useMemberHome, type PlanCreateInput } from '@/features/mealplan/useMemberHome';
-import { EmptyPlanHero } from '@/features/mealplan/EmptyPlanHero';
 import { PlanCreateSheet } from '@/features/mealplan/PlanCreateSheet';
 import { GenerationLoading } from '@/features/mealplan/GenerationLoading';
 import { OverBudgetBanner } from '@/features/mealplan/OverBudgetBanner';
-import { LockedFeatureCard } from '@/features/mealplan/LockedFeatureCard';
-import { BudgetPlanGate } from '@/features/mealplan/BudgetPlanGate';
+import { OnboardingCtaBanner } from '@/features/mealplan/OnboardingCtaBanner';
 import { RegenerateConfirmSheet } from '@/features/mealplan/RegenerateConfirmSheet';
 import { LOCKED_NOTICE_MS } from '@/features/mealplan/constants';
+import { useRouter, type AppLocale } from '@/i18n/routing';
 
 /**
- * 회원 홈 컨트롤러 (ui-design 7장) — useMemberHome 분기별 화면 구성.
+ * 회원 홈 컨트롤러 (ui-design 7장·8장) — useMemberHome 분기별 화면 구성.
  * 게스트 홈(GuestHomeController)과 동일한 홈 셸을 회원 실데이터로 채운다 (FR-201).
+ * 식단 없음/예산 없음은 빈 히어로 전면 대신 샘플 홈 + 상단 배너 (FR-316).
  */
 export function MemberHomeController() {
   const t = useTranslations('memberHome');
+  const locale = useLocale() as AppLocale;
+  const router = useRouter();
   const home = useMemberHome();
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -92,10 +95,6 @@ export function MemberHomeController() {
     );
   }
 
-  if (home.status === 'budget-required') {
-    return <BudgetPlanGate onComplete={home.completeBudgetPlan} />;
-  }
-
   const generating = home.generation !== 'idle';
 
   // FR-204: 실패 → 재시도 배너 / 429 → 대기 안내
@@ -132,26 +131,53 @@ export function MemberHomeController() {
       </div>
     ) : null;
 
-  if (home.status === 'empty') {
+  const lockedNoticeToast = lockedNotice ? (
+    <p
+      role="status"
+      className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-full bg-navy-800 px-4 py-2 text-xs font-bold text-white shadow-card"
+    >
+      {t('locked.notice')}
+    </p>
+  ) : null;
+
+  if (home.status === 'empty' || home.status === 'budget-required') {
+    // FR-316: 빈 히어로/예산 게이트 전면 노출 제거 — 샘플 홈(체험 배지 없음) + 상단 고정 배너
+    const needsOnboarding =
+      home.status === 'budget-required' || home.onboardingCompleted === false;
     return (
       <>
-        <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col justify-center gap-3.5 bg-surface-app px-[18px] py-8 sm:min-h-0 sm:my-6 sm:rounded-[32px] sm:shadow-card">
-          {generationErrorBanner}
-          <EmptyPlanHero
-            budget={home.budget}
-            busy={generating}
-            onCreate={() => setCreateOpen(true)}
-          />
-          <LockedFeatureCard feature="fridge" />
-          <LockedFeatureCard feature="order" />
-        </div>
-        <PlanCreateSheet
-          open={createOpen}
-          busy={generating}
-          onClose={() => setCreateOpen(false)}
-          onSubmit={handleCreateSubmit}
+        <HomeShell
+          viewModel={getDefaultViewModel(locale)}
+          hideTrialBadge
+          topSlot={
+            <>
+              {generationErrorBanner}
+              <OnboardingCtaBanner
+                variant={needsOnboarding ? 'setup' : 'create'}
+                busy={generating}
+                onClick={() => {
+                  if (needsOnboarding) {
+                    router.push('/onboarding');
+                  } else {
+                    setCreateOpen(true);
+                  }
+                }}
+              />
+            </>
+          }
+          onRecipeClick={showLockedNotice}
+          onLockedNavClick={handleLockedNav}
         />
+        {needsOnboarding ? null : (
+          <PlanCreateSheet
+            open={createOpen}
+            busy={generating}
+            onClose={() => setCreateOpen(false)}
+            onSubmit={handleCreateSubmit}
+          />
+        )}
         {generating ? <GenerationLoading /> : null}
+        {lockedNoticeToast}
       </>
     );
   }
@@ -186,14 +212,7 @@ export function MemberHomeController() {
         }}
       />
       {generating ? <GenerationLoading /> : null}
-      {lockedNotice ? (
-        <p
-          role="status"
-          className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-full bg-navy-800 px-4 py-2 text-xs font-bold text-white shadow-card"
-        >
-          {t('locked.notice')}
-        </p>
-      ) : null}
+      {lockedNoticeToast}
     </>
   );
 }

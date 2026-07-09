@@ -111,6 +111,21 @@ useMemberHome():
 
 **i18n 신규 키 체계**: `memberHome.empty.*`, `memberHome.create.*`(시트), `memberHome.loading.step1~3`, `memberHome.overBudget.*`, `memberHome.locked.*`, `mealplan.mealType.{breakfast|lunch|dinner}` — ko/en 동시
 
+## 8. 온보딩 3스텝 + 진입 순서 — v1.2 증보 (프로토타입 1:1)
+
+**`features/household/` 신규** — OnboardingWizard(/onboarding 실화면):
+- STEP1 MemberStep: MEMBER_TYPES 상수(adult_m 남색/adult_f 블루/teen 그린/child 앰버/toddler 오렌지, 기본나이 35/33/15/9/4, 나이범위), 1~5인 프리셋(PRESETS), 카드 리스트(나이 −/+·삭제), 구성원 추가, "N인 가구" 칩
+- STEP2 BudgetStep: 슬라이더(min 80k·권장 130k·max 220k ×인원, USD 60/100/170), 대형 금액, 수준 배너(알뜰<권장≤적정<권장×1.3<여유), 예산 락 토글. 게스트 이전값 프리필
+- STEP3 PreferenceStep: 음식 카드 6종 복수(korean/western/japanese/chinese/comfort/salad — 라벨 한식/양식/일식/중식/분식/샐러드·채식) + 방향 4종 단일 → "이 조건으로 식단 짜기"
+- 완료: PUT households/me → PUT budget/plans → POST /mealplans(preferences=선호 라벨) → GenerationLoading 재사용 → 홈
+- 각 스텝 [이전/다음], 프로토타입 마크업(지란고비.dc.html onboardStep) 기준 스타일
+
+**진입 순서 규칙 (1장 갱신)**:
+- 유효 세션: 회원 홈. 온보딩 미완료 → 샘플 홈 + "설정 마치고 식단 만들기" 배너(→/onboarding). 식단 없음(온보딩 완료) → 샘플 홈 + "내 식단 만들기" 배너(생성 시트). EmptyPlanHero 전면 노출 제거
+- 게스트: visited 마커(localStorage `jaringobe.visited`, 로그아웃 시 기록) 있으면 [로그인하기/구경하기] 바텀시트 1회/세션 → 구경하기=게스트. 신규는 기존 10초 프롬프트
+- i18n: `onboarding.step1~3.*`, `memberType.*`, `cuisine.*`, `entry.revisit.*` ko/en 동시
+
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 3라운드 UI 교차 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — 회원 홈(member 모드) 7장 증보 (회원홈-식단연결 기획)
+- 2026-07-09: v1.2 — 온보딩 3스텝(프로토타입 1:1)·진입 순서 8장 증보

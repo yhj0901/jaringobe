@@ -188,6 +188,18 @@
       "retry": "Try again",
       "rateLimited": "Too many requests for now. Please try again in a minute.",
       "dismiss": "Dismiss"
+    },
+    "banner": {
+      "setup": {
+        "badge": "Budget lock",
+        "title": "Finish setup to start your budget-fit meal plan",
+        "cta": "Finish setup & plan meals"
+      },
+      "create": {
+        "badge": "Budget lock",
+        "title": "Create your own budget-fit meal plan",
+        "cta": "Create my meal plan"
+      }
     }
   },
   "mealplan": {
@@ -232,13 +244,135 @@
     }
   },
   "onboarding": {
-    "title": "Household setup",
-    "stub": "Household onboarding is coming soon.",
     "imported": {
       "title": "Your budget plan has been moved to your account!",
-      "description": "The plan you created in trial mode is now applied. Start budget-fit meal planning right away.",
-      "homeCta": "Go home"
+      "description": "The plan you created in trial mode is now applied. Finish your household setup to start budget-fit meal planning.",
+      "continueCta": "Continue setup"
     },
-    "stubHomeCta": "Go home and get started"
+    "stepIndicator": "STEP {current} / 3",
+    "step1": {
+      "title1": "Set up your",
+      "title2": "household",
+      "subtitle": "From a solo home to a big family — add or remove members",
+      "householdChip": "{count}-person household",
+      "memberHint": "Nutrition & portions auto-calculated per member",
+      "quickSelect": "Quick household size",
+      "presetLabel": "{count}p",
+      "memberList": "Members",
+      "householdBadge": "{count}",
+      "ageWord": "Age",
+      "age": "{age, plural, one {# yr} other {# yrs}}",
+      "ageRange": "{min}–{max} yrs",
+      "decreaseAge": "Decrease age of {name}",
+      "increaseAge": "Increase age of {name}",
+      "removeMember": "Remove {name}",
+      "addMember": "Add member",
+      "addType": "+ {name}",
+      "next": "Next"
+    },
+    "step2": {
+      "title1": "Lock your monthly",
+      "title2": "food budget",
+      "subtitle": "Once locked, AI keeps plans & orders under this amount",
+      "monthBudget": "Monthly food budget",
+      "perPerson": "{amount} / person",
+      "recommended": "Recommended {amount}",
+      "sliderLabel": "Monthly budget",
+      "minNote": "Min {perPerson}/person · {count}-person floor {total}",
+      "mood": {
+        "frugal": {
+          "title": "Frugal & safe",
+          "desc": "At or below the recommended budget"
+        },
+        "moderate": {
+          "title": "A balanced budget",
+          "desc": "Slightly above recommended · room to save"
+        },
+        "roomy": {
+          "title": "A generous budget",
+          "desc": "Well above recommended · watch for waste"
+        }
+      },
+      "lockName": "Budget lock",
+      "lockOn": "On · auto-blocks overspend",
+      "lockOff": "Off · alerts only",
+      "prev": "Back",
+      "next": "Next"
+    },
+    "step3": {
+      "title1": "What kind of",
+      "title2": "meals do you want?",
+      "subtitle": "AI builds your plan around your tastes & goals",
+      "prefTitle": "Preferred cuisines",
+      "prefMulti": "· multi-select",
+      "dirTitle": "Diet direction",
+      "dirSingle": "· pick one",
+      "direction": {
+        "health": {
+          "title": "Healthy & balanced",
+          "desc": "Nutrition for growing kids"
+        },
+        "diet": {
+          "title": "Diet-focused",
+          "desc": "Light, low-calorie meals"
+        },
+        "hearty": {
+          "title": "Hearty & filling",
+          "desc": "Generous for a big family"
+        },
+        "kids": {
+          "title": "Kid-friendly",
+          "desc": "Meals kids actually eat"
+        }
+      },
+      "prev": "Back",
+      "cta": "Build my plan"
+    },
+    "saving": "Saving your setup…",
+    "error": {
+      "household": "We couldn't save your household. Please try again.",
+      "budget": "We couldn't save your budget. Please try again.",
+      "mealplan": "Meal plan generation failed. Please try again.",
+      "rateLimited": "Too many requests for now. Please try again in a minute.",
+      "retry": "Try again"
+    }
+  },
+  "memberType": {
+    "adult_m": {
+      "label": "Adult (M)",
+      "mono": "M"
+    },
+    "adult_f": {
+      "label": "Adult (F)",
+      "mono": "F"
+    },
+    "teen": {
+      "label": "Teen",
+      "mono": "T"
+    },
+    "child": {
+      "label": "Child",
+      "mono": "C"
+    },
+    "toddler": {
+      "label": "Toddler",
+      "mono": "B"
+    }
+  },
+  "cuisine": {
+    "korean": "Korean",
+    "western": "Western",
+    "japanese": "Japanese",
+    "chinese": "Chinese",
+    "comfort": "Comfort",
+    "salad": "Salad & Vegan"
+  },
+  "entry": {
+    "revisit": {
+      "title": "Welcome back!",
+      "description": "Sign in to pick up your budget and meal plan where you left off.",
+      "login": "Sign in",
+      "browse": "Just browsing"
+    }
   }
 }

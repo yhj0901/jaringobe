@@ -132,3 +132,150 @@ class TestValidation:
         assert (await db.scalars(select(BudgetPlan))).all() == []
         user = (await db.scalars(select(User))).one()
         assert user.onboarding_completed_at is None
+
+
+# ---------- v1.2 — PUT /api/v1/budget/plans (upsert) ----------
+
+UPSERT_PAYLOAD = {
+    "householdSize": 5,
+    "budget": {"amount": "450000", "currency": "KRW"},
+    "mealDirection": "health",
+    "locked": True,
+    "cuisines": ["korean", "japanese"],
+}
+
+
+class TestUpsertBudgetPlan:
+    async def test_put_creates_201(self, client, db, respx_mock):
+        await login(client, respx_mock)
+        res = await client.put("/api/v1/budget/plans", json=UPSERT_PAYLOAD)
+        assert res.status_code == 201, res.text
+        body = res.json()
+        assert body["householdSize"] == 5
+        assert body["budget"] == {"amount": "450000.00", "currency": "KRW"}
+        assert body["mealDirection"] == "health"
+        assert body["source"] == "onboarding"
+        assert body["locked"] is True
+        assert body["cuisines"] == ["korean", "japanese"]
+
+        plan = (await db.scalars(select(BudgetPlan))).one()
+        assert plan.locked is True
+        assert plan.cuisines == ["korean", "japanese"]
+
+    async def test_put_updates_200(self, client, db, respx_mock):
+        await login(client, respx_mock)
+        assert (await client.put("/api/v1/budget/plans", json=UPSERT_PAYLOAD)).status_code == 201
+        res = await client.put(
+            "/api/v1/budget/plans",
+            json={
+                "householdSize": 2,
+                "budget": {"amount": "300000", "currency": "KRW"},
+                "mealDirection": "diet",
+                "locked": False,
+                "cuisines": ["salad"],
+            },
+        )
+        assert res.status_code == 200, res.text
+        body = res.json()
+        assert body["householdSize"] == 2
+        assert body["locked"] is False
+        assert body["cuisines"] == ["salad"]
+
+        plans = (await db.scalars(select(BudgetPlan))).all()
+        assert len(plans) == 1  # upsert — 중복 생성 금지
+        assert plans[0].meal_direction == "diet"
+        assert plans[0].locked is False
+
+    async def test_put_updates_existing_post_plan_and_keeps_source(self, client, respx_mock):
+        """기존 POST(게스트 이전)로 만든 플랜을 PUT 이 갱신 — source 유지."""
+        await login(client, respx_mock)
+        assert (await client.post("/api/v1/budget/plans", json=VALID_PAYLOAD)).status_code == 201
+        res = await client.put("/api/v1/budget/plans", json=UPSERT_PAYLOAD)
+        assert res.status_code == 200
+        assert res.json()["source"] == "guest"
+
+    async def test_put_defaults_locked_true_cuisines_empty(self, client, respx_mock):
+        """locked/cuisines 미전송 시 기본값 (locked true, cuisines [])."""
+        await login(client, respx_mock)
+        payload = {k: v for k, v in UPSERT_PAYLOAD.items() if k not in ("locked", "cuisines")}
+        res = await client.put("/api/v1/budget/plans", json=payload)
+        assert res.status_code == 201
+        assert res.json()["locked"] is True
+        assert res.json()["cuisines"] == []
+
+    async def test_unauthenticated_401(self, client):
+        res = await client.put("/api/v1/budget/plans", json=UPSERT_PAYLOAD)
+        assert res.status_code == 401
+
+    @pytest.mark.parametrize(
+        "mutation",
+        [
+            {"householdSize": 0},  # POST 와 동일 검증 유지
+            {"budget": {"amount": "49999.99", "currency": "KRW"}},
+            {"mealDirection": "spicy"},
+            {"locked": "yes-please"},  # boolean 아님
+            {"cuisines": ["korean", "pizza"]},  # 열거 위반
+            {"cuisines": ["korean", "korean"]},  # 중복
+            {
+                "cuisines": [
+                    "korean",
+                    "western",
+                    "japanese",
+                    "chinese",
+                    "comfort",
+                    "salad",
+                    "korean",
+                ]
+            },  # 7개 초과
+            {"cuisines": "korean"},  # 배열 아님
+        ],
+    )
+    async def test_put_422_validation_error(self, client, respx_mock, mutation):
+        await login(client, respx_mock)
+        res = await client.put("/api/v1/budget/plans", json={**UPSERT_PAYLOAD, **mutation})
+        assert res.status_code == 422, res.text
+        assert res.json()["detail"]["code"] == "VALIDATION_ERROR"
+
+    async def test_put_race_integrity_error_maps_to_409(self):
+        """동시 생성 경합 — 사전 조회는 없음이었지만 commit 에서 UNIQUE 위반."""
+        from sqlalchemy.exc import IntegrityError
+
+        from app.core.errors import ApiError
+        from app.domains.budget import service
+        from app.domains.budget.schemas import BudgetPlanUpsertRequest
+
+        class FakeDB:
+            async def scalar(self, *_args, **_kwargs):
+                return None
+
+            def add(self, _obj):
+                pass
+
+            async def commit(self):
+                raise IntegrityError("stmt", {}, Exception("duplicate key"))
+
+            async def rollback(self):
+                self.rolled_back = True
+
+        user = User(nickname="자린이")
+        payload = BudgetPlanUpsertRequest.model_validate(UPSERT_PAYLOAD)
+        fake_db = FakeDB()
+        with pytest.raises(ApiError) as exc_info:
+            await service.upsert_budget_plan(fake_db, user, payload)
+        assert exc_info.value.status_code == 409
+        assert exc_info.value.code == "BUDGET_PLAN_EXISTS"
+        assert fake_db.rolled_back is True
+
+    async def test_post_regression_defaults(self, client, db, respx_mock):
+        """기존 POST 동작 불변 — locked 기본 true, cuisines 기본 [] + 응답에 확장 필드."""
+        await login(client, respx_mock)
+        res = await client.post("/api/v1/budget/plans", json=VALID_PAYLOAD)
+        assert res.status_code == 201
+        body = res.json()
+        assert body["locked"] is True
+        assert body["cuisines"] == []
+        assert body["source"] == "guest"
+
+        plan = (await db.scalars(select(BudgetPlan))).one()
+        assert plan.locked is True
+        assert plan.cuisines == []

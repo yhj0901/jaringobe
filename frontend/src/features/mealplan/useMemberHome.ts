@@ -43,6 +43,8 @@ export interface PlanCreateInput {
 
 export interface MemberHomeState {
   status: MemberHomeStatus;
+  /** users/me.onboardingCompleted — 진입 배너 분기 (FR-316, ui-design 8장). 조회 전 null */
+  onboardingCompleted: boolean | null;
   plan: MealPlanResponse | null;
   /** 표시용 ViewModel — status='ready' 일 때만 존재 */
   viewModel: HomeViewModel | null;
@@ -62,6 +64,7 @@ export interface MemberHomeState {
 
 export function useMemberHome(): MemberHomeState {
   const [status, setStatus] = useState<MemberHomeStatus>('loading');
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
   const [plan, setPlan] = useState<MealPlanResponse | null>(null);
   const [budget, setBudget] = useState<Money | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
@@ -100,6 +103,7 @@ export function useMemberHome(): MemberHomeState {
       setStatus(me.status === 401 ? 'guest' : 'error');
       return;
     }
+    setOnboardingCompleted(me.data.onboardingCompleted);
     if (!me.data.hasBudgetPlan) {
       setStatus('budget-required');
       return;
@@ -194,6 +198,7 @@ export function useMemberHome(): MemberHomeState {
 
   return {
     status,
+    onboardingCompleted,
     plan,
     viewModel,
     budget,

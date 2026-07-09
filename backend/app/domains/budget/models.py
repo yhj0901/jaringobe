@@ -7,6 +7,7 @@ from decimal import Decimal
 from sqlalchemy import (
     CHAR,
     TIMESTAMP,
+    Boolean,
     CheckConstraint,
     ForeignKey,
     Numeric,
@@ -14,7 +15,7 @@ from sqlalchemy import (
     String,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -56,6 +57,13 @@ class BudgetPlan(Base):
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
     meal_direction: Mapped[str] = mapped_column(String(20), nullable=False)
     source: Mapped[str] = mapped_column(String(20), nullable=False)
+    # 0004 확장 — 예산 락 여부 + 선호 음식(enum 배열, 서비스 검증)
+    locked: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=text("true")
+    )
+    cuisines: Mapped[list[str]] = mapped_column(
+        JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
+    )
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, default=_utcnow, server_default=text("now()")
     )

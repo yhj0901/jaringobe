@@ -7,6 +7,7 @@ import type { MemberHomeState } from '@/features/mealplan/useMemberHome';
 import { renderWithIntl } from '@/test/renderWithIntl';
 
 const state: { current: MemberHomeState } = { current: undefined as unknown as MemberHomeState };
+const routerMock = { push: vi.fn(), replace: vi.fn() };
 
 vi.mock('@/features/mealplan/useMemberHome', () => ({
   useMemberHome: () => state.current,
@@ -14,6 +15,14 @@ vi.mock('@/features/mealplan/useMemberHome', () => ({
 vi.mock('@/features/guest/GuestHomeController', () => ({
   GuestHomeController: () => <div data-testid="guest-home" />,
 }));
+vi.mock('@/i18n/routing', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/i18n/routing')>();
+  return {
+    ...actual,
+    useRouter: () => routerMock,
+    usePathname: () => '/',
+  };
+});
 
 const PLAN: MealPlanResponse = {
   id: 'plan-1',
@@ -58,6 +67,7 @@ const PLAN: MealPlanResponse = {
 function baseState(overrides: Partial<MemberHomeState> = {}): MemberHomeState {
   return {
     status: 'loading',
+    onboardingCompleted: true,
     plan: null,
     viewModel: null,
     budget: null,
@@ -84,6 +94,7 @@ function readyState(plan: MealPlanResponse = PLAN, overrides: Partial<MemberHome
 }
 
 beforeEach(() => {
+  vi.clearAllMocks();
   state.current = baseState();
 });
 
@@ -107,24 +118,36 @@ describe('MemberHomeController 상태 분기 (ui-design 7장)', () => {
     expect(state.current.reload).toHaveBeenCalledTimes(1);
   });
 
-  it('budget-required → BudgetPlanGate (FR-207)', () => {
+  it('budget-required → 샘플 홈 + 온보딩 유도 배너 (FR-316, BudgetPlanGate 전면 제거)', () => {
     state.current = baseState({ status: 'budget-required' });
     renderWithIntl(<MemberHomeController />);
-    expect(screen.getByText('먼저 예산안을 만들어 주세요')).toBeInTheDocument();
+    expect(screen.queryByText('먼저 예산안을 만들어 주세요')).not.toBeInTheDocument();
+    // 샘플 홈 셸 + 상단 배너
+    expect(screen.getByText('남은 예산')).toBeInTheDocument();
+    expect(screen.getAllByText('예시').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: '설정 마치고 식단 만들기' }));
+    expect(routerMock.push).toHaveBeenCalledWith('/onboarding');
   });
 });
 
-describe('MemberHomeController 빈 상태 (FR-202/203/204)', () => {
-  it('EmptyPlanHero + 잠금 카드, CTA → 생성 시트 → 제출 시 createPlan 호출', () => {
-    state.current = baseState({
-      status: 'empty',
-      budget: { amount: '500000.00', currency: 'KRW' },
-    });
+describe('MemberHomeController 빈 상태 — 샘플 홈 + 배너 (FR-316/202/203/204)', () => {
+  it('온보딩 미완료 → "설정 마치고 식단 만들기" 배너 → /onboarding', () => {
+    state.current = baseState({ status: 'empty', onboardingCompleted: false });
     renderWithIntl(<MemberHomeController />);
 
-    expect(screen.getByText('₩500,000')).toBeInTheDocument();
-    expect(screen.getAllByText('준비 중')).toHaveLength(2);
+    // 체험 배지 없음 + "예시" 라벨 유지 (ui-design 8장)
+    expect(screen.queryByText('체험 모드')).not.toBeInTheDocument();
+    expect(screen.getAllByText('예시').length).toBeGreaterThan(0);
 
+    fireEvent.click(screen.getByRole('button', { name: '설정 마치고 식단 만들기' }));
+    expect(routerMock.push).toHaveBeenCalledWith('/onboarding');
+  });
+
+  it('온보딩 완료 → "내 식단 만들기" 배너 → 생성 시트 → 제출 시 createPlan 호출', () => {
+    state.current = baseState({ status: 'empty' });
+    renderWithIntl(<MemberHomeController />);
+
+    expect(screen.queryByText('체험 모드')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '내 식단 만들기' }));
     fireEvent.click(screen.getByRole('button', { name: '식단 생성하기' }));
     expect(state.current.createPlan).toHaveBeenCalledWith({
@@ -134,13 +157,21 @@ describe('MemberHomeController 빈 상태 (FR-202/203/204)', () => {
     });
     // 제출 후 시트 닫힘
     expect(screen.queryByRole('button', { name: '식단 생성하기' })).not.toBeInTheDocument();
+    expect(routerMock.push).not.toHaveBeenCalled();
   });
 
-  it('생성 중 → GenerationLoading 오버레이 + CTA 비활성', () => {
+  it('생성 중 → GenerationLoading 오버레이 + 배너 CTA 비활성', () => {
     state.current = baseState({ status: 'empty', generation: 'creating' });
     renderWithIntl(<MemberHomeController />);
     expect(screen.getByText('예산에 맞는 식단을 만들고 있어요')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '내 식단 만들기' })).toBeDisabled();
+  });
+
+  it('빈 상태 탭바: fridge → "준비 중" 안내 (FR-208)', () => {
+    state.current = baseState({ status: 'empty', onboardingCompleted: false });
+    renderWithIntl(<MemberHomeController />);
+    fireEvent.click(screen.getByRole('button', { name: '냉장고' }));
+    expect(screen.getByText('아직 준비 중인 기능이에요. 곧 만나요!')).toBeInTheDocument();
   });
 
   it('실패 → 재시도 배너 (retryGenerate)', () => {

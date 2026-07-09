@@ -188,6 +188,18 @@
       "retry": "다시 시도",
       "rateLimited": "요청이 많아 잠시 쉬어가는 중이에요. 1분 후 다시 시도해 주세요.",
       "dismiss": "닫기"
+    },
+    "banner": {
+      "setup": {
+        "badge": "예산 락",
+        "title": "설정을 마치면 예산에 맞춘 내 식단이 시작돼요",
+        "cta": "설정 마치고 식단 만들기"
+      },
+      "create": {
+        "badge": "예산 락",
+        "title": "예산에 맞춘 내 식단을 만들어 보세요",
+        "cta": "내 식단 만들기"
+      }
     }
   },
   "mealplan": {
@@ -232,13 +244,135 @@
     }
   },
   "onboarding": {
-    "title": "가구 구성 설정",
-    "stub": "가구 구성 온보딩은 준비 중이에요.",
     "imported": {
       "title": "예산안을 계정으로 옮겼어요!",
-      "description": "체험 모드에서 만든 예산안이 그대로 적용됐어요. 이제 예산에 맞춘 식단을 시작해 보세요.",
-      "homeCta": "홈으로 가기"
+      "description": "체험 모드에서 만든 예산안이 그대로 적용됐어요. 가구 구성만 마저 설정하면 예산에 맞춘 식단이 시작돼요.",
+      "continueCta": "설정 이어서 하기"
     },
-    "stubHomeCta": "홈으로 가서 시작하기"
+    "stepIndicator": "STEP {current} / 3",
+    "step1": {
+      "title1": "가구 구성원을",
+      "title2": "설정하세요",
+      "subtitle": "1인 가구부터 대가족까지 — 구성원을 추가·삭제하세요",
+      "householdChip": "{count}인 가구",
+      "memberHint": "구성원에 맞춰 영양·식사량을 자동 계산해요",
+      "quickSelect": "가구 유형 빠른 선택",
+      "presetLabel": "{count}인",
+      "memberList": "구성원",
+      "householdBadge": "{count}인",
+      "ageWord": "나이",
+      "age": "{age}세",
+      "ageRange": "{min}~{max}세",
+      "decreaseAge": "{name} 나이 줄이기",
+      "increaseAge": "{name} 나이 늘리기",
+      "removeMember": "{name} 삭제",
+      "addMember": "구성원 추가",
+      "addType": "+ {name}",
+      "next": "다음"
+    },
+    "step2": {
+      "title1": "한 달 식비 예산을",
+      "title2": "잠가요",
+      "subtitle": "락을 걸면 AI가 이 금액을 넘지 않게 식단·주문을 자동 조절해요",
+      "monthBudget": "월 식비 예산",
+      "perPerson": "1인 {amount}",
+      "recommended": "권장 {amount}",
+      "sliderLabel": "월 예산",
+      "minNote": "1인 최소 {perPerson} 기준 · {count}인 최소 {total}",
+      "mood": {
+        "frugal": {
+          "title": "알뜰한 예산이에요",
+          "desc": "권장 식비 이하 — 안정적으로 관리돼요"
+        },
+        "moderate": {
+          "title": "적정한 예산이에요",
+          "desc": "권장보다 조금 높아요 · 절약 여지가 있어요"
+        },
+        "roomy": {
+          "title": "여유로운 예산이에요",
+          "desc": "권장 식비를 크게 넘어요 · 낭비에 주의하세요"
+        }
+      },
+      "lockName": "예산 락",
+      "lockOn": "켜짐 · 초과 지출 자동 차단",
+      "lockOff": "꺼짐 · 알림만 받아요",
+      "prev": "이전",
+      "next": "다음"
+    },
+    "step3": {
+      "title1": "어떤 식단을",
+      "title2": "원하세요?",
+      "subtitle": "선호 음식과 식단 방향에 맞춰 AI가 식단을 짜요",
+      "prefTitle": "선호하는 음식 종류",
+      "prefMulti": "· 복수 선택",
+      "dirTitle": "식단 방향",
+      "dirSingle": "· 하나 선택",
+      "direction": {
+        "health": {
+          "title": "건강·영양 위주",
+          "desc": "성장기 자녀 영양 균형"
+        },
+        "diet": {
+          "title": "다이어트 위주",
+          "desc": "저칼로리·가벼운 한 끼"
+        },
+        "hearty": {
+          "title": "든든·푸짐 위주",
+          "desc": "대가족 양 충분히"
+        },
+        "kids": {
+          "title": "아이 입맛 위주",
+          "desc": "아이들이 잘 먹는 메뉴"
+        }
+      },
+      "prev": "이전",
+      "cta": "이 조건으로 식단 짜기"
+    },
+    "saving": "설정을 저장하고 있어요…",
+    "error": {
+      "household": "가구 구성 저장에 실패했어요. 다시 시도해 주세요.",
+      "budget": "예산 저장에 실패했어요. 다시 시도해 주세요.",
+      "mealplan": "식단 생성에 실패했어요. 다시 시도해 주세요.",
+      "rateLimited": "요청이 많아 잠시 쉬어가는 중이에요. 1분 후 다시 시도해 주세요.",
+      "retry": "다시 시도"
+    }
+  },
+  "memberType": {
+    "adult_m": {
+      "label": "성인 남성",
+      "mono": "남"
+    },
+    "adult_f": {
+      "label": "성인 여성",
+      "mono": "여"
+    },
+    "teen": {
+      "label": "청소년",
+      "mono": "청"
+    },
+    "child": {
+      "label": "어린이",
+      "mono": "아"
+    },
+    "toddler": {
+      "label": "유아",
+      "mono": "유"
+    }
+  },
+  "cuisine": {
+    "korean": "한식",
+    "western": "양식",
+    "japanese": "일식",
+    "chinese": "중식",
+    "comfort": "분식",
+    "salad": "샐러드·채식"
+  },
+  "entry": {
+    "revisit": {
+      "title": "다시 오셨네요!",
+      "description": "로그인하면 내 예산과 식단을 이어서 관리할 수 있어요.",
+      "login": "로그인하기",
+      "browse": "구경하기"
+    }
   }
 }

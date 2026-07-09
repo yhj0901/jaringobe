@@ -15,8 +15,13 @@ import { EngagementPrompt } from '@/features/guest/EngagementPrompt';
 import { BudgetDraftFlow } from '@/features/guest/BudgetDraftFlow';
 import { PersistentCtaBanner } from '@/features/guest/PersistentCtaBanner';
 import { AutoOrderPrompt } from '@/features/guest/AutoOrderPrompt';
+import { RevisitPrompt } from '@/features/guest/RevisitPrompt';
 import { SignupGateModal } from '@/features/auth/SignupGateModal';
-import { PROMPT_DECLINED_SESSION_KEY } from '@/shared/config/constants';
+import {
+  PROMPT_DECLINED_SESSION_KEY,
+  REVISIT_SHOWN_SESSION_KEY,
+  VISITED_MARKER_KEY,
+} from '@/shared/config/constants';
 import { useRouter, type AppLocale } from '@/i18n/routing';
 
 /** 예산안 적용 연출 시간 (FR-105 — 300ms 미만) */
@@ -43,6 +48,7 @@ export function GuestHomeController() {
   const [applying, setApplying] = useState(false);
   const [autoOrderPromptOpen, setAutoOrderPromptOpen] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
+  const [revisitOpen, setRevisitOpen] = useState(false);
 
   // FR-107: 마운트 후 localStorage 복원 (30일 만료는 스토리지 래퍼가 검사)
   useEffect(() => {
@@ -50,6 +56,14 @@ export function GuestHomeController() {
     setHydrated(true);
     if (window.sessionStorage.getItem(PROMPT_DECLINED_SESSION_KEY) !== null) {
       setDeclined(true);
+    }
+    // FR-316: 로그인 이력 재방문자 → [로그인하기/구경하기] 알림 (세션 내 1회)
+    if (
+      window.localStorage.getItem(VISITED_MARKER_KEY) !== null &&
+      window.sessionStorage.getItem(REVISIT_SHOWN_SESSION_KEY) === null
+    ) {
+      window.sessionStorage.setItem(REVISIT_SHOWN_SESSION_KEY, '1');
+      setRevisitOpen(true);
     }
   }, []);
 
@@ -74,9 +88,9 @@ export function GuestHomeController() {
     );
   }, [hydrated, plan, locale]);
 
-  // FR-102: 예산안 미작성 게스트에게만 타이밍 프롬프트
+  // FR-102: 예산안 미작성 게스트에게만 타이밍 프롬프트 (재방문 알림 중에는 보류)
   useEngagementTiming({
-    enabled: hydrated && !plan && !draftOpen,
+    enabled: hydrated && !plan && !draftOpen && !revisitOpen,
     onTrigger: () => setPromptOpen(true),
   });
 
@@ -133,6 +147,11 @@ export function GuestHomeController() {
         onAutoOrderStart={goLogin}
         onRecipeClick={gateOrDraft}
         onLockedNavClick={gateOrDraft}
+      />
+      <RevisitPrompt
+        open={revisitOpen}
+        onLogin={goLogin}
+        onBrowse={() => setRevisitOpen(false)}
       />
       <EngagementPrompt open={promptOpen} onAccept={handleAccept} onDecline={handleDecline} />
       <BudgetDraftFlow

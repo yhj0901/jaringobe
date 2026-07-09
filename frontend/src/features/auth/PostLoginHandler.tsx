@@ -7,7 +7,8 @@ import { fetchMe } from '@/features/auth/useSession';
 import { resolvePostLoginAction } from '@/features/auth/postLogin';
 import { importGuestPlan } from '@/features/budget/importGuestPlan';
 import { useGuestStore } from '@/features/guest/store';
-import { KNOWN_NOTICE_CODES } from '@/shared/config/constants';
+import { saveOnboardingPrefill } from '@/features/household/prefill';
+import { KNOWN_NOTICE_CODES, VISITED_MARKER_KEY } from '@/shared/config/constants';
 import { useRouter, usePathname } from '@/i18n/routing';
 
 /**
@@ -36,6 +37,9 @@ export function PostLoginHandler() {
       setNoticeCode(notice);
     }
 
+    // FR-316: 로그인 이력 마커 — 재방문 게스트 [로그인/구경] 알림 판정용 (PII 아님)
+    window.localStorage.setItem(VISITED_MARKER_KEY, '1');
+
     const run = async () => {
       await useGuestStore.persist.rehydrate();
       const me = await fetchMe();
@@ -48,8 +52,13 @@ export function PostLoginHandler() {
       const action = resolvePostLoginAction(me.data, guestPlan !== undefined);
 
       if (action === 'stay') {
-        // 예산안 없어도 홈 유지 — member 홈의 BudgetPlanGate 가 작성 흐름 처리 (FR-207)
         router.replace(pathname);
+        return;
+      }
+
+      if (action === 'onboarding') {
+        // 온보딩 미완료 회원 → 실화면 위저드 (FR-316)
+        router.push('/onboarding');
         return;
       }
 
@@ -57,16 +66,18 @@ export function PostLoginHandler() {
       if (guestPlan === undefined) return;
       const result = await importGuestPlan(guestPlan);
       if (result === 'created') {
+        // FR-315: STEP2 프리필용 이전값 전달 후 로컬 게스트 데이터 삭제
+        saveOnboardingPrefill(guestPlan);
         useGuestStore.getState().clearGuestData();
         router.push('/onboarding?imported=1');
       } else if (result === 'already-exists') {
-        // 기존 활성 예산안 보유 — 로컬 게스트 데이터 삭제만 (api-spec 2-1)
+        // 기존 활성 예산안 보유 — 로컬 삭제만 하고 온보딩(가구 설정)으로 (api-spec 2-1)
         useGuestStore.getState().clearGuestData();
-        router.replace(pathname);
+        router.push('/onboarding');
       } else if (result === 'invalid') {
-        // 변조 의심 — 게스트 값 폐기 후 홈 유지 (BudgetPlanGate 가 재작성 처리)
+        // 변조 의심 — 게스트 값 폐기 후 일반 온보딩
         useGuestStore.getState().clearGuestData();
-        router.replace(pathname);
+        router.push('/onboarding');
       } else {
         setFailed(true);
       }
