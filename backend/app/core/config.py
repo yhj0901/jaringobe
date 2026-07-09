@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     llm_model: str = "claude-sonnet-5"
 
+    # 마트 연동 — 네이버 쇼핑 검색 API (.env 전용, 하드코딩 금지)
+    naver_client_id: str = ""
+    naver_client_secret: str = ""
+
     # 인증 — JWT + OAuth state 서명 (.env: JWT_SECRET / JWT_ALG)
     jwt_secret: str = "dev-only-jwt-secret-do-not-use-in-prod"
     jwt_alg: str = "HS256"
