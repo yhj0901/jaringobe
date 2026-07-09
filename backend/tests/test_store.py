@@ -65,17 +65,17 @@ async def test_store_cart_filters_and_picks_cheapest(client, respx_mock):
     # 두부: 식품+컬리 2건만(두부틀·쿠팡 제외), 최저가 연두부 1200
     assert by["두부"]["matched"] is True
     assert by["두부"]["candidateCount"] == 2
-    assert by["두부"]["price"]["amount"] == "1200"
+    assert by["두부"]["price"]["amount"] == "1200.00"
     assert by["두부"]["mallName"] == "컬리N마트"
     # 쌀: 최저가 8990
-    assert by["쌀"]["price"]["amount"] == "8990"
+    assert by["쌀"]["price"]["amount"] == "8990.00"
     # 고사리: 후보 없음
     assert by["고사리"]["matched"] is False
     assert by["고사리"]["candidateCount"] == 0
 
     assert body["matchedCount"] == 2
     assert body["total"]["currency"] == "KRW"
-    assert body["total"]["amount"] == "10190"  # 1200 + 8990
+    assert body["total"]["amount"] == "10190.00"  # 1200 + 8990
 
 
 async def test_store_cart_requires_auth(client):
