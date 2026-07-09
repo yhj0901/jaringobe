@@ -100,6 +100,7 @@ def _mock(region: str, days: int, meals_per_day: int) -> list[dict]:
 def _prompt(
     region: str, household_size: int, meal_direction: str, days: int, meals_per_day: int,
     allergies: list[str], preferences: list[str], budget_hint: str,
+    household_desc: str = "",
 ) -> str:
     lines = [
         f"Region: {region}",
@@ -108,7 +109,12 @@ def _prompt(
         f"Allergies (AVOID strictly): {allergies}",
         f"Preferences: {preferences}",
         f"Plan: {days} days x {meals_per_day} meals/day",
+        f"Return EXACTLY {days * meals_per_day} meals — one per meal_type per day, no duplicates.",
+        "Dish and ingredient names in Korean only." if region == "KR" else "Dish and ingredient names in English only.",
     ]
+    if household_desc:
+        # 구성원 유형·나이 반영 (영양·식사량 개인화 힌트)
+        lines.insert(2, f"Household members: {household_desc}")
     if budget_hint:
         lines.append(budget_hint)
     lines.append(
@@ -121,6 +127,7 @@ def _prompt(
 async def generate_meals(
     region: str, household_size: int, meal_direction: str, days: int, meals_per_day: int,
     allergies: list[str], preferences: list[str], budget_hint: str = "",
+    household_desc: str = "",
 ) -> list[dict]:
     llm = get_llm()
     if not llm.enabled:
@@ -130,7 +137,7 @@ async def generate_meals(
         data = await llm.complete_json(
             _SYSTEM,
             _prompt(region, household_size, meal_direction, days, meals_per_day,
-                    allergies, preferences, budget_hint),
+                    allergies, preferences, budget_hint, household_desc),
         )
     except Exception:
         # api-spec v1.1 §3-2: LLM 실패(타임아웃 포함)는 5xx 가 아니라 규칙 기반 폴백 생성
@@ -153,4 +160,13 @@ async def generate_meals(
             "steps": m.get("steps"),
             "ingredients": ings,
         })
-    return drafts
+    # LLM 이 한/영 중복 등으로 초과 반환하는 경우 방어: (day, meal_type) 당 1끼 + 총량 상한
+    seen: set[tuple[int, str]] = set()
+    unique: list[dict] = []
+    for d in drafts:
+        key = (d["day"], d["meal_type"])
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(d)
+    return unique[: days * meals_per_day]
