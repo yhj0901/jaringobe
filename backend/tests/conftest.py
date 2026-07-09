@@ -24,6 +24,7 @@ from sqlalchemy import text  # noqa: E402
 
 import app.domains.auth.models  # noqa: E402, F401 - 메타데이터 등록
 import app.domains.budget.models  # noqa: E402, F401
+import app.domains.household.models  # noqa: E402, F401
 from app.core.db import Base, SessionLocal, engine  # noqa: E402
 from app.core.ratelimit import auth_ip_limiter, budget_user_limiter  # noqa: E402
 from app.main import app  # noqa: E402
