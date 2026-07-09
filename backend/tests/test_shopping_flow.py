@@ -86,3 +86,29 @@ async def test_shopping_flow_requires_auth(client):
         "/api/v1/mealplans/00000000-0000-0000-0000-000000000000/cart", json={}
     )
     assert res.status_code == 401
+
+
+async def test_monthly_plan_proration_and_first_week(client, respx_mock):
+    respx_mock.get(host=NAVER_HOST, path=NAVER_PATH).mock(side_effect=_naver)
+    await login(client, respx_mock)
+    assert (await _budget(client)).status_code == 201  # 월 예산 500,000
+
+    res = await client.post("/api/v1/mealplans/monthly", json={
+        "cycle": "weekly", "mealsPerDay": 3, "asOf": "2026-07-10", "maxPages": 2,
+    })
+    assert res.status_code == 201, res.text
+    b = res.json()
+
+    # 프로레이션: 7/10 입력(오늘 포함) → 남은 22/31, 500000×22/31 = 354838.71
+    assert b["prorateRatio"] == "22/31"
+    assert b["proratedBudget"]["amount"] == "354838.71"
+    assert b["monthlyBudget"]["amount"] == "500000.00"
+    assert b["days"] == 22
+    assert b["periodStart"] == "2026-07-10" and b["periodEnd"] == "2026-07-31"
+
+    # 첫 주기(7일)만 주문 계산
+    fo = b["firstOrder"]
+    assert fo["days"] == 7
+    assert fo["periodStart"] == "2026-07-10" and fo["periodEnd"] == "2026-07-16"
+    assert len(fo["needed"]) > 0
+    assert "cart" in fo

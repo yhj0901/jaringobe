@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import calendar
 from datetime import timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -26,9 +27,12 @@ from app.domains.mealplan.schemas import (
     BudgetSummary,
     MealIngredientOut,
     MealOut,
+    FirstCycleOrder,
     MealPlanCartResponse,
     MealPlanCreateRequest,
     MealPlanResponse,
+    MonthlyPlanRequest,
+    MonthlyPlanResponse,
     RegenerateRequest,
 )
 from app.domains.store import service as store_service
@@ -74,11 +78,14 @@ async def _price(db, drafts, region, currency) -> Decimal:
 async def _generate_within_budget(
     db: AsyncSession, budget: BudgetPlan, region: str,
     days: int, meals_per_day: int, allergies: list[str], preferences: list[str],
+    limit_amount: Decimal | None = None,
 ) -> tuple[list[dict], str, Decimal, list[str]]:
     from app.domains.mealplan.llm import get_llm
 
     currency = budget.currency
     direction = MEAL_DIRECTION_HINT.get(budget.meal_direction, "balanced")
+    # 프로레이트 예산이 주어지면 그 한도로 검산(월예산 전액 아님)
+    limit = limit_amount if limit_amount is not None else budget.amount
     notes: list[str] = []
     budget_hint = ""
     allergy_hint = ""
@@ -101,13 +108,13 @@ async def _generate_within_budget(
 
         total = await _price(db, drafts, region, currency)
         best = (drafts, total)
-        if total <= budget.amount:
+        if total <= limit:
             status = "ready"
             break
         status = "over_budget"
-        over = total - budget.amount
+        over = total - limit
         budget_hint = (
-            f"PREVIOUS PLAN COST {total} {currency}, OVER budget {budget.amount} by {over}. "
+            f"PREVIOUS PLAN COST {total} {currency}, OVER budget {limit} by {over}. "
             "Make it cheaper."
         )
         if not llm_enabled:
@@ -117,7 +124,7 @@ async def _generate_within_budget(
     drafts, total = best
     if status == "over_budget":
         notes.append(
-            f"⚠️ 예산 초과: {total} {currency} > {budget.amount} {currency} "
+            f"⚠️ 예산 초과: {total} {currency} > {limit} {currency} "
             f"({MAX_BUDGET_RETRIES}회 재시도 후, 임의로 자르지 않음)"
         )
     return drafts, status, total, notes
@@ -276,3 +283,72 @@ async def build_shopping_cart(
     # 필요 품목만 마트(컬리) 장바구니
     cart = await store_service.build_cart(to_buy, mall, max_pages)
     return MealPlanCartResponse(meal_plan_id=plan.id, needed=shortfall.items, cart=cart)
+
+
+def _prorate(as_of, monthly: Decimal) -> tuple[int, int, Decimal, str]:
+    """월예산을 '오늘 포함 남은 일수' 비율로 안분. (예: 7/10 → 22/31)."""
+    dim = calendar.monthrange(as_of.year, as_of.month)[1]
+    remaining = dim - as_of.day + 1
+    prorated = (monthly * Decimal(remaining) / Decimal(dim)).quantize(_CENT, rounding=ROUND_HALF_UP)
+    return remaining, dim, prorated, f"{remaining}/{dim}"
+
+
+async def build_monthly_plan(
+    db: AsyncSession, user: User, req: MonthlyPlanRequest
+) -> MonthlyPlanResponse:
+    """월 예산 → 그 달(남은 일수) 식단 + 첫 주기 주문(컬리). 예산은 남은 일자 비율만큼."""
+    budget = await _get_budget(db, user)
+    as_of = req.as_of or utcnow().date()
+    remaining, _dim, prorated, ratio = _prorate(as_of, budget.amount)
+    region = user.country
+    cur = budget.currency
+
+    # 한 달치(남은 일수) 식단 — 프로레이트 예산 기준 검산
+    drafts, status, total, _notes = await _generate_within_budget(
+        db, budget, region, remaining, req.meals_per_day, [], [], limit_amount=prorated
+    )
+    plan = MealPlan(
+        user_id=user.id, budget_plan_id=budget.id, status=status, total_cost=total,
+        currency=cur, region=region,
+        period_start=as_of, period_end=as_of + timedelta(days=remaining - 1),
+    )
+    _apply_drafts(plan, drafts, as_of, remaining, cur)
+    db.add(plan)
+    await db.commit()
+    plan = await _reload(db, plan.id)
+
+    # 첫 주기(주문): weekly=7 / biweekly=14
+    cycle_days = 7 if req.cycle == "weekly" else 14
+    first_days = min(cycle_days, remaining)
+    first_end_excl = as_of + timedelta(days=first_days)
+    agg: dict[tuple[str, str], list] = {}
+    for meal in plan.meals:
+        if meal.plan_date >= first_end_excl:
+            continue
+        for ing in meal.ingredients:
+            key = (ing.name.lower(), ing.unit)
+            if key not in agg:
+                agg[key] = [ing.name, Decimal("0")]
+            agg[key][1] += ing.quantity
+    needed = [FridgeNeed(name=n, quantity=q, unit=u) for (_nl, u), (n, q) in agg.items()]
+    shortfall = await fridge_service.compute_shortfall(db, user.id, needed)
+    to_buy = [
+        StoreNeed(name=line.name, quantity=Decimal(line.to_buy), unit=line.unit)
+        for line in shortfall.items if Decimal(line.to_buy) > 0
+    ]
+    cart = await store_service.build_cart(to_buy, req.mall, req.max_pages)
+
+    first_order = FirstCycleOrder(
+        period_start=as_of, period_end=as_of + timedelta(days=first_days - 1),
+        days=first_days, needed=shortfall.items, cart=cart,
+    )
+    return MonthlyPlanResponse(
+        meal_plan_id=plan.id, status=status,
+        period_start=as_of, period_end=as_of + timedelta(days=remaining - 1), days=remaining,
+        monthly_budget=MoneyOut(amount=budget.amount, currency=cur),
+        prorated_budget=MoneyOut(amount=prorated, currency=cur),
+        prorate_ratio=ratio,
+        planned_cost=MoneyOut(amount=total, currency=cur),
+        within_budget=(status == "ready"),
+        first_order=first_order,
+    )

@@ -16,6 +16,8 @@ from app.domains.mealplan.schemas import (
     MealPlanCartResponse,
     MealPlanCreateRequest,
     MealPlanResponse,
+    MonthlyPlanRequest,
+    MonthlyPlanResponse,
     RegenerateRequest,
 )
 
@@ -85,3 +87,18 @@ async def build_shopping_cart(
     """식단 → 냉장고 감산 → 컬리 장바구니 (원스톱)."""
     req = payload or MealPlanCartRequest()
     return await service.build_shopping_cart(db, user, plan_id, req.mall, req.max_pages)
+
+
+@router.post(
+    "/mealplans/monthly",
+    response_model=MonthlyPlanResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(_cart_rate_limit)],
+)
+async def build_monthly_plan(
+    payload: MonthlyPlanRequest | None = None,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> MonthlyPlanResponse:
+    """월 예산 → 그 달(남은 일수, 오늘 포함) 식단 + 첫 주기 주문. 예산은 남은 일자 비율만큼."""
+    return await service.build_monthly_plan(db, user, payload or MonthlyPlanRequest())

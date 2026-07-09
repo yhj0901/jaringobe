@@ -81,3 +81,34 @@ class MealPlanCartResponse(CamelModel):
     meal_plan_id: uuid.UUID
     needed: list[ShortfallLine]   # 식단 재료 − 냉장고 재고 = 필요 품목
     cart: StoreCartResponse       # 필요 품목의 마트(컬리) 장바구니
+
+
+# ---------- 월 예산 → 한 달 식단 + 첫 주기 주문 ----------
+class MonthlyPlanRequest(CamelModel):
+    cycle: Literal["weekly", "biweekly"] = "weekly"
+    meals_per_day: int = Field(default=3, ge=1, le=5)
+    as_of: date | None = None   # 기본: 서버 오늘 (예산 입력일)
+    mall: Literal["kurly", "all"] = "kurly"
+    max_pages: int = Field(default=5, ge=1, le=10)
+
+
+class FirstCycleOrder(CamelModel):
+    period_start: date
+    period_end: date
+    days: int
+    needed: list[ShortfallLine]   # 첫 주기 식단 − 냉장고 = 주문할 목록
+    cart: StoreCartResponse       # 첫 주기 컬리 장바구니(주문)
+
+
+class MonthlyPlanResponse(CamelModel):
+    meal_plan_id: uuid.UUID
+    status: str
+    period_start: date
+    period_end: date
+    days: int
+    monthly_budget: MoneyOut      # 입력한 월 예산
+    prorated_budget: MoneyOut     # 남은 일자 비율만큼(오늘 포함)
+    prorate_ratio: str            # 예: "22/31"
+    planned_cost: MoneyOut        # 한 달 식단 예상 비용(기준가)
+    within_budget: bool
+    first_order: FirstCycleOrder
