@@ -31,6 +31,7 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 
 - 인덱스: `ix_users_email (lower(email))` — 동일 이메일 타 provider 안내(FR-004)용 조회. UNIQUE 아님(정책상 중복 허용)
 - 탈퇴(soft delete) 컬럼은 회원 탈퇴 기획에서 추가 (현 범위 아님)
+- **(v1.5) 지역·통화 허용값**: `country ∈ {KR, US}`, `currency ∈ {KRW, USD}`, `KR↔KRW`·`US↔USD` 로 서버 매핑. **DB CHECK 미추가 — 스키마 변경 없음**(컬럼 재사용). 열거 검증은 API 계층(`PUT /users/me/region`)이 담당 (FR-602)
 
 ### 2-2. `auth_identities`
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -98,18 +99,19 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 
 **`budget_plans` 확장**: `locked boolean NOT NULL DEFAULT true`, `cuisines jsonb NOT NULL DEFAULT '[]'` (enum 배열은 서비스 검증)
 
-## 2-7. store_connections (리비전 0005 — GATE 3 대상)
+## 2-7. store_connections (리비전 0005 / 0007 국가별 확장 — GATE 3 대상)
 
 | 컬럼 | 타입 | 제약 |
 |------|------|------|
 | id | uuid | PK |
 | user_id | uuid | NOT NULL FK→users CASCADE |
-| store | varchar(10) | CHECK in ('kurly','coupang','ssg','naver') |
+| store | varchar(10) | CHECK in ('kurly','coupang','ssg','naver','walmart','instacart') ← **0007 로 walmart·instacart 편입** |
 | status | varchar(15) | CHECK in ('connected','disconnected') |
 | connected_at | timestamptz | NULL |
 | created_at/updated_at | timestamptz | NOT NULL |
 - **UNIQUE(user_id, store)**, `ix_store_connections_user_id`
 - 자격증명 컬럼 없음 — 실연동 시 store 본설계에서 암호화 참조로 확장 (평문 저장 금지 원칙)
+- **(v1.5) 국가별 세트**: 애플리케이션 계층에서 `user.country` 로 노출 세트 결정(KR 4 / US 2). DB 는 전체 enum 허용, **국가↔스토어 매핑 CHECK 는 두지 않음**(지역 전환 시 타 국가 연동 행 보존·복원 위함). `store` 는 `varchar(10)` 로 `instacart`(9자)·`walmart`(7자) 수용 — **컬럼 타입 변경 불필요**, CHECK 제약만 재정의
 
 ## 3. 마이그레이션 계획 (인프라 에이전트 실행)
 
@@ -120,11 +122,13 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 | `0004_household_budget_ext` | household_members 신규 + budget_plans locked/cuisines (down_revision=0003) | **작성·로컬 왕복 검증 PASS** (2026-07-09, GATE 3 통과) |
 | `0005_store_connections` | store_connections 신규 (down_revision=0004) | **작성·로컬 왕복 검증 PASS** (2026-07-10, GATE 3 통과) |
 | `0006_meal_completion` | meals 에 completed_at·time_minutes·difficulty(NULL) 3컬럼 (down_revision=0005) | **작성·로컬 왕복 검증 PASS** (2026-07-10, GATE 3 통과) |
+| `0007_store_connections_global` | `ck_store_connections_store` 제약 재정의: kurly/coupang/ssg/naver **+ walmart + instacart** (down_revision=**0006**). 기존 행 영향 없음·컬럼 타입 변경 없음. downgrade 는 KR 4종으로 CHECK 원복(US 연동 행 존재 시 실패 가능 — 문서화). 모델 `connection_models.py` CheckConstraint 도 동시 동기화 | **계획** (설계 승인 후 `/인프라시작` — store 제약 변경이므로 **팀원 리뷰 필수**) |
 
 - 롤백: 4테이블 역순 drop (최초 리비전이므로 단순, pgcrypto 확장은 유지)
 - 파일: `backend/alembic/versions/0001_initial_auth_budget.py`
 
 ## 변경 이력
+- 2026-07-10: v1.5 — 2-7 store_connections CHECK 에 walmart·instacart 편입(리비전 0007 계획, GATE 3·팀원 리뷰) + 2-1 users country/currency 허용값(KR/US·KRW/USD, DB CHECK 없음·API 검증) 명시
 - 2026-07-09: v1.2 — 2-6 household_members + budget_plans 확장 설계 (리비전 0004 계획)
 - 2026-07-09: 최초 작성 — auth 3테이블 + budget_plans v0 (설계 토론 5라운드 합의)
 - 2026-07-09: 리비전 0001 작성·로컬 검증 완료 (GATE 3 통과). rotated_from FK 는 ON DELETE SET NULL 로 확정
