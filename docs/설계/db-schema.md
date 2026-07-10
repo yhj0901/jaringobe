@@ -122,7 +122,7 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 | `0004_household_budget_ext` | household_members 신규 + budget_plans locked/cuisines (down_revision=0003) | **작성·로컬 왕복 검증 PASS** (2026-07-09, GATE 3 통과) |
 | `0005_store_connections` | store_connections 신규 (down_revision=0004) | **작성·로컬 왕복 검증 PASS** (2026-07-10, GATE 3 통과) |
 | `0006_meal_completion` | meals 에 completed_at·time_minutes·difficulty(NULL) 3컬럼 (down_revision=0005) | **작성·로컬 왕복 검증 PASS** (2026-07-10, GATE 3 통과) |
-| `0007_store_connections_global` | `ck_store_connections_store` 제약 재정의: kurly/coupang/ssg/naver **+ walmart + instacart** (down_revision=**0006**). 기존 행 영향 없음·컬럼 타입 변경 없음. downgrade 는 KR 4종으로 CHECK 원복(US 연동 행 존재 시 실패 가능 — 문서화). 모델 `connection_models.py` CheckConstraint 도 동시 동기화 | **계획** (설계 승인 후 `/인프라시작` — store 제약 변경이므로 **팀원 리뷰 필수**) |
+| `0007_store_connections_global` | `ck_store_connections_store` 제약 재정의: kurly/coupang/ssg/naver **+ walmart + instacart** (down_revision=**0006**). 기존 행 영향 없음·컬럼 타입 변경 없음. downgrade 는 KR 4종으로 CHECK 원복(US 연동 행 존재 시 실패 가능 — 문서화). 모델 `connection_models.py` CheckConstraint 도 동시 동기화 | **파일 작성 완료**(2026-07-10, 리비전 체인 정적 검증 PASS — 단일 head). **왕복 검증 대기**(로컬 postgres 부재 → docker-compose 또는 `jaringobe_dev` SSH 터널에서 `upgrade→downgrade→upgrade`). store 제약 변경 → **팀원 리뷰 필수** |
 
 - 롤백: 4테이블 역순 drop (최초 리비전이므로 단순, pgcrypto 확장은 유지)
 - 파일: `backend/alembic/versions/0001_initial_auth_budget.py`
