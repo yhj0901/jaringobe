@@ -1,4 +1,20 @@
 {
+  "fridgePage": {
+    "title": "가상 냉장고",
+    "subtitle": "재료를 직접 추가·관리해 보세요. (배송 자동등록은 준비 중)",
+    "addTitle": "재료 추가",
+    "name": "재료명 (예: 두부)",
+    "quantity": "수량",
+    "unit": "단위",
+    "expiresAt": "유통기한",
+    "addButton": "냉장고에 추가",
+    "empty": "냉장고가 비어 있어요. 재료를 추가해 보세요.",
+    "expiresIn": "{days}일 남음",
+    "expired": "기한 지남",
+    "deleteLabel": "{name} 삭제",
+    "loginRequired": "로그인이 필요해요.",
+    "loadError": "재고를 불러오지 못했어요."
+  },
   "metadata": {
     "home": {
       "title": "자린고비 — 예산 안에서 식단과 장보기를 자동으로",

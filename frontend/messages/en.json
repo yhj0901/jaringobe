@@ -1,4 +1,20 @@
 {
+  "fridgePage": {
+    "title": "Virtual Fridge",
+    "subtitle": "Add and manage ingredients yourself. (Auto-registration on delivery: coming soon)",
+    "addTitle": "Add ingredient",
+    "name": "Name (e.g., tofu)",
+    "quantity": "Qty",
+    "unit": "Unit",
+    "expiresAt": "Expiry date",
+    "addButton": "Add to fridge",
+    "empty": "Your fridge is empty. Add some ingredients.",
+    "expiresIn": "{days}d left",
+    "expired": "Expired",
+    "deleteLabel": "Delete {name}",
+    "loginRequired": "Please log in.",
+    "loadError": "Failed to load inventory."
+  },
   "metadata": {
     "home": {
       "title": "JARINGOBE — Meal plans and groceries, automatically within budget",
