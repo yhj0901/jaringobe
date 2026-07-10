@@ -12,6 +12,8 @@ from app.core.ratelimit import mealplan_user_limiter, store_user_limiter
 from app.domains.auth.models import User
 from app.domains.mealplan import service
 from app.domains.mealplan.schemas import (
+    MealCompletionRequest,
+    MealOut,
     MealPlanCartRequest,
     MealPlanCartResponse,
     MealPlanCreateRequest,
@@ -60,6 +62,22 @@ async def get_meal_plan(
     user: User = Depends(get_current_user),
 ) -> MealPlanResponse:
     return await service.get_meal_plan(db, user, plan_id)
+
+
+# 하위 경로(.../meals/{meal_id}/completion)라 /mealplans/{plan_id} 조회와 충돌 없음
+@router.put(
+    "/mealplans/{plan_id}/meals/{meal_id}/completion",
+    response_model=MealOut,
+)
+async def set_meal_completion(
+    plan_id: uuid.UUID,
+    meal_id: uuid.UUID,
+    payload: MealCompletionRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> MealOut:
+    """식사 완료 설정/해제 → 갱신된 MealOut."""
+    return await service.set_meal_completion(db, user, plan_id, meal_id, payload.completed)
 
 
 @router.post(

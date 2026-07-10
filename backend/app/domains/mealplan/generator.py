@@ -76,8 +76,16 @@ _SYSTEM = (
 )
 
 
+# 폴백 레시피 시트가 비지 않도록 지역별 기본 조리 단계 (parse_steps 가 줄바꿈 기준 분리)
+_MOCK_STEPS = {
+    "KR": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+    "US": "1. Prep the ingredients.\n2. Cook them in a pan or pot.\n3. Season to taste and serve.",
+}
+
+
 def _mock(region: str, days: int, meals_per_day: int) -> list[dict]:
     bank = _RECIPES.get(region.upper(), _RECIPES["KR"])
+    steps = _MOCK_STEPS.get(region.upper(), _MOCK_STEPS["KR"])
     out: list[dict] = []
     idx = 0
     for day in range(1, days + 1):
@@ -88,7 +96,9 @@ def _mock(region: str, days: int, meals_per_day: int) -> list[dict]:
                 "day": day,
                 "meal_type": MEAL_TYPES[m % len(MEAL_TYPES)],
                 "name": r["name"],
-                "steps": None,
+                "steps": steps,
+                "time_minutes": 20,
+                "difficulty": "easy",
                 "ingredients": [
                     {"name": i["name"], "quantity": Decimal(i["quantity"]), "unit": i["unit"]}
                     for i in r["ingredients"]
@@ -119,7 +129,8 @@ def _prompt(
         lines.append(budget_hint)
     lines.append(
         'Return JSON: {"meals":[{"day":1,"meal_type":"breakfast","name":"...",'
-        '"steps":"...","ingredients":[{"name":"...","quantity":1,"unit":"g|ml|ea"}]}]}'
+        '"steps":"...","time_minutes":20,"difficulty":"easy|normal|hard",'
+        '"ingredients":[{"name":"...","quantity":1,"unit":"g|ml|ea"}]}]}'
     )
     return "\n".join(lines)
 
@@ -153,11 +164,22 @@ async def generate_meals(
                 qty = Decimal("1")
             ings.append({"name": str(i.get("name", "")).strip(),
                          "quantity": qty, "unit": str(i.get("unit", "ea")).strip()})
+        # time_minutes: 양의 정수만 채택, 그 외 None (프론트 기본값)
+        tm: int | None
+        try:
+            parsed = int(m.get("time_minutes"))
+            tm = parsed if parsed > 0 else None
+        except (TypeError, ValueError):
+            tm = None
+        diff = m.get("difficulty")
+        difficulty = diff if diff in ("easy", "normal", "hard") else None
         drafts.append({
             "day": int(m.get("day", 1)),
             "meal_type": str(m.get("meal_type", "meal")),
             "name": str(m.get("name", "")).strip(),
             "steps": m.get("steps"),
+            "time_minutes": tm,
+            "difficulty": difficulty,
             "ingredients": ings,
         })
     # LLM 이 한/영 중복 등으로 초과 반환하는 경우 방어: (day, meal_type) 당 1끼 + 총량 상한

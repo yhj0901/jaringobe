@@ -14,6 +14,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Numeric,
+    SmallInteger,
     String,
     Text,
     UniqueConstraint,
@@ -73,6 +74,12 @@ class Meal(Base):
     meal_type: Mapped[str] = mapped_column(String(16), nullable=False)
     recipe_name: Mapped[str] = mapped_column(String(200), nullable=False)
     recipe_steps: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # 식사 완료·레시피 메타 (마이그레이션 0006 과 1:1). 전부 NULL 허용
+    completed_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=True
+    )
+    time_minutes: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    difficulty: Mapped[str | None] = mapped_column(String(10), nullable=True)
 
     meal_plan: Mapped["MealPlan"] = relationship(back_populates="meals")
     ingredients: Mapped[list["MealIngredient"]] = relationship(
