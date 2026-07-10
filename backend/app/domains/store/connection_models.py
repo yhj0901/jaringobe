@@ -1,4 +1,4 @@
-"""store 연동 상태 SQLAlchemy 모델 — 마이그레이션 0005(docs/설계/db-schema.md 2-7)와 1:1 일치.
+"""store 연동 상태 SQLAlchemy 모델 — 마이그레이션 0005+0007(docs/설계/db-schema.md 2-7)과 1:1 일치.
 
 자격증명 컬럼 없음 — 실계정 연동 도입 시 store 본설계에서 암호화 참조로 확장 (평문 저장 금지).
 """
@@ -31,7 +31,7 @@ class StoreConnection(Base):
     __tablename__ = "store_connections"
     __table_args__ = (
         CheckConstraint(
-            "store IN ('kurly', 'coupang', 'ssg', 'naver')",
+            "store IN ('kurly', 'coupang', 'ssg', 'naver', 'walmart', 'instacart')",
             name="ck_store_connections_store",
         ),
         CheckConstraint(
