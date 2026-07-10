@@ -52,13 +52,19 @@ describe('HomeShell (FR-101)', () => {
     expect(screen.getAllByText('예시').length).toBeGreaterThanOrEqual(3);
   });
 
-  it('전체 조리법 보기 클릭 시 가입 게이트 콜백을 호출한다 (FR-109)', () => {
+  it('끼니 행 클릭 시 해당 끼니로 레시피 콜백을 호출한다 (FR-504)', () => {
     const onRecipeClick = vi.fn();
     renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} onRecipeClick={onRecipeClick} />);
-    const buttons = screen.getAllByRole('button', { name: '전체 조리법 보기' });
+    const buttons = screen.getAllByRole('button', { name: /레시피 보기$/ });
     expect(buttons).toHaveLength(3);
     fireEvent.click(buttons[0] as HTMLElement);
     expect(onRecipeClick).toHaveBeenCalledTimes(1);
+    expect(onRecipeClick.mock.calls[0]?.[0]).toMatchObject({ slot: 'breakfast' });
+  });
+
+  it('완료 버튼: onToggleMealComplete 미제공(게스트) 시 노출하지 않는다 (FR-503)', () => {
+    renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} />);
+    expect(screen.queryByRole('button', { name: /완료/ })).not.toBeInTheDocument();
   });
 
   it('en 로캘에서 USD 금액과 영어 라벨을 렌더한다 (US-107)', () => {

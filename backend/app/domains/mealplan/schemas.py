@@ -3,14 +3,15 @@
 금액은 budget 도메인의 MoneyOut 재사용(amount 문자열, float 금지).
 """
 
+import re
 import uuid
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, field_serializer
 
-from app.core.schema import CamelModel
+from app.core.schema import CamelModel, serialize_utc
 from app.domains.budget.schemas import MoneyOut
 from app.domains.fridge.schemas import ShortfallLine
 from app.domains.store.schemas import StoreCartResponse
@@ -43,12 +44,42 @@ class MealIngredientOut(CamelModel):
     est_cost: MoneyOut | None = None
 
 
+Difficulty = Literal["easy", "normal", "hard"]
+
+# 번호 접두("1." "2)" 등) 또는 줄바꿈 기준 단계 분리
+_STEP_SPLIT = re.compile(r"(?:\r?\n)+|(?<!\d)\d+[.)]\s*")
+
+
+def parse_steps(recipe_steps: str | None) -> list[str]:
+    """recipe_steps(Text) → 조리 단계 배열.
+
+    줄바꿈 또는 "1." "2)" 형태의 번호를 기준으로 분리하고 빈 항목은 제거한다.
+    """
+    if not recipe_steps:
+        return []
+    parts = _STEP_SPLIT.split(recipe_steps)
+    return [s.strip() for s in parts if s and s.strip()]
+
+
+class MealCompletionRequest(CamelModel):
+    completed: bool
+
+
 class MealOut(CamelModel):
     id: uuid.UUID
     plan_date: date
     meal_type: str
     recipe_name: str
     ingredients: list[MealIngredientOut]
+    # v1.4 확장 (하위 호환 옵셔널)
+    steps: list[str] = Field(default_factory=list)
+    completed_at: datetime | None = None
+    time_minutes: int | None = None
+    difficulty: Difficulty | None = None
+
+    @field_serializer("completed_at")
+    def _ser_completed_at(self, v: datetime | None) -> str | None:
+        return serialize_utc(v) if v is not None else None
 
 
 class BudgetSummary(CamelModel):

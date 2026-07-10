@@ -1,4 +1,5 @@
 import type { Money } from '@/shared/api/types';
+import type { MealDifficulty } from '@/features/mealplan/types';
 
 /**
  * HomeViewModel — 홈 셸 주입 계약 (ui-design 2장).
@@ -9,6 +10,13 @@ export type HomeMode = 'guest-default' | 'guest-planned' | 'member';
 
 export type MealSlot = 'breakfast' | 'lunch' | 'dinner';
 
+/** 레시피 시트 재료 칩 — name+quantity+unit (FR-504) */
+export interface RecipeIngredient {
+  name: string;
+  quantity: string;
+  unit: string;
+}
+
 export interface MealItem {
   slot: MealSlot;
   name: string;
@@ -17,6 +25,18 @@ export interface MealItem {
   ingredients?: string[];
   /** [member 옵셔널 확장] 끼니 추정 비용 — 재료 estCost 합 (FR-205) */
   estCost?: Money;
+  /** [member 옵셔널 확장] 완료 토글 대상 끼니 id (FR-501) */
+  mealId?: string;
+  /** [member 옵셔널 확장] 레시피 시트 재료 칩 데이터 (FR-504) */
+  recipeIngredients?: RecipeIngredient[];
+  /** [member 옵셔널 확장] 조리 단계 (FR-502) — 없으면 시트가 기본 조리법 표시 */
+  steps?: string[];
+  /** [member 옵셔널 확장] 완료 시각 — 완료=ISO, 미완료=null (FR-501) */
+  completedAt?: string | null;
+  /** [member 옵셔널 확장] 조리 시간(분) — 없으면 기본값 (FR-505) */
+  timeMinutes?: number | null;
+  /** [member 옵셔널 확장] 조리 난이도 — 없으면 기본값 (FR-505) */
+  difficulty?: MealDifficulty | null;
 }
 
 export interface DayPlan {

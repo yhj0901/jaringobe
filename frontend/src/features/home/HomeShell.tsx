@@ -6,7 +6,7 @@ import { MealPlanSection } from '@/features/home/MealPlanSection';
 import { FridgePreviewCard } from '@/features/home/FridgePreviewCard';
 import { AutoOrderCard } from '@/features/home/AutoOrderCard';
 import { LockedFeatureCard } from '@/features/mealplan/LockedFeatureCard';
-import type { HomeViewModel } from '@/features/home/types';
+import type { HomeViewModel, MealItem } from '@/features/home/types';
 
 export type LockedTab = 'meal' | 'fridge' | 'cart';
 
@@ -15,7 +15,8 @@ interface HomeShellProps {
   /** [member 옵셔널 확장] 회원 샘플 홈 — 체험 배지 숨김, "예시" 라벨은 유지 (ui-design 8장) */
   hideTrialBadge?: boolean;
   onAutoOrderStart?: () => void;
-  onRecipeClick?: () => void;
+  /** 끼니 행 클릭 → 레시피 시트 (FR-504) — 클릭된 끼니를 전달 */
+  onRecipeClick?: (meal: MealItem) => void;
   /** 하단 탭바의 잠긴 탭(식단/냉장고/장바구니) 클릭 — 게스트는 가입 게이트 (FR-109), 회원은 탭별 분기 (FR-208) */
   onLockedNavClick?: (tab: LockedTab) => void;
   /** [member 옵셔널 확장] 헤더 아래 배너 슬롯 — 예산 초과/에러 배너 (FR-206) */
@@ -24,6 +25,10 @@ interface HomeShellProps {
   onSelectDate?: (date: string) => void;
   /** [member 옵셔널 확장] 전체 재생성 버튼 (FR-209) */
   onRegenerateClick?: () => void;
+  /** [member 옵셔널 확장] 끼니 완료 토글 (FR-501) — 제공 시 완료 버튼 노출 */
+  onToggleMealComplete?: (meal: MealItem) => void;
+  /** [member 옵셔널 확장] 완료 토글 진행 중 끼니 id (FR-503) */
+  pendingMealIds?: ReadonlySet<string>;
   /** 헤더 GB 아바타 클릭 — 회원: /settings 이동, 게스트: 가입 게이트 (ui-design 9장, FR-401) */
   onAvatarClick?: () => void;
 }
@@ -108,6 +113,8 @@ export function HomeShell({
   onSelectDate,
   onRegenerateClick,
   onAvatarClick,
+  onToggleMealComplete,
+  pendingMealIds,
 }: HomeShellProps) {
   const t = useTranslations('guestHome');
   const isGuest = viewModel.mode !== 'member';
@@ -156,6 +163,8 @@ export function HomeShell({
             selectedDate={viewModel.selectedDate}
             onSelectDate={onSelectDate}
             onRegenerate={onRegenerateClick}
+            onToggleMealComplete={onToggleMealComplete}
+            pendingMealIds={pendingMealIds}
           />
           {isGuest ? (
             <>

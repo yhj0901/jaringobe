@@ -29,6 +29,7 @@ from app.domains.mealplan.schemas import (
     MealIngredientOut,
     MealOut,
     FirstCycleOrder,
+    parse_steps,
     MealPlanCartResponse,
     MealPlanCreateRequest,
     MealPlanResponse,
@@ -163,11 +164,17 @@ async def _generate_within_budget(
 def _apply_drafts(plan: MealPlan, drafts: list[dict], start, days: int, currency: str) -> None:
     for m in drafts:
         day = max(1, min(int(m["day"]), days))
+        difficulty = m.get("difficulty")
+        if difficulty not in ("easy", "normal", "hard"):
+            difficulty = None
+        time_minutes = m.get("time_minutes")
         meal = Meal(
             plan_date=start + timedelta(days=day - 1),
             meal_type=m["meal_type"][:16],
             recipe_name=(m["name"] or "meal")[:200],
             recipe_steps=m.get("steps"),
+            time_minutes=int(time_minutes) if time_minutes is not None else None,
+            difficulty=difficulty,
         )
         for ing in m["ingredients"]:
             meal.ingredients.append(MealIngredient(
@@ -194,17 +201,7 @@ def _serialize(plan: MealPlan, budget: BudgetPlan, notes: list[str]) -> MealPlan
         within_budget=plan.status == "ready",
     )
     meals = [
-        MealOut(
-            id=m.id, plan_date=m.plan_date, meal_type=m.meal_type, recipe_name=m.recipe_name,
-            ingredients=[
-                MealIngredientOut(
-                    id=i.id, name=i.name, quantity=str(i.quantity), unit=i.unit,
-                    est_cost=(MoneyOut(amount=i.est_cost, currency=i.currency)
-                              if i.est_cost is not None and i.currency else None),
-                )
-                for i in sorted(m.ingredients, key=lambda x: str(x.id))
-            ],
-        )
+        _meal_out(m)
         for m in sorted(plan.meals, key=lambda x: (x.plan_date, str(x.id)))
     ]
     return MealPlanResponse(
@@ -258,6 +255,48 @@ async def get_meal_plan(db: AsyncSession, user: User, plan_id) -> MealPlanRespon
         raise ApiError(403, "FORBIDDEN", "not your resource")
     budget = await _get_budget(db, user)
     return _serialize(plan, budget, [])
+
+
+def _meal_out(m: Meal) -> MealOut:
+    return MealOut(
+        id=m.id, plan_date=m.plan_date, meal_type=m.meal_type, recipe_name=m.recipe_name,
+        steps=parse_steps(m.recipe_steps),
+        completed_at=m.completed_at,
+        time_minutes=m.time_minutes,
+        difficulty=m.difficulty,  # type: ignore[arg-type]
+        ingredients=[
+            MealIngredientOut(
+                id=i.id, name=i.name, quantity=str(i.quantity), unit=i.unit,
+                est_cost=(MoneyOut(amount=i.est_cost, currency=i.currency)
+                          if i.est_cost is not None and i.currency else None),
+            )
+            for i in sorted(m.ingredients, key=lambda x: str(x.id))
+        ],
+    )
+
+
+async def set_meal_completion(
+    db: AsyncSession, user: User, plan_id, meal_id, completed: bool
+) -> MealOut:
+    """식사 완료 설정/해제 → 갱신된 MealOut. 소유자 스코프 검증(CWE-639).
+
+    plan·meal 존재하지 않으면 404, 타인 소유면 403.
+    완료=completed_at=utcnow(), 해제=None.
+    """
+    plan = await _reload_or_none(db, plan_id)
+    if plan is None:
+        raise ApiError(404, "NOT_FOUND", "meal plan not found")
+    if plan.user_id != user.id:
+        raise ApiError(403, "FORBIDDEN", "not your resource")
+    meal = next((m for m in plan.meals if m.id == meal_id), None)
+    if meal is None:
+        raise ApiError(404, "NOT_FOUND", "meal not found")
+    meal.completed_at = utcnow() if completed else None
+    await db.commit()
+    # commit 후 관계 만료 → 이글 로딩으로 재조회(async lazy-load 회피)
+    plan = await _reload(db, plan_id)
+    meal = next(m for m in plan.meals if m.id == meal_id)
+    return _meal_out(meal)
 
 
 async def _reload_or_none(db: AsyncSession, plan_id) -> MealPlan | None:

@@ -212,6 +212,32 @@
       "breakfast": "아침",
       "lunch": "점심",
       "dinner": "저녁"
+    },
+    "completion": {
+      "complete": "완료",
+      "completed": "완료됨",
+      "markAria": "{meal} 식사 완료 체크",
+      "unmarkAria": "{meal} 식사 완료 해제"
+    },
+    "recipe": {
+      "aiBadge": "AI 추천 레시피",
+      "openAria": "{meal} 레시피 보기",
+      "timeMinutes": "{minutes}분",
+      "timeDefault": "약 20분",
+      "difficulty": {
+        "easy": "쉬움",
+        "normal": "보통",
+        "hard": "어려움"
+      },
+      "servings": "{count}인분",
+      "ingredientsTitle": "재료",
+      "stepsTitle": "조리 방법",
+      "close": "닫기",
+      "basicSteps": {
+        "step1": "재료를 깨끗이 씻고 알맞게 손질해 준비해요.",
+        "step2": "재료를 넣고 알맞게 조리하며 간을 맞춰요.",
+        "step3": "그릇에 보기 좋게 담아 맛있게 즐겨요."
+      }
     }
   },
   "auth": {

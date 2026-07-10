@@ -135,6 +135,11 @@ useMemberHome():
 - 연동 토글: 연동하기 → 확인 시트("1단계: 연동 표시만, 실제 계정 연결은 준비 중" 안내) → PUT connections. 해제 동일
 - i18n: `settings.*`, `store.{kurly|coupang|ssg|naver}` ko/en 동시
 
+## 10. 식사 완료 + 레시피 시트 (v1.4)
+- MealCard: 우측 완료 버튼(미완료=brand 파랑 CTA/완료=연한 배지+체크, 재터치 해제) — 낙관적 갱신·실패 롤백·연타 방지. member 전용(게스트=기존 게이트)
+- 행 본문 클릭 → RecipeSheet(BottomSheet 재사용): 끼니 배지+"AI 추천 레시피" 배지, 요리명, 메타 3칩(timeMinutes||기본 "약 20분" / difficulty||"쉬움" / N인분=household size), 재료 칩, steps 번호 리스트, 닫기. 게스트 샘플은 기본 조리법 3단계 고정 문구
+- i18n: mealplan.completion.*, recipe.* ko/en
+
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 3라운드 UI 교차 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — 회원 홈(member 모드) 7장 증보 (회원홈-식단연결 기획)

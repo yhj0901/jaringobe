@@ -17,6 +17,7 @@ import { PersistentCtaBanner } from '@/features/guest/PersistentCtaBanner';
 import { AutoOrderPrompt } from '@/features/guest/AutoOrderPrompt';
 import { RevisitPrompt } from '@/features/guest/RevisitPrompt';
 import { SignupGateModal } from '@/features/auth/SignupGateModal';
+import { RecipeSheet } from '@/features/mealplan/RecipeSheet';
 import {
   PROMPT_DECLINED_SESSION_KEY,
   REVISIT_SHOWN_SESSION_KEY,
@@ -24,6 +25,7 @@ import {
 } from '@/shared/config/constants';
 import { useRouter, type AppLocale } from '@/i18n/routing';
 import type { OnboardingResult } from '@/features/household/types';
+import type { MealItem } from '@/features/home/types';
 
 /** 예산안 적용 연출 시간 (FR-105 — 300ms 미만) */
 const APPLY_TRANSITION_MS = 250;
@@ -50,6 +52,7 @@ export function GuestHomeController() {
   const [autoOrderPromptOpen, setAutoOrderPromptOpen] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
   const [revisitOpen, setRevisitOpen] = useState(false);
+  const [recipeMeal, setRecipeMeal] = useState<MealItem | null>(null);
 
   // FR-107: 마운트 후 localStorage 복원 (30일 만료는 스토리지 래퍼가 검사)
   useEffect(() => {
@@ -147,9 +150,14 @@ export function GuestHomeController() {
       <HomeShell
         viewModel={viewModel}
         onAutoOrderStart={goLogin}
-        onRecipeClick={gateOrDraft}
+        onRecipeClick={(meal) => setRecipeMeal(meal)}
         onLockedNavClick={gateOrDraft}
         onAvatarClick={() => setGateOpen(true)}
+      />
+      <RecipeSheet
+        meal={recipeMeal}
+        householdSize={plan?.householdSize}
+        onClose={() => setRecipeMeal(null)}
       />
       <RevisitPrompt
         open={revisitOpen}

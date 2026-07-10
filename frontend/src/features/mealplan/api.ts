@@ -2,6 +2,7 @@ import { apiFetch, type ApiResult } from '@/shared/api/client';
 import { MEALPLAN_CREATE_TIMEOUT_MS } from '@/features/mealplan/constants';
 import type {
   MealPlanCreateRequest,
+  MealPlanMeal,
   MealPlanRegenerateRequest,
   MealPlanResponse,
 } from '@/features/mealplan/types';
@@ -38,10 +39,25 @@ export function createMealPlan(body: MealPlanCreateRequest): Promise<ApiResult<M
   return fetchWithGenerationTimeout('/api/v1/mealplans', body);
 }
 
-/** POST /api/v1/mealplans/{id}/regenerate — 전체 재생성 scope=all (api-spec 3-4, FR-209) */
+/** POST /api/v1/mealplans/{id}/regenerate — 전체 재생성 scope=all (api-spec 3-5, FR-209) */
 export function regenerateMealPlan(planId: string): Promise<ApiResult<MealPlanResponse>> {
   return fetchWithGenerationTimeout(
     `/api/v1/mealplans/${encodeURIComponent(planId)}/regenerate`,
     { scope: 'all' },
+  );
+}
+
+/**
+ * PUT /api/v1/mealplans/{planId}/meals/{mealId}/completion — 식사 완료 설정/해제 (api-spec 3-4, FR-501).
+ * 200 갱신된 MealOut(단일 끼니) 반환. 본인 스코프(CWE-639)는 서버가 검증.
+ */
+export function setMealCompletion(
+  planId: string,
+  mealId: string,
+  completed: boolean,
+): Promise<ApiResult<MealPlanMeal>> {
+  return apiFetch<MealPlanMeal>(
+    `/api/v1/mealplans/${encodeURIComponent(planId)}/meals/${encodeURIComponent(mealId)}/completion`,
+    { method: 'PUT', body: JSON.stringify({ completed }) },
   );
 }

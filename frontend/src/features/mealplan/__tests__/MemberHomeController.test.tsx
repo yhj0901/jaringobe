@@ -71,11 +71,14 @@ function baseState(overrides: Partial<MemberHomeState> = {}): MemberHomeState {
     plan: null,
     viewModel: null,
     budget: null,
+    householdSize: 4,
     generation: 'idle',
     generationError: null,
+    pendingMealIds: new Set<string>(),
     selectDate: vi.fn(),
     createPlan: vi.fn().mockResolvedValue(undefined),
     regeneratePlan: vi.fn().mockResolvedValue(undefined),
+    toggleMealCompletion: vi.fn().mockResolvedValue(undefined),
     retryGenerate: vi.fn().mockResolvedValue(undefined),
     dismissGenerationError: vi.fn(),
     completeBudgetPlan: vi.fn().mockResolvedValue('created'),
@@ -275,13 +278,31 @@ describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
   });
 
-  it('조리법 보기 → "준비 중" 안내 (조리법 상세는 범위 외)', () => {
+  it('끼니 행 클릭 → 레시피 시트(메타 3칩·재료 칩·기본 조리법) 오픈 후 닫기 (FR-504)', () => {
     state.current = readyState();
     renderWithIntl(<MemberHomeController />);
-    fireEvent.click(
-      screen.getAllByRole('button', { name: '전체 조리법 보기' })[0] as HTMLElement,
-    );
-    expect(screen.getByText('아직 준비 중인 기능이에요. 곧 만나요!')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '토스트 레시피 보기' }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('AI 추천 레시피')).toBeInTheDocument();
+    // 메타 3칩: 기본 시간/난이도 + householdSize(4) 기반 인분
+    expect(within(dialog).getByText('약 20분')).toBeInTheDocument();
+    expect(within(dialog).getByText('쉬움')).toBeInTheDocument();
+    expect(within(dialog).getByText('4인분')).toBeInTheDocument();
+    // 재료 칩 (name+quantity+unit)
+    expect(within(dialog).getByText('식빵 2ea')).toBeInTheDocument();
+    // steps 부재 → 기본 조리법 3단계
+    expect(within(dialog).getByText(/재료를 깨끗이 씻고/)).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: '닫기' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('완료 버튼 클릭 → toggleMealCompletion(mealId) 호출 (FR-501/503)', () => {
+    state.current = readyState();
+    renderWithIntl(<MemberHomeController />);
+    fireEvent.click(screen.getByRole('button', { name: '토스트 식사 완료 체크' }));
+    expect(state.current.toggleMealCompletion).toHaveBeenCalledWith('m1');
   });
 
   it('재생성 진행 중 → GenerationLoading 오버레이', () => {

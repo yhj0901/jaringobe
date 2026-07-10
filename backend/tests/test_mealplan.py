@@ -295,6 +295,188 @@ async def test_generator_dedupes_duplicate_meals(client, respx_mock, monkeypatch
     assert drafts[0]["name"] == "콩나물국밥"
 
 
+async def test_mealout_v14_fields_present(client, respx_mock):
+    """MealOut 확장 필드(steps/completedAt/timeMinutes/difficulty)가 생성분에 채워진다."""
+    await login(client, respx_mock)
+    await _create_budget(client)
+    body = (
+        await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 2})
+    ).json()
+    meal = body["meals"][0]
+    assert meal["completedAt"] is None
+    assert isinstance(meal["steps"], list) and len(meal["steps"]) >= 2  # mock 기본 단계
+    assert meal["timeMinutes"] == 20  # mock 폴백 기본값
+    assert meal["difficulty"] == "easy"
+
+
+async def test_meal_completion_set_and_unset(client, respx_mock):
+    """완료=200 completedAt 세팅 → 해제=None 왕복."""
+    await login(client, respx_mock)
+    await _create_budget(client)
+    body = (
+        await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 2})
+    ).json()
+    plan_id, meal_id = body["id"], body["meals"][0]["id"]
+
+    res = await client.put(
+        f"/api/v1/mealplans/{plan_id}/meals/{meal_id}/completion",
+        json={"completed": True},
+    )
+    assert res.status_code == 200, res.text
+    out = res.json()
+    assert out["id"] == meal_id
+    assert out["completedAt"] is not None
+    assert out["completedAt"].endswith("Z")  # ISO-8601 UTC
+
+    res = await client.put(
+        f"/api/v1/mealplans/{plan_id}/meals/{meal_id}/completion",
+        json={"completed": False},
+    )
+    assert res.status_code == 200
+    assert res.json()["completedAt"] is None
+
+
+async def test_meal_completion_requires_auth(client):
+    plan_id = "00000000-0000-0000-0000-000000000000"
+    meal_id = "00000000-0000-0000-0000-000000000001"
+    res = await client.put(
+        f"/api/v1/mealplans/{plan_id}/meals/{meal_id}/completion",
+        json={"completed": True},
+    )
+    assert res.status_code == 401
+    assert res.json()["detail"]["code"] == "AUTH_REQUIRED"
+
+
+async def test_meal_completion_plan_not_found(client, respx_mock):
+    await login(client, respx_mock)
+    await _create_budget(client)
+    res = await client.put(
+        "/api/v1/mealplans/00000000-0000-0000-0000-000000000000"
+        "/meals/00000000-0000-0000-0000-000000000001/completion",
+        json={"completed": True},
+    )
+    assert res.status_code == 404
+    assert res.json()["detail"]["code"] == "NOT_FOUND"
+
+
+async def test_meal_completion_meal_not_found(client, respx_mock):
+    """플랜은 내 것이지만 존재하지 않는 mealId → 404."""
+    await login(client, respx_mock)
+    await _create_budget(client)
+    plan_id = (
+        await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 1})
+    ).json()["id"]
+    res = await client.put(
+        f"/api/v1/mealplans/{plan_id}"
+        "/meals/00000000-0000-0000-0000-000000000009/completion",
+        json={"completed": True},
+    )
+    assert res.status_code == 404
+    assert res.json()["detail"]["code"] == "NOT_FOUND"
+
+
+async def test_meal_completion_forbidden_other_user(client, respx_mock):
+    """타 유저 플랜의 끼니 완료 시도 → 403 (CWE-639 소유자 스코프)."""
+    await login(client, respx_mock, provider_user_id="kakao-1", email="a@example.com")
+    await _create_budget(client)
+    body = (
+        await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 2})
+    ).json()
+    plan_id, meal_id = body["id"], body["meals"][0]["id"]
+
+    await login(client, respx_mock, provider_user_id="kakao-2", email="b@example.com")
+    res = await client.put(
+        f"/api/v1/mealplans/{plan_id}/meals/{meal_id}/completion",
+        json={"completed": True},
+    )
+    assert res.status_code == 403
+    assert res.json()["detail"]["code"] == "FORBIDDEN"
+
+
+async def test_meal_completion_requires_body(client, respx_mock):
+    """completed 필드 누락 → 422."""
+    await login(client, respx_mock)
+    await _create_budget(client)
+    body = (
+        await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 1})
+    ).json()
+    plan_id, meal_id = body["id"], body["meals"][0]["id"]
+    res = await client.put(
+        f"/api/v1/mealplans/{plan_id}/meals/{meal_id}/completion", json={}
+    )
+    assert res.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        (None, []),
+        ("", []),
+        ("한 줄만", ["한 줄만"]),
+        ("1. 손질\n2. 볶기\n3. 담기", ["손질", "볶기", "담기"]),
+        ("1) 손질 2) 볶기 3) 담기", ["손질", "볶기", "담기"]),
+        ("손질\n\n볶기\n", ["손질", "볶기"]),  # 빈 줄 제거
+        ("재료 2개 준비\n30분 조리", ["재료 2개 준비", "30분 조리"]),  # 문장 내 숫자는 미분리
+    ],
+)
+def test_parse_steps(raw, expected):
+    from app.domains.mealplan.schemas import parse_steps
+
+    assert parse_steps(raw) == expected
+
+
+async def test_meal_time_difficulty_round_trip_from_llm(client, respx_mock, monkeypatch):
+    """LLM 이 준 time_minutes/difficulty 가 저장→응답까지 왕복한다."""
+    from app.domains.mealplan import generator as gen_mod
+
+    class _MetaLLM:
+        enabled = True
+
+        async def complete_json(self, *a, **k):
+            return {"meals": [
+                {"day": 1, "meal_type": "breakfast", "name": "토스트",
+                 "steps": "1. 빵을 굽는다\n2. 버터를 바른다",
+                 "time_minutes": 15, "difficulty": "normal",
+                 "ingredients": [{"name": "빵", "quantity": 2, "unit": "ea"}]},
+            ]}
+
+    monkeypatch.setattr(gen_mod, "get_llm", lambda: _MetaLLM())
+    await login(client, respx_mock)
+    await _create_budget(client)
+    body = (
+        await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 1})
+    ).json()
+    meal = body["meals"][0]
+    assert meal["timeMinutes"] == 15
+    assert meal["difficulty"] == "normal"
+    assert meal["steps"] == ["빵을 굽는다", "버터를 바른다"]
+
+
+async def test_meal_llm_invalid_meta_falls_back_to_none(client, respx_mock, monkeypatch):
+    """time_minutes 비정상·difficulty 범위 밖이면 None (프론트 기본값)."""
+    from app.domains.mealplan import generator as gen_mod
+
+    class _BadMetaLLM:
+        enabled = True
+
+        async def complete_json(self, *a, **k):
+            return {"meals": [
+                {"day": 1, "meal_type": "breakfast", "name": "죽",
+                 "time_minutes": "약 20분", "difficulty": "very_hard",
+                 "ingredients": [{"name": "쌀", "quantity": 100, "unit": "g"}]},
+            ]}
+
+    monkeypatch.setattr(gen_mod, "get_llm", lambda: _BadMetaLLM())
+    await login(client, respx_mock)
+    await _create_budget(client)
+    body = (
+        await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 1})
+    ).json()
+    meal = body["meals"][0]
+    assert meal["timeMinutes"] is None
+    assert meal["difficulty"] is None
+
+
 def test_pricing_fallback_is_quantity_based():
     """기준가 미등록 재료 폴백이 수량 비례 + 상한(₩8,000)으로 계산된다."""
     import asyncio

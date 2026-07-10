@@ -1,19 +1,24 @@
 import { useTranslations } from 'next-intl';
 import { MealCard } from '@/features/home/MealCard';
-import type { DayPlan } from '@/features/home/types';
+import type { DayPlan, MealItem } from '@/features/home/types';
 
 /** meal 탭 스크롤 목적지 (FR-208) */
 export const MEAL_SECTION_ID = 'home-meal-section';
 
 interface MealPlanSectionProps {
   weekPlan: DayPlan[];
-  onRecipeClick?: () => void;
+  /** 행 본문 클릭 → 레시피 시트 (FR-504) — 클릭된 끼니를 전달 */
+  onRecipeClick?: (meal: MealItem) => void;
   /** [member 옵셔널 확장] 선택된 일자 (YYYY-MM-DD) — 미지정 시 첫째 날 (게스트 동작 불변) */
   selectedDate?: string;
   /** [member 옵셔널 확장] 주간 스트립 일자 이동 (FR-205) */
   onSelectDate?: (date: string) => void;
   /** [member 옵셔널 확장] 전체 재생성 버튼 (FR-209) */
   onRegenerate?: () => void;
+  /** [member 옵셔널 확장] 끼니 완료 토글 (FR-501) — 제공 시 완료 버튼 노출 */
+  onToggleMealComplete?: (meal: MealItem) => void;
+  /** [member 옵셔널 확장] 완료 토글 진행 중 끼니 id (FR-503) */
+  pendingMealIds?: ReadonlySet<string>;
 }
 
 /** 일자(YYYY-MM-DD) → 일(day of month) 숫자 */
@@ -31,6 +36,8 @@ export function MealPlanSection({
   selectedDate,
   onSelectDate,
   onRegenerate,
+  onToggleMealComplete,
+  pendingMealIds,
 }: MealPlanSectionProps) {
   const t = useTranslations('guestHome.mealPlan');
   const tPlan = useTranslations('memberHome.plan');
@@ -56,7 +63,15 @@ export function MealPlanSection({
       </div>
       <div className="rounded-[20px] bg-white px-4 py-1 shadow-card">
         {activeDay?.meals.map((meal) => (
-          <MealCard key={meal.slot} meal={meal} onRecipeClick={onRecipeClick} />
+          <MealCard
+            key={meal.slot}
+            meal={meal}
+            onRecipeClick={onRecipeClick ? () => onRecipeClick(meal) : undefined}
+            onToggleComplete={
+              onToggleMealComplete ? () => onToggleMealComplete(meal) : undefined
+            }
+            completePending={meal.mealId !== undefined && pendingMealIds?.has(meal.mealId)}
+          />
         ))}
       </div>
       <ol aria-label={t('weekStrip')} className="flex gap-1.5 overflow-x-auto px-0.5 text-xs">

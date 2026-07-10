@@ -212,6 +212,32 @@
       "breakfast": "Breakfast",
       "lunch": "Lunch",
       "dinner": "Dinner"
+    },
+    "completion": {
+      "complete": "Done",
+      "completed": "Completed",
+      "markAria": "Mark {meal} as eaten",
+      "unmarkAria": "Undo completion for {meal}"
+    },
+    "recipe": {
+      "aiBadge": "AI recipe",
+      "openAria": "View recipe for {meal}",
+      "timeMinutes": "{minutes} min",
+      "timeDefault": "~20 min",
+      "difficulty": {
+        "easy": "Easy",
+        "normal": "Medium",
+        "hard": "Hard"
+      },
+      "servings": "Serves {count}",
+      "ingredientsTitle": "Ingredients",
+      "stepsTitle": "How to cook",
+      "close": "Close",
+      "basicSteps": {
+        "step1": "Rinse and prep all the ingredients.",
+        "step2": "Cook the ingredients and season to taste.",
+        "step3": "Plate it nicely and enjoy."
+      }
     }
   },
   "auth": {
