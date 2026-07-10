@@ -149,9 +149,13 @@ export function HomeShell({
           {/* 브랜드 마크 — 설정 진입은 하단 "마이" 탭으로 이동 (상단 중복 제거) */}
           <span
             aria-hidden
-            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] bg-navy-800 text-[13px] font-extrabold tracking-tight text-white"
+            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] overflow-hidden"
           >
-            GB
+            <img
+              src="/icon.png"
+              alt="Jaringobe"
+              className="h-full w-full object-cover"
+            />
           </span>
         </header>
 
