@@ -180,8 +180,8 @@ export function HomeShell({
             </>
           ) : (
             <>
-              {/* FR-208: 회원에게는 냉장고/자동주문을 "준비 중" 잠금 카드로 표시 (게스트 샘플 노출 금지) */}
-              <LockedFeatureCard feature="fridge" />
+              {/* 냉장고는 /fridge 수동 관리 페이지로 연결(활성), 자동주문은 "준비 중" (FR-208) */}
+              <LockedFeatureCard feature="fridge" href="/fridge" />
               <LockedFeatureCard feature="order" />
             </>
           )}
