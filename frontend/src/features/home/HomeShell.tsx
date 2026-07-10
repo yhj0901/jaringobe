@@ -29,12 +29,12 @@ interface HomeShellProps {
   onToggleMealComplete?: (meal: MealItem) => void;
   /** [member 옵셔널 확장] 완료 토글 진행 중 끼니 id (FR-503) */
   pendingMealIds?: ReadonlySet<string>;
-  /** 헤더 GB 아바타 클릭 — 회원: /settings 이동, 게스트: 가입 게이트 (ui-design 9장, FR-401) */
-  onAvatarClick?: () => void;
+  /** 하단 "마이" 탭 클릭 — 회원: /settings 이동, 게스트: 가입 게이트 (ui-design 9장, FR-401) */
+  onMyTabClick?: () => void;
 }
 
 /** 하단 탭바 아이콘 — 디자인 마크업의 인라인 SVG 재사용 */
-function NavIcon({ tab, active }: { tab: 'home' | LockedTab; active: boolean }) {
+function NavIcon({ tab, active }: { tab: 'home' | 'my' | LockedTab; active: boolean }) {
   const stroke = active ? '#2F6BFF' : '#9AA6BD';
   switch (tab) {
     case 'home':
@@ -92,6 +92,18 @@ function NavIcon({ tab, active }: { tab: 'home' | LockedTab; active: boolean }) 
           />
         </svg>
       );
+    case 'my':
+      return (
+        <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="3.5" stroke={stroke} strokeWidth="1.9" />
+          <path
+            d="M5 20a7 7 0 0 1 14 0"
+            stroke={stroke}
+            strokeWidth="1.9"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
   }
 }
 
@@ -112,7 +124,7 @@ export function HomeShell({
   topSlot,
   onSelectDate,
   onRegenerateClick,
-  onAvatarClick,
+  onMyTabClick,
   onToggleMealComplete,
   pendingMealIds,
 }: HomeShellProps) {
@@ -134,23 +146,13 @@ export function HomeShell({
               {t('header.title')} <span className="text-brand-600">{t('header.accent')}</span>
             </h1>
           </div>
-          {onAvatarClick !== undefined ? (
-            <button
-              type="button"
-              aria-label={t('header.settingsLabel')}
-              onClick={onAvatarClick}
-              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] bg-navy-800 text-[13px] font-extrabold tracking-tight text-white"
-            >
-              GB
-            </button>
-          ) : (
-            <span
-              aria-hidden
-              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] bg-navy-800 text-[13px] font-extrabold tracking-tight text-white"
-            >
-              GB
-            </span>
-          )}
+          {/* 브랜드 마크 — 설정 진입은 하단 "마이" 탭으로 이동 (상단 중복 제거) */}
+          <span
+            aria-hidden
+            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] bg-navy-800 text-[13px] font-extrabold tracking-tight text-white"
+          >
+            GB
+          </span>
         </header>
 
         {topSlot}
@@ -181,7 +183,7 @@ export function HomeShell({
         </div>
       </main>
 
-      {/* 하단 탭바 — 디자인의 home/meal/fridge/cart. 게스트는 잠긴 탭 클릭 시 가입 게이트 */}
+      {/* 하단 탭바 — 홈/식단/냉장고/장바구니/마이. 잠긴 탭·마이 클릭 시 회원 분기/게스트 게이트 */}
       <nav
         aria-label={t('nav.label')}
         className="sticky bottom-0 z-40 flex border-t border-surface-line bg-white/95 px-1.5 pb-4 pt-2 backdrop-blur-md"
@@ -209,6 +211,17 @@ export function HomeShell({
             </span>
           </button>
         ))}
+        <button
+          type="button"
+          aria-label={t('nav.my')}
+          onClick={() => onMyTabClick?.()}
+          className="flex flex-1 flex-col items-center gap-1"
+        >
+          <NavIcon tab="my" active={false} />
+          <span className="text-[11px] font-bold tracking-tight text-ink-300">
+            {t('nav.my')}
+          </span>
+        </button>
       </nav>
     </div>
   );

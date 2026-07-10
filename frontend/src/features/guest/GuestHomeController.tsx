@@ -152,7 +152,7 @@ export function GuestHomeController() {
         onAutoOrderStart={goLogin}
         onRecipeClick={(meal) => setRecipeMeal(meal)}
         onLockedNavClick={gateOrDraft}
-        onAvatarClick={() => setGateOpen(true)}
+        onMyTabClick={() => setGateOpen(true)}
       />
       <RecipeSheet
         meal={recipeMeal}

@@ -209,17 +209,17 @@ describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
     expect(screen.queryByText('이번 주 주문 추천')).not.toBeInTheDocument();
   });
 
-  it('헤더 GB 아바타 → /settings 이동 (ui-design 9장, FR-401)', () => {
+  it('마이 탭 → /settings 이동 (ui-design 9장, FR-401)', () => {
     state.current = readyState();
     renderWithIntl(<MemberHomeController />);
-    fireEvent.click(screen.getByRole('button', { name: '설정 열기' }));
+    fireEvent.click(screen.getByRole('button', { name: '마이' }));
     expect(routerMock.push).toHaveBeenCalledWith('/settings');
   });
 
-  it('빈 상태(샘플 홈)에서도 GB 아바타 → /settings 이동', () => {
+  it('빈 상태(샘플 홈)에서도 마이 탭 → /settings 이동', () => {
     state.current = baseState({ status: 'empty' });
     renderWithIntl(<MemberHomeController />);
-    fireEvent.click(screen.getByRole('button', { name: '설정 열기' }));
+    fireEvent.click(screen.getByRole('button', { name: '마이' }));
     expect(routerMock.push).toHaveBeenCalledWith('/settings');
   });
 

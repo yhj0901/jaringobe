@@ -36,7 +36,8 @@
       "home": "홈",
       "meal": "식단",
       "fridge": "냉장고",
-      "cart": "장바구니"
+      "cart": "장바구니",
+      "my": "마이"
     },
     "budgetMood": {
       "title": "이번 달 예산 무드",

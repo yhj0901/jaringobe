@@ -89,19 +89,15 @@ describe('HomeShell (FR-101)', () => {
     expect(onLockedNavClick).toHaveBeenCalledTimes(3);
   });
 
-  it('onAvatarClick 제공 시 헤더 GB 아바타가 설정 진입 버튼이 된다 (ui-design 9장)', () => {
-    const onAvatarClick = vi.fn();
+  it('하단 "마이" 탭 클릭 시 설정 진입 콜백 (상단 아바타는 브랜드 마크로만)', () => {
+    const onMyTabClick = vi.fn();
     renderWithIntl(
-      <HomeShell viewModel={getDefaultViewModel('ko')} onAvatarClick={onAvatarClick} />,
+      <HomeShell viewModel={getDefaultViewModel('ko')} onMyTabClick={onMyTabClick} />,
     );
-    const avatar = screen.getByRole('button', { name: '설정 열기' });
-    fireEvent.click(avatar);
-    expect(onAvatarClick).toHaveBeenCalledTimes(1);
-  });
-
-  it('onAvatarClick 미제공 시 아바타는 버튼이 아니다 (기존 동작 불변)', () => {
-    renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} />);
+    // 상단 GB 는 버튼이 아님 (설정 진입 중복 제거)
     expect(screen.queryByRole('button', { name: '설정 열기' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '마이' }));
+    expect(onMyTabClick).toHaveBeenCalledTimes(1);
   });
 
   it('냉장고 항목을 임박 순으로 정렬해 표시한다', () => {

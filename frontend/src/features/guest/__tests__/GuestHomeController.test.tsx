@@ -220,9 +220,9 @@ describe('GuestHomeController', () => {
     expect(screen.getByText('저장하려면 로그인이 필요해요')).toBeInTheDocument();
   });
 
-  it('게스트의 헤더 GB 아바타 클릭 → 가입 게이트 (ui-design 9장 — 설정은 회원 전용)', async () => {
+  it('게스트의 마이 탭 클릭 → 가입 게이트 (ui-design 9장 — 설정은 회원 전용)', async () => {
     await renderController();
-    fireEvent.click(screen.getByRole('button', { name: '설정 열기' }));
+    fireEvent.click(screen.getByRole('button', { name: '마이' }));
     expect(screen.getByText('저장하려면 로그인이 필요해요')).toBeInTheDocument();
   });
 });
