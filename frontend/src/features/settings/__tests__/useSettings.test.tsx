@@ -16,6 +16,7 @@ import {
   regenerateMealPlan,
 } from '@/features/mealplan/api';
 import { fetchStoreConnections, putStoreConnection } from '@/features/store/api';
+import { putUserRegion } from '@/features/settings/regionApi';
 import { VISITED_MARKER_KEY } from '@/shared/config/constants';
 import { IntlWrapper } from '@/test/renderWithIntl';
 import type { MealPlanResponse } from '@/features/mealplan/types';
@@ -38,6 +39,7 @@ vi.mock('@/features/store/api', () => ({
   fetchStoreConnections: vi.fn(),
   putStoreConnection: vi.fn(),
 }));
+vi.mock('@/features/settings/regionApi', () => ({ putUserRegion: vi.fn() }));
 
 const fetchMeMock = vi.mocked(fetchMe);
 const logoutMock = vi.mocked(postLogout);
@@ -50,6 +52,7 @@ const createMock = vi.mocked(createMealPlan);
 const regenerateMock = vi.mocked(regenerateMealPlan);
 const storesMock = vi.mocked(fetchStoreConnections);
 const putStoreMock = vi.mocked(putStoreConnection);
+const regionMock = vi.mocked(putUserRegion);
 
 function ok<T>(data: T, status = 200): ApiResult<T> {
   return { ok: true, status, data };
@@ -387,6 +390,46 @@ describe('useSettings 스토어 토글 (FR-404)', () => {
     });
     expect(done).toBe(false);
     expect(result.current.connections?.kurly).toBe(true);
+  });
+});
+
+describe('useSettings 지역 전환 (FR-601/602)', () => {
+  const US_CONNECTIONS = {
+    connections: [
+      { store: 'walmart' as const, status: 'disconnected' as const, connectedAt: null },
+      { store: 'instacart' as const, status: 'disconnected' as const, connectedAt: null },
+    ],
+  };
+
+  it('US 전환 → user 통화 USD + US 스토어 세트로 갱신', async () => {
+    seedHappyPath();
+    regionMock.mockResolvedValue(ok({ ...ME, country: 'US', currency: 'USD' }));
+    const { result } = await renderReady();
+    // 전환 후 재조회는 US 세트
+    storesMock.mockResolvedValueOnce(ok(US_CONNECTIONS));
+
+    let done = false;
+    await act(async () => {
+      done = await result.current.switchRegion('US');
+    });
+    expect(done).toBe(true);
+    expect(regionMock).toHaveBeenCalledWith('US');
+    expect(result.current.user?.currency).toBe('USD');
+    expect(result.current.storeIds).toEqual(['walmart', 'instacart']);
+    expect(result.current.connections).toEqual({ walmart: false, instacart: false });
+  });
+
+  it('전환 실패 → false + 기존 지역(KR) 유지', async () => {
+    seedHappyPath();
+    regionMock.mockResolvedValue(err(500, 'UNKNOWN'));
+    const { result } = await renderReady();
+
+    let done = true;
+    await act(async () => {
+      done = await result.current.switchRegion('US');
+    });
+    expect(done).toBe(false);
+    expect(result.current.user?.country).toBe('KR');
   });
 });
 

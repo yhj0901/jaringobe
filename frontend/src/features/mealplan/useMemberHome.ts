@@ -51,6 +51,8 @@ export interface MemberHomeState {
   status: MemberHomeStatus;
   /** users/me.onboardingCompleted — 진입 배너 분기 (FR-316, ui-design 8장). 조회 전 null */
   onboardingCompleted: boolean | null;
+  /** users/me.country — 홈 헤더 "글로벌" 배지 분기 (FR-605). 조회 전 null */
+  country: string | null;
   plan: MealPlanResponse | null;
   /** 표시용 ViewModel — status='ready' 일 때만 존재 */
   viewModel: HomeViewModel | null;
@@ -77,6 +79,7 @@ export interface MemberHomeState {
 export function useMemberHome(): MemberHomeState {
   const [status, setStatus] = useState<MemberHomeStatus>('loading');
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
+  const [country, setCountry] = useState<string | null>(null);
   const [plan, setPlan] = useState<MealPlanResponse | null>(null);
   const [budget, setBudget] = useState<Money | null>(null);
   const [householdSize, setHouseholdSize] = useState<number | null>(null);
@@ -125,6 +128,7 @@ export function useMemberHome(): MemberHomeState {
       return;
     }
     setOnboardingCompleted(me.data.onboardingCompleted);
+    setCountry(me.data.country);
     if (!me.data.hasBudgetPlan) {
       setStatus('budget-required');
       return;
@@ -284,6 +288,7 @@ export function useMemberHome(): MemberHomeState {
   return {
     status,
     onboardingCompleted,
+    country,
     plan,
     viewModel,
     budget,
