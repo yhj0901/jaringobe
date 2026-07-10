@@ -23,7 +23,7 @@ from app.domains.mealplan.generator import generate_meals
 from app.domains.mealplan.models import Meal, MealIngredient, MealPlan
 from app.domains.mealplan.pricing import DBPriceProvider
 from app.domains.fridge import service as fridge_service
-from app.domains.fridge.schemas import NeededItem as FridgeNeed
+from app.domains.fridge.schemas import FridgeItemCreate, NeededItem as FridgeNeed
 from app.domains.mealplan.schemas import (
     BudgetSummary,
     MealIngredientOut,
@@ -275,6 +275,18 @@ def _meal_out(m: Meal) -> MealOut:
     )
 
 
+def _meal_consumption(meal: Meal) -> dict[tuple[str, str], tuple[str, Decimal]]:
+    """끼니 재료를 (name소문자, unit) 키로 집계 → {키: (표시명, 합계수량)}. 수량<=0 제외."""
+    agg: dict[tuple[str, str], tuple[str, Decimal]] = {}
+    for ing in meal.ingredients:
+        if ing.quantity <= 0:
+            continue
+        key = (ing.name.lower(), ing.unit)
+        name, qty = agg.get(key, (ing.name, Decimal("0")))
+        agg[key] = (name, qty + ing.quantity)
+    return agg
+
+
 async def set_meal_completion(
     db: AsyncSession, user: User, plan_id, meal_id, completed: bool
 ) -> MealOut:
@@ -282,6 +294,12 @@ async def set_meal_completion(
 
     plan·meal 존재하지 않으면 404, 타인 소유면 403.
     완료=completed_at=utcnow(), 해제=None.
+
+    가상 냉장고 연동 (Zero-UX 축):
+    - 미완료→완료 전환: 끼니 재료를 냉장고에서 차감(deduct, 유통기한 임박 FIFO).
+    - 완료→미완료 전환: 차감분 되돌리기 — 같은 수량을 냉장고에 재등록(source=mealplan, 유통기한 없음).
+      원래 유통기한/재고 부족분은 복원하지 않음(수량 기준 원복).
+    - 상태 변화가 없으면(멱등) 냉장고를 건드리지 않는다.
     """
     plan = await _reload_or_none(db, plan_id)
     if plan is None:
@@ -291,8 +309,27 @@ async def set_meal_completion(
     meal = next((m for m in plan.meals if m.id == meal_id), None)
     if meal is None:
         raise ApiError(404, "NOT_FOUND", "meal not found")
+
+    was_completed = meal.completed_at is not None
+    consumption = _meal_consumption(meal)
     meal.completed_at = utcnow() if completed else None
-    await db.commit()
+
+    if completed and not was_completed and consumption:
+        # 완료 전환 → 냉장고 차감 (deduct 내부에서 commit)
+        await fridge_service.deduct(
+            db, user.id,
+            [FridgeNeed(name=n, quantity=q, unit=u) for (_nl, u), (n, q) in consumption.items()],
+        )
+    elif not completed and was_completed and consumption:
+        # 해제 전환 → 차감분 되돌리기 (add_items 내부에서 commit)
+        await fridge_service.add_items(
+            db, user.id,
+            [FridgeItemCreate(name=n, quantity=q, unit=u, source="mealplan")
+             for (_nl, u), (n, q) in consumption.items()],
+        )
+    else:
+        await db.commit()
+
     # commit 후 관계 만료 → 이글 로딩으로 재조회(async lazy-load 회피)
     plan = await _reload(db, plan_id)
     meal = next(m for m in plan.meals if m.id == meal_id)
