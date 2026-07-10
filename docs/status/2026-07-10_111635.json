@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-07-10T00:00:00+09:00",
+  "session_topic": "글로벌 지역 전환 + 국가별 스토어 (설계 단계)",
+  "command": "/설계시작 글로벌 지역 전환",
+  "agent": "agents/design.md",
+  "status": "설계 문서 확장 작성 중 — api-spec/db-schema/ui-design/security-design/architecture",
+  "tasks": [
+    {"id": 1, "subject": "기획서·기존 계약 문서·현행 구현 조사", "status": "completed"},
+    {"id": 2, "subject": "api-spec.md 확장 (PUT /users/me/region + store 국가별)", "status": "in_progress"},
+    {"id": 3, "subject": "db-schema.md 확장 (store enum 0007, users country/currency 값)", "status": "pending"},
+    {"id": 4, "subject": "ui-design.md 확장 (지역·통화 행, 글로벌 배지)", "status": "pending"},
+    {"id": 5, "subject": "security-design.md 확장 (지역 전환 CWE)", "status": "pending"},
+    {"id": 6, "subject": "architecture.md 확장 (지역 전환 흐름)", "status": "pending"},
+    {"id": 7, "subject": "GATE 2 승인 요청", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/설계/api-spec.md", "docs/설계/db-schema.md", "docs/설계/ui-design.md",
+    "docs/설계/security-design.md", "docs/설계/architecture.md"
+  ],
+  "key_findings": "users.country(CHAR2 KR)/currency(CHAR3 KRW) 컬럼·UserMeResponse·MoneyState 이미 존재. 신규: PUT /users/me/region(users에 write 엔드포인트 최초), store country별 세트 분기(현재 SUPPORTED_STORES 단일 튜플), 마이그레이션 0007 store CHECK에 walmart/instacart 추가(varchar(10) 수용). 마이그레이션 head=0006. connection_* 파일은 우리 영역, store CHECK 변경은 GATE3+팀원 리뷰.",
+  "recommended_actions": "설계 문서 5종 확장 완료 후 GATE 2(설계 승인) 요청 → 승인 시 /인프라시작(0007) 선행 후 /API시작+/UI시작 병렬",
+  "pending_user_input": "설계 승인 (GATE 2)"
+}

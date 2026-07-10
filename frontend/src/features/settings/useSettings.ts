@@ -18,11 +18,12 @@ import {
   MEALPLAN_NOT_FOUND_CODE,
 } from '@/features/mealplan/constants';
 import { fetchStoreConnections, putStoreConnection } from '@/features/store/api';
-import { STORE_IDS } from '@/features/store/constants';
+import { storeIdsForCountry } from '@/features/store/constants';
+import { putUserRegion } from '@/features/settings/regionApi';
 import { VISITED_MARKER_KEY } from '@/shared/config/constants';
 import type { Cuisine, HouseholdMemberInput } from '@/features/household/types';
-import type { StoreId } from '@/features/store/types';
-import type { MealDirection, Money, UserMeResponse } from '@/shared/api/types';
+import type { StoreConnectionsResponse, StoreId } from '@/features/store/types';
+import type { Country, MealDirection, Money, UserMeResponse } from '@/shared/api/types';
 
 /**
  * 설정 페이지 데이터 어댑터 (ui-design 9장, FR-401~404)
@@ -64,16 +65,21 @@ export interface SettingsState {
   budget: Money | null;
   /** 최신 식단 id — 재생성 대상 (없으면 생성 폴백, FR-403) */
   planId: string | null;
-  connections: Record<StoreId, boolean> | null;
+  connections: Partial<Record<StoreId, boolean>> | null;
+  /** user.country 의 스토어 노출 순서 (서버 응답 기준, FR-603) */
+  storeIds: StoreId[];
   profile: DietProfile;
   saving: boolean;
   togglingStore: StoreId | null;
+  switchingRegion: boolean;
   generating: boolean;
   loggingOut: boolean;
   saveHousehold: (members: HouseholdMemberInput[]) => Promise<boolean>;
   saveBudget: (amount: string, locked: boolean) => Promise<boolean>;
   savePreference: (cuisines: Cuisine[], direction: MealDirection) => Promise<boolean>;
   toggleStore: (store: StoreId, connected: boolean) => Promise<boolean>;
+  /** 지역 수동 전환 — PUT /users/me/region → user·스토어 세트 갱신 (FR-601/602) */
+  switchRegion: (country: Country) => Promise<boolean>;
   regenerate: () => Promise<RegenerateOutcome>;
   /** 성공 시 visited 마커 기록까지 수행 — 홈 이동은 호출측 (FR-401) */
   logout: () => Promise<boolean>;
@@ -88,12 +94,32 @@ export function useSettings(): SettingsState {
   const [members, setMembers] = useState<HouseholdMemberInput[] | null>(null);
   const [budget, setBudget] = useState<Money | null>(null);
   const [planId, setPlanId] = useState<string | null>(null);
-  const [connections, setConnections] = useState<Record<StoreId, boolean> | null>(null);
+  const [connections, setConnections] = useState<Partial<Record<StoreId, boolean>> | null>(null);
+  const [storeIds, setStoreIds] = useState<StoreId[]>([]);
   const [profile, setProfile] = useState<DietProfile>(INITIAL_PROFILE);
   const [saving, setSaving] = useState(false);
   const [togglingStore, setTogglingStore] = useState<StoreId | null>(null);
+  const [switchingRegion, setSwitchingRegion] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  /**
+   * user.country 의 스토어 세트로 노출 순서·연동 맵 구성 (ui-design 12장, FR-603).
+   * 표시 세트는 클라이언트 상수(storeIdsForCountry), 연동 여부는 서버 응답 기준 —
+   * 응답에 없는 스토어는 disconnected 로 채운다(부분 응답에도 안전).
+   */
+  const applyStoreConnections = useCallback((country: string, data: StoreConnectionsResponse) => {
+    const ids = storeIdsForCountry(country);
+    const connectedSet = new Set(
+      data.connections.filter((c) => c.status === 'connected').map((c) => c.store),
+    );
+    setStoreIds([...ids]);
+    setConnections(
+      Object.fromEntries(ids.map((id) => [id, connectedSet.has(id)])) as Partial<
+        Record<StoreId, boolean>
+      >,
+    );
+  }, []);
 
   const membersRef = useRef<HouseholdMemberInput[] | null>(null);
   const profileRef = useRef<DietProfile>(INITIAL_PROFILE);
@@ -169,18 +195,10 @@ export function useSettings(): SettingsState {
       setStatus('error');
       return;
     }
-    const map = Object.fromEntries(
-      STORE_IDS.map((id) => [
-        id,
-        stores.data.connections.some(
-          (connection) => connection.store === id && connection.status === 'connected',
-        ),
-      ]),
-    ) as Record<StoreId, boolean>;
-    setConnections(map);
+    applyStoreConnections(me.data.country, stores.data);
 
     setStatus('ready');
-  }, [applyMembers, applyProfile]);
+  }, [applyMembers, applyProfile, applyStoreConnections]);
 
   useEffect(() => {
     void load();
@@ -256,6 +274,25 @@ export function useSettings(): SettingsState {
     [],
   );
 
+  /**
+   * FR-601/602: 지역 수동 전환 — PUT /users/me/region.
+   * 성공 시 user(country/currency) 갱신 + 국가별 스토어 세트 재조회. 통화는 서버 매핑.
+   */
+  const switchRegion = useCallback(
+    async (country: Country) => {
+      setSwitchingRegion(true);
+      const result = await putUserRegion(country);
+      if (result.ok) {
+        setUser(result.data);
+        const stores = await fetchStoreConnections();
+        if (stores.ok) applyStoreConnections(result.data.country, stores.data);
+      }
+      setSwitchingRegion(false);
+      return result.ok;
+    },
+    [applyStoreConnections],
+  );
+
   /** FR-403: 저장 후 재생성 — latest 있으면 regenerate, 없으면 생성 폴백 */
   const regenerate = useCallback(async (): Promise<RegenerateOutcome> => {
     setGenerating(true);
@@ -297,15 +334,18 @@ export function useSettings(): SettingsState {
     budget,
     planId,
     connections,
+    storeIds,
     profile,
     saving,
     togglingStore,
+    switchingRegion,
     generating,
     loggingOut,
     saveHousehold,
     saveBudget,
     savePreference,
     toggleStore,
+    switchRegion,
     regenerate,
     logout,
     reload,

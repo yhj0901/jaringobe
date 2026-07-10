@@ -1,11 +1,13 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { STORE_BRAND_COLORS, STORE_IDS } from '@/features/store/constants';
+import { STORE_BRAND_COLORS } from '@/features/store/constants';
 import type { StoreId } from '@/features/store/types';
 
 interface StoreConnectionsCardProps {
-  connections: Record<StoreId, boolean>;
+  connections: Partial<Record<StoreId, boolean>>;
+  /** user.country 의 스토어 노출 순서 (KR 4종 / US 2종, FR-603) */
+  storeIds: StoreId[];
   /** 연동됨 항목의 서비스 계정 이메일 표시 (users/me.email — 프로토타입 accountLabel) */
   email: string | null;
   busyStore: StoreId | null;
@@ -13,11 +15,12 @@ interface StoreConnectionsCardProps {
 }
 
 /**
- * 자동 주문 연동 스토어 (FR-404, 프로토타입 settings stores 재현)
- * KR 4종 브랜드 배지 + 연동됨(그린 라벨·해제)/연동하기(브랜드색 버튼). 확인 시트는 호출측.
+ * 자동 주문 연동 스토어 (FR-404/603, 프로토타입 settings stores 재현)
+ * 국가별 스토어 브랜드 배지 + 연동됨(그린 라벨·해제)/연동하기(브랜드색 버튼). 확인 시트는 호출측.
  */
 export function StoreConnectionsCard({
   connections,
+  storeIds,
   email,
   busyStore,
   onToggle,
@@ -32,7 +35,7 @@ export function StoreConnectionsCard({
       </h2>
       <p className="mx-0.5 mb-2.5 text-xs leading-relaxed text-ink-300">{t('sub')}</p>
       <ul className="rounded-[18px] bg-white px-4 py-1.5 shadow-card">
-        {STORE_IDS.map((store, index) => {
+        {storeIds.map((store, index) => {
           const connected = connections[store];
           const color = STORE_BRAND_COLORS[store];
           const name = tStore(`${store}.name`);
@@ -40,7 +43,7 @@ export function StoreConnectionsCard({
             <li
               key={store}
               className={`flex items-center gap-3 py-[13px] ${
-                index < STORE_IDS.length - 1 ? 'border-b border-[#F1F3F8]' : ''
+                index < storeIds.length - 1 ? 'border-b border-[#F1F3F8]' : ''
               }`}
             >
               <span

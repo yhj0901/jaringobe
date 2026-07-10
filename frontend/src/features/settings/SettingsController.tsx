@@ -6,16 +6,17 @@ import { useRouter } from '@/i18n/routing';
 import { formatMoney } from '@/shared/ui/MoneyText';
 import { GenerationLoading } from '@/features/mealplan/GenerationLoading';
 import { AccountCard } from '@/features/settings/AccountCard';
+import { RegionCard } from '@/features/settings/RegionCard';
 import { DietSettingsCard } from '@/features/settings/DietSettingsCard';
 import { StoreConnectionsCard } from '@/features/settings/StoreConnectionsCard';
 import { EditOverlay, type SettingsEditResult } from '@/features/settings/EditOverlay';
 import { ConfirmSheet } from '@/features/settings/ConfirmSheet';
 import { useSettings, type DietSection } from '@/features/settings/useSettings';
 import type { StoreId } from '@/features/store/types';
-import type { Money } from '@/shared/api/types';
+import type { Country, Money } from '@/shared/api/types';
 
 /** 상단 배너 오류 종류 → settings.error.{key} */
-type PageError = 'store' | 'generate' | 'rateLimited' | 'logout' | null;
+type PageError = 'store' | 'generate' | 'rateLimited' | 'logout' | 'region' | null;
 
 /**
  * 설정 페이지 컨트롤러 (ui-design 9장, FR-401~404)
@@ -37,6 +38,7 @@ export function SettingsController() {
     null,
   );
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [regionConfirm, setRegionConfirm] = useState<Country | null>(null);
   const [pageError, setPageError] = useState<PageError>(null);
 
   // 미인증(쿠키 무효 401) — 미들웨어 통과 후 세션 만료 케이스 → 로그인으로 (ui-design 1장 규칙)
@@ -92,6 +94,15 @@ export function SettingsController() {
     const ok = await settings.toggleStore(store, connect);
     if (!ok) setPageError('store');
   }, [storeConfirm, settings]);
+
+  // FR-601: 지역 전환 확인 → PUT /users/me/region (통화·스토어 세트 갱신)
+  const handleRegionConfirm = useCallback(async () => {
+    if (regionConfirm === null) return;
+    const target = regionConfirm;
+    setRegionConfirm(null);
+    const ok = await settings.switchRegion(target);
+    if (!ok) setPageError('region');
+  }, [regionConfirm, settings]);
 
   // FR-401: 로그아웃 → visited 마커(훅) → 게스트 홈
   const handleLogout = useCallback(async () => {
@@ -201,6 +212,11 @@ export function SettingsController() {
             email={user.email}
             onLogout={() => setLogoutOpen(true)}
           />
+          <RegionCard
+            country={user.country}
+            busy={settings.switchingRegion}
+            onSwitch={(target) => setRegionConfirm(target)}
+          />
           <DietSettingsCard
             householdSummary={householdSummary}
             preferenceSummary={preferenceSummary}
@@ -209,6 +225,7 @@ export function SettingsController() {
           />
           <StoreConnectionsCard
             connections={connections}
+            storeIds={settings.storeIds}
             email={user.email}
             busyStore={settings.togglingStore}
             onToggle={(store, next) => setStoreConfirm({ store, connect: next })}
@@ -269,6 +286,18 @@ export function SettingsController() {
         busy={settings.togglingStore !== null}
         onConfirm={() => void handleStoreConfirm()}
         onCancel={() => setStoreConfirm(null)}
+      />
+
+      {/* 지역 전환 확인 (FR-601/606 — 기존 플랜 통화 유지 안내) */}
+      <ConfirmSheet
+        open={regionConfirm !== null}
+        title={t('region.switchConfirm.title')}
+        description={t('region.switchConfirm.description')}
+        confirmLabel={t('region.switchConfirm.confirm')}
+        cancelLabel={t('region.switchConfirm.cancel')}
+        busy={settings.switchingRegion}
+        onConfirm={() => void handleRegionConfirm()}
+        onCancel={() => setRegionConfirm(null)}
       />
 
       {/* 로그아웃 확인 (FR-401) */}

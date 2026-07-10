@@ -120,6 +120,16 @@ GET / → RSC 가 홈 셸 + 기본 샘플 렌더 (SSG 가능)
 냉장고/자동주문 카드는 "준비 중" 잠금 (fridge/order 도메인 구현 시 해제)
 ```
 
+### 3-5. 지역 전환 (v1.3 — 글로벌-지역전환, 수동)
+```
+[설정] "지역·통화" 토글 → 확인 시트 → PUT /api/v1/users/me/region {country}
+[백엔드] country(KR/US) 검증 → currency 매핑(KR→KRW / US→USD) → users.country·currency UPDATE → 200 UserMe
+[프론트] GET /users/me 재조회 → 통화(MoneyText)·스토어 세트·"글로벌" 배지 즉시 반영
+소급 변환 없음: 기존 budget_plans/meal_plans 저장 통화 유지 (FR-606)
+```
+- store 연동 조회/변경은 `user.country` 기준 세트로 분기(KR 4 / US 2). 지역 전환 시 타 국가 연동 행은 **삭제 없이 응답 필터만** — 재전환 시 상태 복원
+- 담당 격리: users region 은 **auth 도메인 라우터**(GET /users/me 와 동일 위치), 국가별 스토어 세트는 우리 소유 `connection_*` 파일에서 분기. store 도메인 **DB CHECK 변경(0007)은 팀원 리뷰 필수**(연동·어댑터 본 파일 무접촉)
+
 ## 4. 환경 변수 (.env — 인프라 에이전트가 .env.example 관리)
 
 | 키 | 위치 | 용도 |
@@ -133,7 +143,9 @@ GET / → RSC 가 홈 셸 + 기본 샘플 렌더 (SSG 가능)
 ## 5. 선행/후속 의존성
 - **선행**: docker-compose(postgres) + Alembic 초기 리비전 — `/인프라시작` (GATE 3)
 - **후속 확장점**: 홈 셸의 데이터 주입 인터페이스(게스트 샘플 ↔ 회원 실데이터), budget_plans 확장(budget 본설계), 애플 어댑터(P1), store 어댑터(마트 연동 기획 시), rate limit 인메모리 → Redis 교체(멀티 인스턴스 배포 시)
+- **글로벌-지역전환(v1.3) 이관 항목**: IP·GPS 자동 지역 감지, 기존 데이터 통화 소급 변환, **US Walmart/Instacart 실 API 어댑터**(이번 범위는 국가별 목록·연동 상태·enum 확장까지 — 실연동은 store 본설계). 다국가 확장(현재 KR/US 2국)
 
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 5라운드 합의)
 - 2026-07-09: v1.1 — 회원 홈 흐름(3-4) 추가
+- 2026-07-10: v1.3 — 지역 전환 흐름(3-5) + 후속 이관 항목(자동 감지·소급 변환·US 실 API) 명시

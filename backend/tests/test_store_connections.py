@@ -115,3 +115,59 @@ class TestPutConnection:
         await login(client, respx_mock, provider_user_id="kakao-B", email="b@example.com")
         listed = (await client.get("/api/v1/stores/connections")).json()["connections"]
         assert all(c["status"] == "disconnected" for c in listed)
+
+
+US_STORES = ["walmart", "instacart"]
+
+
+async def _switch_to_us(client):
+    res = await client.put("/api/v1/users/me/region", json={"country": "US"})
+    assert res.status_code == 200, res.text
+
+
+class TestCountryBasedStores:
+    """v1.5 — user.country 기준 스토어 세트 (FR-603)."""
+
+    async def test_us_lists_us_stores(self, client, respx_mock):
+        """US 전환 후 GET → walmart/instacart 세트 전체 disconnected."""
+        await login(client, respx_mock)
+        await _switch_to_us(client)
+        body = (await client.get("/api/v1/stores/connections")).json()
+        assert [c["store"] for c in body["connections"]] == US_STORES
+        assert all(c["status"] == "disconnected" for c in body["connections"])
+
+    async def test_us_can_connect_us_store(self, client, db, respx_mock):
+        await login(client, respx_mock)
+        await _switch_to_us(client)
+        res = await client.put("/api/v1/stores/connections/walmart", json={"connected": True})
+        assert res.status_code == 200, res.text
+        assert res.json()["store"] == "walmart"
+        assert res.json()["status"] == "connected"
+
+    async def test_us_user_kr_store_404(self, client, respx_mock):
+        """US 유저가 KR 스토어(kurly) PUT → 404 STORE_NOT_SUPPORTED."""
+        await login(client, respx_mock)
+        await _switch_to_us(client)
+        res = await client.put("/api/v1/stores/connections/kurly", json={"connected": True})
+        assert res.status_code == 404, res.text
+        assert res.json()["detail"]["code"] == "STORE_NOT_SUPPORTED"
+
+    async def test_region_switch_preserves_rows(self, client, db, respx_mock):
+        """KR 연동 → US 전환 시 응답에서 제외만(삭제 없음) → KR 재전환 시 상태 복원."""
+        await login(client, respx_mock)
+        await client.put("/api/v1/stores/connections/kurly", json={"connected": True})
+
+        await _switch_to_us(client)
+        us_listed = (await client.get("/api/v1/stores/connections")).json()["connections"]
+        assert [c["store"] for c in us_listed] == US_STORES  # kurly 미노출
+
+        # 행은 보존됨
+        rows = (await db.scalars(select(StoreConnection))).all()
+        assert any(r.store == "kurly" and r.status == "connected" for r in rows)
+
+        # KR 재전환 → kurly 연동 상태 복원
+        res = await client.put("/api/v1/users/me/region", json={"country": "KR"})
+        assert res.status_code == 200
+        kr_listed = (await client.get("/api/v1/stores/connections")).json()["connections"]
+        by_store = {c["store"]: c for c in kr_listed}
+        assert by_store["kurly"]["status"] == "connected"

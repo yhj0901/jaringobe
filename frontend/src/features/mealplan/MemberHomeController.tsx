@@ -27,6 +27,9 @@ export function MemberHomeController() {
   const router = useRouter();
   const home = useMemberHome();
 
+  // FR-605: country != KR 시 홈 헤더 "글로벌" 배지 (조회 전 null 은 미노출)
+  const isGlobalRegion = home.country !== null && home.country !== 'KR';
+
   const [createOpen, setCreateOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [lockedNotice, setLockedNotice] = useState<string | null>(null);
@@ -185,6 +188,7 @@ export function MemberHomeController() {
           onRecipeClick={showLockedNotice}
           onLockedNavClick={handleLockedNav}
           onMyTabClick={goSettings}
+          globalBadge={isGlobalRegion}
         />
         {needsOnboarding ? null : (
           <PlanCreateSheet
@@ -225,6 +229,7 @@ export function MemberHomeController() {
         pendingMealIds={home.pendingMealIds}
         onLockedNavClick={handleLockedNav}
         onMyTabClick={goSettings}
+        globalBadge={isGlobalRegion}
       />
       <RegenerateConfirmSheet
         open={confirmOpen}

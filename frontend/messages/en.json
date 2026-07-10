@@ -41,6 +41,7 @@
       "label": "Trial mode"
     },
     "sampleLabel": "Sample",
+    "globalBadge": "Global",
     "applying": "Applying your budget plan…",
     "header": {
       "greeting": "Hello",
@@ -469,6 +470,19 @@
       "confirm": "Rebuild",
       "decline": "Later"
     },
+    "region": {
+      "section": "Region & currency",
+      "korea": "Korea ₩",
+      "global": "Global $",
+      "globalBadge": "Global",
+      "noRetroNotice": "Switching region applies only to new items and display. Existing plans and meals keep their original currency.",
+      "switchConfirm": {
+        "title": "Switch region?",
+        "description": "Your currency and connected stores will change. Existing plans and meals keep their original currency.",
+        "confirm": "Switch",
+        "cancel": "Cancel"
+      }
+    },
     "stores": {
       "section": "Auto-order store connections",
       "sub": "We prepare meals and auto-orders from your connected stores. For now, only the connection status is saved.",
@@ -494,6 +508,7 @@
       "load": "We couldn't load your settings. Please try again in a moment.",
       "reload": "Reload",
       "store": "We couldn't update the connection. Please try again shortly.",
+      "region": "We couldn't switch your region. Please try again shortly.",
       "generate": "Meal plan generation failed. Please try again shortly.",
       "rateLimited": "Too many requests for now. Please try again in a minute.",
       "logout": "Sign-out failed. Please try again shortly.",
@@ -516,6 +531,14 @@
     "naver": {
       "name": "Naver Shopping",
       "mono": "N"
+    },
+    "walmart": {
+      "name": "Walmart",
+      "mono": "W"
+    },
+    "instacart": {
+      "name": "Instacart",
+      "mono": "I"
     }
   }
 }
