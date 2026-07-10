@@ -175,7 +175,7 @@ export function MemberHomeController() {
           }
           onRecipeClick={showLockedNotice}
           onLockedNavClick={handleLockedNav}
-          onAvatarClick={goSettings}
+          onMyTabClick={goSettings}
         />
         {needsOnboarding ? null : (
           <PlanCreateSheet
@@ -215,7 +215,7 @@ export function MemberHomeController() {
         }}
         pendingMealIds={home.pendingMealIds}
         onLockedNavClick={handleLockedNav}
-        onAvatarClick={goSettings}
+        onMyTabClick={goSettings}
       />
       <RegenerateConfirmSheet
         open={confirmOpen}

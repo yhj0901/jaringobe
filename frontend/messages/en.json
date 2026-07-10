@@ -36,7 +36,8 @@
       "home": "Home",
       "meal": "Meals",
       "fridge": "Fridge",
-      "cart": "Cart"
+      "cart": "Cart",
+      "my": "My"
     },
     "budgetMood": {
       "title": "This month's budget mood",
