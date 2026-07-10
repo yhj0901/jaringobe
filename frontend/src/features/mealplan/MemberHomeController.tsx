@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { HomeShell } from '@/features/home/HomeShell';
-import { MEAL_SECTION_ID } from '@/features/home/MealPlanSection';
 import { GuestHomeController } from '@/features/guest/GuestHomeController';
 import { getDefaultViewModel } from '@/features/guest/sampleMatrix';
 import { useMemberHome, type PlanCreateInput } from '@/features/mealplan/useMemberHome';
@@ -30,7 +29,7 @@ export function MemberHomeController() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [lockedNotice, setLockedNotice] = useState(false);
+  const [lockedNotice, setLockedNotice] = useState<string | null>(null);
   const [recipeMeal, setRecipeMeal] = useState<MealItem | null>(null);
   const noticeTimerRef = useRef<number | null>(null);
 
@@ -41,11 +40,17 @@ export function MemberHomeController() {
     [],
   );
 
-  const showLockedNotice = useCallback(() => {
-    setLockedNotice(true);
+  // 잠긴 기능 토스트 — 전달된 문구를 LOCKED_NOTICE_MS 동안 노출
+  const displayNotice = useCallback((message: string) => {
+    setLockedNotice(message);
     if (noticeTimerRef.current !== null) window.clearTimeout(noticeTimerRef.current);
-    noticeTimerRef.current = window.setTimeout(() => setLockedNotice(false), LOCKED_NOTICE_MS);
+    noticeTimerRef.current = window.setTimeout(() => setLockedNotice(null), LOCKED_NOTICE_MS);
   }, []);
+
+  // "준비 중" 안내 (냉장고/자동주문/레시피) — onRecipeClick(meal) 인자는 무시
+  const showLockedNotice = useCallback(() => {
+    displayNotice(t('locked.notice'));
+  }, [displayNotice, t]);
 
   const handleCreateSubmit = (input: PlanCreateInput) => {
     setCreateOpen(false);
@@ -58,9 +63,9 @@ export function MemberHomeController() {
   };
 
   const handleLockedNav = (tab: 'meal' | 'fridge' | 'cart') => {
-    // FR-208: meal 탭은 식단 섹션 스크롤, fridge/cart 는 "준비 중" 안내 (가입 게이트 아님)
+    // meal 탭은 프리미엄 구독 편입 예정 → 구독 안내, fridge/cart 는 "준비 중" 안내 (가입 게이트 아님)
     if (tab === 'meal') {
-      document.getElementById(MEAL_SECTION_ID)?.scrollIntoView({ behavior: 'smooth' });
+      displayNotice(t('locked.premiumNotice'));
       return;
     }
     showLockedNotice();
@@ -144,7 +149,7 @@ export function MemberHomeController() {
       role="status"
       className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-full bg-navy-800 px-4 py-2 text-xs font-bold text-white shadow-card"
     >
-      {t('locked.notice')}
+      {lockedNotice}
     </p>
   ) : null;
 

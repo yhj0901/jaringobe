@@ -74,7 +74,7 @@ describe('HomeShell (FR-101)', () => {
     expect(screen.getByText('Walmart')).toBeInTheDocument();
   });
 
-  it('하단 탭바: 홈은 현재 탭, 잠긴 탭(냉장고/장바구니) 클릭 시 게이트 콜백. 식단 탭은 없음(구독 편입 예정)', () => {
+  it('하단 탭바: 홈은 현재 탭, 잠긴 탭(식단/냉장고/장바구니) 클릭 시 콜백 (식단은 구독 편입 예정)', () => {
     const onLockedNavClick = vi.fn();
     renderWithIntl(
       <HomeShell viewModel={getDefaultViewModel('ko')} onLockedNavClick={onLockedNavClick} />,
@@ -83,12 +83,13 @@ describe('HomeShell (FR-101)', () => {
     const home = screen.getByRole('button', { name: '홈' });
     expect(home).toHaveAttribute('aria-current', 'page');
 
-    // 식단 탭 제거 확인
-    expect(screen.queryByRole('button', { name: '식단' })).not.toBeInTheDocument();
+    // 식단 탭 복원 확인 — 클릭 시 tab='meal' 로 콜백
+    fireEvent.click(screen.getByRole('button', { name: '식단' }));
+    expect(onLockedNavClick).toHaveBeenLastCalledWith('meal');
 
     fireEvent.click(screen.getByRole('button', { name: '냉장고' }));
     fireEvent.click(screen.getByRole('button', { name: '장바구니' }));
-    expect(onLockedNavClick).toHaveBeenCalledTimes(2);
+    expect(onLockedNavClick).toHaveBeenCalledTimes(3);
   });
 
   it('하단 "마이" 탭 클릭 시 설정 진입 콜백 (상단 아바타는 브랜드 마크로만)', () => {

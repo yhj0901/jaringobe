@@ -265,14 +265,20 @@ describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it('탭바: fridge/cart → "준비 중" 안내 (FR-208). 식단 탭은 없음(구독 편입 예정)', () => {
+  it('탭바: fridge/cart → "준비 중" 안내 (FR-208)', () => {
     state.current = readyState();
     renderWithIntl(<MemberHomeController />);
 
-    expect(screen.queryByRole('button', { name: '식단' })).not.toBeInTheDocument();
-
     fireEvent.click(screen.getByRole('button', { name: '냉장고' }));
     expect(screen.getByText('아직 준비 중인 기능이에요. 곧 만나요!')).toBeInTheDocument();
+  });
+
+  it('탭바: 식단 → "프리미엄 구독" 안내 (구독 편입 예정)', () => {
+    state.current = readyState();
+    renderWithIntl(<MemberHomeController />);
+
+    fireEvent.click(screen.getByRole('button', { name: '식단' }));
+    expect(screen.getByText('프리미엄 구독 서비스로 준비 중이에요. 곧 만나요!')).toBeInTheDocument();
   });
 
   it('끼니 행 클릭 → 레시피 시트(메타 3칩·재료 칩·기본 조리법) 오픈 후 닫기 (FR-504)', () => {

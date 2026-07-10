@@ -201,7 +201,8 @@
       "fridgeDescription": "We're preparing a virtual fridge that auto-registers delivered ingredients.",
       "orderTitle": "Auto grocery orders",
       "orderDescription": "We're preparing budget-fit automatic grocery ordering.",
-      "notice": "This feature is coming soon!"
+      "notice": "This feature is coming soon!",
+      "premiumNotice": "A premium subscription feature — coming soon!"
     },
     "error": {
       "loadFailed": "We couldn't load your meal plan. Please try again in a moment.",
