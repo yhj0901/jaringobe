@@ -202,7 +202,9 @@
       "orderTitle": "Auto grocery orders",
       "orderDescription": "We're preparing budget-fit automatic grocery ordering.",
       "notice": "This feature is coming soon!",
-      "premiumNotice": "A premium subscription feature — coming soon!"
+      "premiumNotice": "A premium subscription feature — coming soon!",
+      "open": "Open",
+      "fridgeActiveDescription": "Add and manage ingredients yourself."
     },
     "error": {
       "loadFailed": "We couldn't load your meal plan. Please try again in a moment.",

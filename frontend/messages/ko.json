@@ -202,7 +202,9 @@
       "orderTitle": "식재료 자동주문",
       "orderDescription": "예산에 맞춘 자동주문 기능을 준비하고 있어요.",
       "notice": "아직 준비 중인 기능이에요. 곧 만나요!",
-      "premiumNotice": "프리미엄 구독 서비스로 준비 중이에요. 곧 만나요!"
+      "premiumNotice": "프리미엄 구독 서비스로 준비 중이에요. 곧 만나요!",
+      "open": "사용하기",
+      "fridgeActiveDescription": "재료를 직접 추가·관리해 보세요. (배송 자동등록은 준비 중)"
     },
     "error": {
       "loadFailed": "식단을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",

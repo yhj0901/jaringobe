@@ -63,9 +63,13 @@ export function MemberHomeController() {
   };
 
   const handleLockedNav = (tab: 'meal' | 'fridge' | 'cart') => {
-    // meal 탭은 프리미엄 구독 편입 예정 → 구독 안내, fridge/cart 는 "준비 중" 안내 (가입 게이트 아님)
+    // meal 탭은 프리미엄 구독 편입 예정 → 구독 안내, fridge 는 냉장고 페이지 이동, cart 는 "준비 중" 안내
     if (tab === 'meal') {
       displayNotice(t('locked.premiumNotice'));
+      return;
+    }
+    if (tab === 'fridge') {
+      router.push('/fridge');
       return;
     }
     showLockedNotice();
