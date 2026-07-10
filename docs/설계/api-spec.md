@@ -181,7 +181,12 @@ Access 재발급 + refresh 회전.
 ### 3-3. `GET /api/v1/mealplans/{id}` — 인증 필요 (기존)
 - `200` MealPlanResponse / `404 NOT_FOUND` / `403 FORBIDDEN`(타인 소유)
 
-### 3-4. `POST /api/v1/mealplans/{id}/regenerate` — 인증 필요 (기존, 프론트 P1)
+### 3-4. `PUT /api/v1/mealplans/{planId}/meals/{mealId}/completion` — 인증 필요 (v1.4 신규)
+식사 완료 설정/해제. body `{ "completed": true|false }` → `200` 갱신된 MealOut. 404 NOT_FOUND / 403 FORBIDDEN(타인 소유).
+
+**MealOut 확장 (v1.4, 하위 호환 옵셔널)**: `steps: string[]`(조리 단계), `completedAt: datetime|null`, `timeMinutes: int|null`, `difficulty: "easy"|"normal"|"hard"|null` — time/difficulty 는 신규 생성분부터 LLM 이 채움(부재 시 프론트 기본값).
+
+### 3-5. `POST /api/v1/mealplans/{id}/regenerate` — 인증 필요 (기존, 프론트 P1)
 ```json
 { "scope": "all" }   // all | meal (meal 이면 mealId 필수 — 프론트 P2)
 ```
@@ -253,8 +258,10 @@ KR 4종 전체 상태 반환 (미저장 스토어는 disconnected).
 | 13 | `PUT /api/v1/budget/plans` | 필요 | JSON (v1.2 신규) |
 | 14 | `GET /api/v1/stores/connections` | 필요 | JSON (v1.3 신규) |
 | 15 | `PUT /api/v1/stores/connections/{store}` | 필요 | JSON (v1.3 신규) |
+| 16 | `PUT /api/v1/mealplans/{planId}/meals/{mealId}/completion` | 필요 | JSON (v1.4 신규) |
 
 ## 변경 이력
+- 2026-07-10: **v1.4** — 식사 완료 API + MealOut 확장(steps/completedAt/timeMinutes/difficulty). UI 대변인 동의
 - 2026-07-10: **v1.3** — store 연동 상태 2종 (설정 페이지, 자격증명 미수집 1단계). UI 대변인 동의
 - 2026-07-09: **v1.2** — household 도메인(PUT/GET /households/me) + PUT /budget/plans(locked·cuisines 확장). 온보딩 3스텝(프로토타입 1:1) 대응. UI 대변인 동의 완료
 - 2026-07-09: **v1.1** — mealplan 도메인 정식 편입(구현 기준: camelCase/uuid/allergies·preferences 요청 필드) + `GET /mealplans/latest` 신규. 팀원 미머지 초안(cbd0623)의 상이점은 구현 우선으로 조정. UI 대변인 동의 완료

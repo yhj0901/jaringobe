@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { GuestHomeController } from '@/features/guest/GuestHomeController';
 import { useGuestStore, type GuestPlan } from '@/features/guest/store';
 import {
@@ -173,10 +173,24 @@ describe('GuestHomeController', () => {
     expect(screen.queryByText('자동주문을 시작해볼까요?')).not.toBeInTheDocument();
   });
 
-  it('예산안 있는 게스트의 전체 조리법 보기 → 가입 게이트 모달 → 로그인 이동 (FR-109)', async () => {
+  it('게스트 끼니 행 클릭 → 샘플 레시피 시트(기본 조리법) 오픈, 게이트 아님 (v1.4)', async () => {
     seedPlan(GUEST_PLAN, new Date().toISOString());
     await renderController();
-    fireEvent.click(screen.getAllByRole('button', { name: '전체 조리법 보기' })[0] as HTMLElement);
+    fireEvent.click(screen.getAllByRole('button', { name: /레시피 보기$/ })[0] as HTMLElement);
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('AI 추천 레시피')).toBeInTheDocument();
+    // 게스트 샘플은 steps 부재 → 기본 조리법 3단계 고정 문구
+    expect(within(dialog).getByText(/재료를 깨끗이 씻고/)).toBeInTheDocument();
+    // 저장이 필요한 게이트 문구는 뜨지 않는다
+    expect(screen.queryByText('저장하려면 로그인이 필요해요')).not.toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: '닫기' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('예산안 있는 게스트의 잠긴 탭 클릭 → 가입 게이트 모달 → 로그인 이동 (FR-109)', async () => {
+    seedPlan(GUEST_PLAN, new Date().toISOString());
+    await renderController();
+    fireEvent.click(screen.getByRole('button', { name: '냉장고' }));
     expect(screen.getByText('저장하려면 로그인이 필요해요')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '로그인하기' }));
     expect(routerMock.push).toHaveBeenCalledWith('/login?next=/');

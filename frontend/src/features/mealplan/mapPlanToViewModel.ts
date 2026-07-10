@@ -71,6 +71,17 @@ function toMealItem(meal: MealPlanMeal & { mealType: MealSlot }): MealItem {
     isSample: false,
     ingredients: meal.ingredients.map((ingredient) => ingredient.name),
     estCost: sumIngredientCost(meal.ingredients),
+    // v1.4 완료·레시피 확장 (FR-501/502/504) — 없는 필드는 undefined 로 남겨 시트가 기본값 처리
+    mealId: meal.id,
+    recipeIngredients: meal.ingredients.map((ingredient) => ({
+      name: ingredient.name,
+      quantity: ingredient.quantity,
+      unit: ingredient.unit,
+    })),
+    steps: meal.steps,
+    completedAt: meal.completedAt ?? null,
+    timeMinutes: meal.timeMinutes ?? null,
+    difficulty: meal.difficulty ?? null,
   };
 }
 

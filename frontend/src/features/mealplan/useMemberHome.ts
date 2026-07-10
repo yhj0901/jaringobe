@@ -6,7 +6,13 @@ import {
   createOnboardingPlan,
   type CreateOnboardingPlanResult,
 } from '@/features/budget/createOnboardingPlan';
-import { createMealPlan, fetchLatestMealPlan, regenerateMealPlan } from '@/features/mealplan/api';
+import {
+  createMealPlan,
+  fetchLatestMealPlan,
+  regenerateMealPlan,
+  setMealCompletion,
+} from '@/features/mealplan/api';
+import { fetchHousehold } from '@/features/household/api';
 import {
   MEALPLAN_MEALS_PER_DAY,
   MEALPLAN_NOT_FOUND_CODE,
@@ -50,11 +56,17 @@ export interface MemberHomeState {
   viewModel: HomeViewModel | null;
   /** 온보딩 예산안 작성 직후 확정된 예산 — 빈 상태 히어로 금액 (FR-202) */
   budget: Money | null;
+  /** 가구 인원 — 레시피 시트 "N인분" (FR-504). 조회 전/실패 시 null */
+  householdSize: number | null;
   generation: GenerationPhase;
   generationError: GenerationErrorKind | null;
+  /** 완료 토글 진행 중인 끼니 id 집합 — 연타 방지 (FR-503) */
+  pendingMealIds: ReadonlySet<string>;
   selectDate: (date: string) => void;
   createPlan: (input: PlanCreateInput) => Promise<void>;
   regeneratePlan: () => Promise<void>;
+  /** 끼니 완료 설정/해제 — 낙관적 갱신 + 실패 롤백 (FR-501/503) */
+  toggleMealCompletion: (mealId: string) => Promise<void>;
   /** 실패 배너의 재시도 — 마지막 생성/재생성 요청을 그대로 재실행 (FR-204) */
   retryGenerate: () => Promise<void>;
   dismissGenerationError: () => void;
@@ -67,14 +79,17 @@ export function useMemberHome(): MemberHomeState {
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
   const [plan, setPlan] = useState<MealPlanResponse | null>(null);
   const [budget, setBudget] = useState<Money | null>(null);
+  const [householdSize, setHouseholdSize] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [generation, setGeneration] = useState<GenerationPhase>('idle');
   const [generationError, setGenerationError] = useState<GenerationErrorKind | null>(null);
+  const [pendingMealIds, setPendingMealIds] = useState<ReadonlySet<string>>(new Set());
 
   const generationRef = useRef<GenerationPhase>('idle');
   const lastCreateInputRef = useRef<PlanCreateInput | null>(null);
   const lastActionRef = useRef<'create' | 'regenerate' | null>(null);
   const planRef = useRef<MealPlanResponse | null>(null);
+  const pendingRef = useRef<Set<string>>(new Set());
 
   const applyPlan = useCallback((next: MealPlanResponse) => {
     planRef.current = next;
@@ -96,6 +111,12 @@ export function useMemberHome(): MemberHomeState {
     setStatus('error');
   }, [applyPlan]);
 
+  /** 가구 인원 조회 — 레시피 "N인분" 표시용. 실패(404 등)해도 홈 흐름은 계속 (기본값 폴백) */
+  const loadHousehold = useCallback(async () => {
+    const result = await fetchHousehold();
+    setHouseholdSize(result.ok ? result.data.size : null);
+  }, []);
+
   const load = useCallback(async () => {
     setStatus('loading');
     const me = await fetchMe();
@@ -108,8 +129,9 @@ export function useMemberHome(): MemberHomeState {
       setStatus('budget-required');
       return;
     }
+    void loadHousehold();
     await loadLatest();
-  }, [loadLatest]);
+  }, [loadLatest, loadHousehold]);
 
   useEffect(() => {
     void load();
@@ -169,6 +191,69 @@ export function useMemberHome(): MemberHomeState {
 
   const dismissGenerationError = useCallback(() => setGenerationError(null), []);
 
+  /** pendingRef 와 렌더용 state 동기화 */
+  const syncPending = useCallback((next: Set<string>) => {
+    pendingRef.current = next;
+    setPendingMealIds(new Set(next));
+  }, []);
+
+  const toggleMealCompletion = useCallback(
+    async (mealId: string) => {
+      const current = planRef.current;
+      if (current === null) return;
+      if (pendingRef.current.has(mealId)) return; // 연타 방지 (FR-503)
+      const target = current.meals.find((meal) => meal.id === mealId);
+      if (target === undefined) return;
+
+      const previousCompletedAt = target.completedAt ?? null;
+      const nextCompleted = previousCompletedAt === null;
+      const optimisticAt = nextCompleted ? new Date().toISOString() : null;
+
+      // 낙관적 갱신 — selectedDate 는 유지 (applyPlan 미사용)
+      const optimisticPlan: MealPlanResponse = {
+        ...current,
+        meals: current.meals.map((meal) =>
+          meal.id === mealId ? { ...meal, completedAt: optimisticAt } : meal,
+        ),
+      };
+      planRef.current = optimisticPlan;
+      setPlan(optimisticPlan);
+
+      const addPending = new Set(pendingRef.current);
+      addPending.add(mealId);
+      syncPending(addPending);
+
+      const result = await setMealCompletion(current.id, mealId, nextCompleted);
+
+      const base = planRef.current ?? optimisticPlan;
+      if (result.ok) {
+        // 서버 진실(MealOut)로 해당 끼니 병합
+        const server = result.data;
+        const merged: MealPlanResponse = {
+          ...base,
+          meals: base.meals.map((meal) => (meal.id === mealId ? { ...meal, ...server } : meal)),
+        };
+        planRef.current = merged;
+        setPlan(merged);
+      } else {
+        // 실패 → 이전 완료 상태로 롤백
+        const rolledBack: MealPlanResponse = {
+          ...base,
+          meals: base.meals.map((meal) =>
+            meal.id === mealId ? { ...meal, completedAt: previousCompletedAt } : meal,
+          ),
+        };
+        planRef.current = rolledBack;
+        setPlan(rolledBack);
+      }
+
+      const clearPending = new Set(pendingRef.current);
+      clearPending.delete(mealId);
+      syncPending(clearPending);
+    },
+    [syncPending],
+  );
+
   const completeBudgetPlan = useCallback(
     async (guestPlan: GuestPlan) => {
       const result = await createOnboardingPlan(guestPlan);
@@ -202,11 +287,14 @@ export function useMemberHome(): MemberHomeState {
     plan,
     viewModel,
     budget,
+    householdSize,
     generation,
     generationError,
+    pendingMealIds,
     selectDate,
     createPlan,
     regeneratePlan,
+    toggleMealCompletion,
     retryGenerate,
     dismissGenerationError,
     completeBudgetPlan,

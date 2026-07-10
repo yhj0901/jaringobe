@@ -6,9 +6,11 @@ import {
   createMealPlan,
   fetchLatestMealPlan,
   regenerateMealPlan,
+  setMealCompletion,
 } from '@/features/mealplan/api';
+import { fetchHousehold } from '@/features/household/api';
 import { createOnboardingPlan } from '@/features/budget/createOnboardingPlan';
-import type { MealPlanResponse } from '@/features/mealplan/types';
+import type { MealPlanMeal, MealPlanResponse } from '@/features/mealplan/types';
 import type { ApiResult } from '@/shared/api/client';
 
 vi.mock('@/features/auth/useSession', () => ({ fetchMe: vi.fn() }));
@@ -16,13 +18,17 @@ vi.mock('@/features/mealplan/api', () => ({
   fetchLatestMealPlan: vi.fn(),
   createMealPlan: vi.fn(),
   regenerateMealPlan: vi.fn(),
+  setMealCompletion: vi.fn(),
 }));
+vi.mock('@/features/household/api', () => ({ fetchHousehold: vi.fn() }));
 vi.mock('@/features/budget/createOnboardingPlan', () => ({ createOnboardingPlan: vi.fn() }));
 
 const fetchMeMock = vi.mocked(fetchMe);
 const latestMock = vi.mocked(fetchLatestMealPlan);
 const createMock = vi.mocked(createMealPlan);
 const regenerateMock = vi.mocked(regenerateMealPlan);
+const completionMock = vi.mocked(setMealCompletion);
+const householdMock = vi.mocked(fetchHousehold);
 const onboardingMock = vi.mocked(createOnboardingPlan);
 
 function ok<T>(data: T, status = 200): ApiResult<T> {
@@ -79,6 +85,7 @@ const GUEST_PLAN = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  householdMock.mockResolvedValue(ok({ members: [], size: 4 }));
 });
 
 describe('useMemberHome 분기 (ui-design 7장)', () => {
@@ -289,5 +296,106 @@ describe('useMemberHome 온보딩 예산안 (FR-207)', () => {
     });
     expect(kind).toBe('error');
     expect(result.current.status).toBe('budget-required');
+  });
+});
+
+describe('useMemberHome 완료 토글·가구 인원 (FR-501/503/504)', () => {
+  function meal(id: string, completedAt: string | null = null): MealPlanMeal {
+    return {
+      id,
+      planDate: '2026-07-08',
+      mealType: 'breakfast',
+      recipeName: `요리-${id}`,
+      ingredients: [],
+      completedAt,
+    };
+  }
+
+  const TOGGLE_PLAN: MealPlanResponse = {
+    ...PLAN,
+    meals: [meal('m1', null), meal('m2', '2026-07-08T09:00:00Z')],
+  };
+
+  async function setupReady(plan: MealPlanResponse = TOGGLE_PLAN) {
+    fetchMeMock.mockResolvedValue(ok(ME));
+    latestMock.mockResolvedValue(ok(plan));
+    const rendered = renderHook(() => useMemberHome());
+    await waitFor(() => expect(rendered.result.current.status).toBe('ready'));
+    return rendered;
+  }
+
+  it('가구 인원(households/me.size)을 노출한다', async () => {
+    const { result } = await setupReady();
+    await waitFor(() => expect(result.current.householdSize).toBe(4));
+  });
+
+  it('households/me 실패 시 householdSize=null (홈은 계속)', async () => {
+    householdMock.mockResolvedValue(err(404, 'HOUSEHOLD_NOT_FOUND'));
+    const { result } = await setupReady();
+    expect(result.current.householdSize).toBeNull();
+    expect(result.current.status).toBe('ready');
+  });
+
+  it('완료 설정: 낙관적 갱신 후 서버 MealOut 병합 (selectedDate 유지)', async () => {
+    const { result } = await setupReady();
+    act(() => result.current.selectDate('2026-07-08'));
+    completionMock.mockResolvedValue(ok(meal('m1', '2026-07-08T10:00:00Z')));
+
+    await act(() => result.current.toggleMealCompletion('m1'));
+
+    expect(completionMock).toHaveBeenCalledWith('plan-1', 'm1', true);
+    expect(result.current.plan?.meals.find((m) => m.id === 'm1')?.completedAt).toBe(
+      '2026-07-08T10:00:00Z',
+    );
+    expect(result.current.viewModel?.selectedDate).toBe('2026-07-08');
+    expect(result.current.pendingMealIds.size).toBe(0);
+  });
+
+  it('완료 해제: 이미 완료된 끼니 → completed=false 로 호출', async () => {
+    const { result } = await setupReady();
+    completionMock.mockResolvedValue(ok(meal('m2', null)));
+
+    await act(() => result.current.toggleMealCompletion('m2'));
+
+    expect(completionMock).toHaveBeenCalledWith('plan-1', 'm2', false);
+    expect(result.current.plan?.meals.find((m) => m.id === 'm2')?.completedAt).toBeNull();
+  });
+
+  it('실패 시 이전 완료 상태로 롤백한다', async () => {
+    const { result } = await setupReady();
+    completionMock.mockResolvedValue(err(500, 'UNKNOWN'));
+
+    await act(() => result.current.toggleMealCompletion('m1'));
+
+    expect(result.current.plan?.meals.find((m) => m.id === 'm1')?.completedAt).toBeNull();
+    expect(result.current.pendingMealIds.size).toBe(0);
+  });
+
+  it('연타 방지: 진행 중 재호출은 무시된다', async () => {
+    const { result } = await setupReady();
+    let resolveToggle: (value: ApiResult<MealPlanMeal>) => void = () => undefined;
+    completionMock.mockImplementation(
+      () => new Promise<ApiResult<MealPlanMeal>>((resolve) => (resolveToggle = resolve)),
+    );
+
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.toggleMealCompletion('m1');
+    });
+    await waitFor(() => expect(result.current.pendingMealIds.has('m1')).toBe(true));
+    await act(() => result.current.toggleMealCompletion('m1'));
+    expect(completionMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveToggle(ok(meal('m1', '2026-07-08T10:00:00Z')));
+      await first;
+    });
+    expect(result.current.pendingMealIds.size).toBe(0);
+  });
+
+  it('plan 없음/없는 mealId → 아무 것도 하지 않는다', async () => {
+    const { result } = await setupReady();
+    await act(() => result.current.toggleMealCompletion('nope'));
+    expect(completionMock).not.toHaveBeenCalled();
   });
 });

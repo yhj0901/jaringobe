@@ -12,8 +12,10 @@ import { GenerationLoading } from '@/features/mealplan/GenerationLoading';
 import { OverBudgetBanner } from '@/features/mealplan/OverBudgetBanner';
 import { OnboardingCtaBanner } from '@/features/mealplan/OnboardingCtaBanner';
 import { RegenerateConfirmSheet } from '@/features/mealplan/RegenerateConfirmSheet';
+import { RecipeSheet } from '@/features/mealplan/RecipeSheet';
 import { LOCKED_NOTICE_MS } from '@/features/mealplan/constants';
 import { useRouter, type AppLocale } from '@/i18n/routing';
+import type { MealItem } from '@/features/home/types';
 
 /**
  * 회원 홈 컨트롤러 (ui-design 7장·8장) — useMemberHome 분기별 화면 구성.
@@ -29,6 +31,7 @@ export function MemberHomeController() {
   const [createOpen, setCreateOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [lockedNotice, setLockedNotice] = useState(false);
+  const [recipeMeal, setRecipeMeal] = useState<MealItem | null>(null);
   const noticeTimerRef = useRef<number | null>(null);
 
   useEffect(
@@ -206,7 +209,11 @@ export function MemberHomeController() {
         }
         onSelectDate={home.selectDate}
         onRegenerateClick={() => setConfirmOpen(true)}
-        onRecipeClick={showLockedNotice}
+        onRecipeClick={(meal) => setRecipeMeal(meal)}
+        onToggleMealComplete={(meal) => {
+          if (meal.mealId !== undefined) void home.toggleMealCompletion(meal.mealId);
+        }}
+        pendingMealIds={home.pendingMealIds}
         onLockedNavClick={handleLockedNav}
         onAvatarClick={goSettings}
       />
@@ -217,6 +224,11 @@ export function MemberHomeController() {
           setConfirmOpen(false);
           void home.regeneratePlan();
         }}
+      />
+      <RecipeSheet
+        meal={recipeMeal}
+        householdSize={home.householdSize ?? undefined}
+        onClose={() => setRecipeMeal(null)}
       />
       {generating ? <GenerationLoading /> : null}
       {lockedNoticeToast}

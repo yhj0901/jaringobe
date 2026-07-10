@@ -27,3 +27,9 @@ export const LOCKED_NOTICE_MS = 2_500;
 
 /** latest 404 — 빈 상태 분기 전용 코드 (api-spec 3-1) */
 export const MEALPLAN_NOT_FOUND_CODE = 'MEALPLAN_NOT_FOUND';
+
+/** 레시피 시트 "N인분" 기본값 — 가구 인원 미조회 시 폴백 (FR-504) */
+export const RECIPE_DEFAULT_SERVINGS = 2;
+
+/** 레시피 시트 기본 조리 난이도 — difficulty 부재 시 (FR-505: "쉬움") */
+export const RECIPE_DEFAULT_DIFFICULTY = 'easy' as const;
