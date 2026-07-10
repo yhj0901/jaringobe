@@ -48,12 +48,12 @@ export function MemberStep({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="mb-5 flex items-center gap-2.5">
-        <span
+        <img
+          src="/icon.png"
+          alt="Jaringobe"
           aria-hidden
-          className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-navy-800 text-[11px] font-extrabold tracking-tight text-white"
-        >
-          GB
-        </span>
+          className="h-[30px] w-[30px] rounded-[9px] object-cover"
+        />
         <span aria-hidden className="text-[15px] font-extrabold tracking-tight text-navy-900">
           JARIN<span className="text-brand-600">GO BE</span>
         </span>

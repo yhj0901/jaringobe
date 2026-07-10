@@ -50,12 +50,12 @@ export default async function LoginPage({ params: { locale }, searchParams }: Lo
       <div className="flex min-h-screen w-full max-w-[480px] flex-col bg-[linear-gradient(165deg,#1C2E58_0%,#0B1B3A_100%)] px-7 pb-9 pt-12 text-white sm:min-h-[760px] sm:rounded-[32px] sm:shadow-hero">
         <header className="flex flex-1 flex-col justify-center">
           <div className="mb-6 flex items-center gap-2.5">
-            <span
+            <img
+              src="/icon.png"
+              alt="Jaringobe"
               aria-hidden
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[13px] font-extrabold text-navy-900"
-            >
-              GB
-            </span>
+              className="h-10 w-10 rounded-xl object-cover"
+            />
             <h1 className="text-lg font-extrabold tracking-tight" aria-label={t('auth.login.title')}>
               <span aria-hidden>
                 JARIN<span className="text-brand-400">GO BE</span>

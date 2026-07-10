@@ -139,16 +139,24 @@ export function HomeShell({
               type="button"
               aria-label={t('header.settingsLabel')}
               onClick={onAvatarClick}
-              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] bg-navy-800 text-[13px] font-extrabold tracking-tight text-white"
+              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] overflow-hidden"
             >
-              GB
+              <img
+                src="/icon.png"
+                alt="Jaringobe"
+                className="h-full w-full object-cover"
+              />
             </button>
           ) : (
             <span
               aria-hidden
-              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] bg-navy-800 text-[13px] font-extrabold tracking-tight text-white"
+              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[13px] overflow-hidden"
             >
-              GB
+              <img
+                src="/icon.png"
+                alt="Jaringobe"
+                className="h-full w-full object-cover"
+              />
             </span>
           )}
         </header>

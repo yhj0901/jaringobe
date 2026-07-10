@@ -20,6 +20,7 @@ export async function generateMetadata({
 }: Omit<LocaleLayoutProps, 'children'>): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: 'metadata' });
   return {
+    metadataBase: new URL('https://jaringobe.cloud'),
     title: t('home.title'),
     description: t('home.description'),
     openGraph: {
@@ -27,6 +28,25 @@ export async function generateMetadata({
       description: t('home.description'),
       locale: locale === 'ko' ? 'ko_KR' : 'en_US',
       type: 'website',
+      images: [
+        {
+          url: '/opengraph-image.png',
+          width: 800,
+          height: 800,
+          alt: 'Jaringobe',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t('home.title'),
+      description: t('home.description'),
+      images: ['/twitter-image.png'],
+    },
+    icons: {
+      icon: '/icon.png',
+      shortcut: '/favicon.ico',
+      apple: '/apple-icon.png',
     },
     alternates: {
       languages: {

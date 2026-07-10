@@ -22,12 +22,12 @@ export function AccountCard({ nickname, email, onLogout }: AccountCardProps) {
       </h2>
       <div className="rounded-[18px] bg-white shadow-card">
         <div className="flex items-center gap-[13px] p-4">
-          <span
+          <img
+            src="/icon.png"
+            alt="Jaringobe"
             aria-hidden
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-navy-800 text-[15px] font-extrabold text-white"
-          >
-            GB
-          </span>
+            className="h-12 w-12 shrink-0 rounded-[14px] object-cover"
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-extrabold text-navy-900">{nickname}</p>
             <p className="truncate text-[12.5px] text-ink-400">{email ?? t('noEmail')}</p>
