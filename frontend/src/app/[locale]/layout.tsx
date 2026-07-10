@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
@@ -13,6 +13,14 @@ interface LocaleLayoutProps {
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
+
+/** PWA — 상태바/테마 컬러(브랜드 네이비) + 모바일 뷰포트 */
+export const viewport: Viewport = {
+  themeColor: '#0B1B3A',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 /** SEO/OG 메타 — 로캘별 title/description + hreflang (FR-110) */
 export async function generateMetadata({
@@ -43,9 +51,15 @@ export async function generateMetadata({
       description: t('home.description'),
       images: ['/twitter-image.png'],
     },
+    manifest: '/manifest.webmanifest',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: '자린고비',
+    },
     icons: {
-      icon: '/icon.png',
-      shortcut: '/favicon.ico',
+      icon: '/icon-192.png',
+      shortcut: '/icon-192.png',
       apple: '/apple-icon.png',
     },
     alternates: {
