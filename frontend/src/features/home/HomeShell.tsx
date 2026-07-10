@@ -107,8 +107,8 @@ function NavIcon({ tab, active }: { tab: 'home' | 'my' | LockedTab; active: bool
   }
 }
 
-// '식단'(meal)은 추후 프리미엄 구독 기능으로 편입 예정 — 지금은 탭에서 제외
-const LOCKED_TABS: LockedTab[] = ['fridge', 'cart'];
+// '식단'(meal)은 프리미엄 구독 편입 예정 기능 — 탭은 노출하되 클릭 시 구독 안내
+const LOCKED_TABS: LockedTab[] = ['meal', 'fridge', 'cart'];
 
 /**
  * 홈 셸 — 게스트/회원 공용, HomeViewModel 주입형 (FR-101, architecture.md A-2).
