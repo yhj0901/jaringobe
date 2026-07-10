@@ -1,5 +1,6 @@
 {
   "fridgePage": {
+    "back": "Home",
     "title": "Virtual Fridge",
     "subtitle": "Add and manage ingredients yourself. (Auto-registration on delivery: coming soon)",
     "addTitle": "Add ingredient",
