@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/routing';
 import {
   addFridgeItems,
   daysUntil,
@@ -66,6 +67,22 @@ export function FridgeManager() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-4 p-4">
       <header>
+        <Link
+          href="/"
+          aria-label={t('back')}
+          className="mb-2 inline-flex items-center gap-1 text-[13px] font-bold text-ink-300 hover:text-navy-900"
+        >
+          <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M15 5l-7 7 7 7"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {t('back')}
+        </Link>
         <h1 className="text-lg font-extrabold text-navy-900">{t('title')}</h1>
         <p className="mt-1 text-[13px] text-ink-300">{t('subtitle')}</p>
       </header>
