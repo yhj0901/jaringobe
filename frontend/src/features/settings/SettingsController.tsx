@@ -207,6 +207,51 @@ export function SettingsController() {
             budgetSummary={budgetSummary}
             onEdit={openEdit}
           />
+          {/* 알림 설정 진입점 (ui-design 12장 — /settings/notifications) */}
+          <section aria-label={t('notifications.section')} className="mt-[22px]">
+            <h2 className="mx-0.5 mb-2 text-xs font-extrabold tracking-wide text-ink-400">
+              {t('notifications.section')}
+            </h2>
+            <div className="rounded-[18px] bg-white px-4 py-1 shadow-card">
+              <button
+                type="button"
+                onClick={() => router.push('/settings/notifications')}
+                className="flex w-full items-center gap-3 py-3.5 text-left"
+              >
+                <span
+                  aria-hidden
+                  className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-brand-50"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M12 4a5 5 0 0 0-5 5v3l-1.5 3h13L17 12V9a5 5 0 0 0-5-5zM10 18a2 2 0 0 0 4 0"
+                      stroke="#2F6BFF"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14.5px] font-bold text-ink-800">
+                    {t('notifications.title')}
+                  </span>
+                  <span className="block truncate text-xs text-ink-300">
+                    {t('notifications.summary')}
+                  </span>
+                </span>
+                <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M9 6l6 6-6 6"
+                    stroke="#C2C9D6"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </section>
           <StoreConnectionsCard
             connections={connections}
             email={user.email}

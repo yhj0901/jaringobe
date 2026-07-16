@@ -30,3 +30,13 @@ uv run alembic history
 ## 데이터 보관
 - `refresh_tokens`: 만료/폐기 후 30일 경과분 배치 삭제 대상 (배치 작업은 미구현 — 후속)
 - 이메일은 null 허용 (카카오 동의 거부) — 전 도메인이 null 전제로 다뤄야 함
+
+---
+
+## v0.2.0 증분 — 리비전 0008_notification_app (2026-07-16)
+
+> 상세: `docs/설계/db-schema.md` 2-8
+
+- 신규 4테이블: `device_tokens`(token UNIQUE) · `notification_settings`(UNIQUE(user_id,type), partial index `ix_notification_settings_due`) · `notification_logs`(90일 보관, template_key 만) · `app_login_codes`(해시·60초)
+- `meal_plans.status` 는 DDL 변경 없음 (CHECK 부재 — 서비스 검증으로 processing/failed 확장)
+- **적용 순서 주의**: down_revision=0007(`feature/global-region`) — 해당 브랜치 머지 후 `alembic upgrade head`

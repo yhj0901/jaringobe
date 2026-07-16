@@ -120,6 +120,72 @@ GET / → RSC 가 홈 셸 + 기본 샘플 렌더 (SSG 가능)
 냉장고/자동주문 카드는 "준비 중" 잠금 (fridge/order 도메인 구현 시 해제)
 ```
 
+## 3-5. 앱 로그인 — 원타임 코드 세션 인계 (v1.5)
+
+> 문제: 구글은 웹뷰 내 OAuth 를 차단(`disallowed_useragent`). 커스텀 탭/시스템 브라우저에서 OAuth 를 진행하면 쿠키가 **외부 브라우저**에 세팅되어 웹뷰 세션이 생기지 않는다. → 원타임 코드로 세션을 웹뷰에 인계한다. 앱에서는 3사 provider 모두 이 경로로 통일.
+
+```
+[웹(웹뷰 내)] 로그인 버튼 → 브리지 LOGIN_PROVIDER(provider, next)
+[앱] 커스텀 탭(iOS SFSafariViewController / Android Custom Tabs) 오픈:
+     /api/v1/auth/{provider}/authorize?client=app&next={next}
+[백엔드] state(client=app 포함) → provider → callback
+     → users upsert (기존 3-2 와 동일)
+     → 쿠키 대신 원타임 코드 발급 (60초·단일사용·해시 저장)
+     → 302 jaringobe://auth?code={code}&next={next}
+[앱] 딥링크 수신 → 커스텀 탭 닫기 → 웹뷰 내비게이트:
+     /api/v1/auth/app/session?code={code}&next={next}
+[백엔드] 코드 검증·소진 → Set-Cookie (웹뷰 쿠키 저장소에 세팅) → 302 {next}?login=success
+[웹] 이후 기존 3-2 후속 흐름과 동일 (GET /users/me 분기)
+```
+- 웹 브라우저 로그인(3-2)은 변경 없음 — `client` 파라미터 부재 시 기존 동작
+- 커스텀 스킴(`jaringobe://`)은 P0, Universal Links/App Links 전환은 P1 (security-design 5-4)
+
+## 3-6. 식단 생성 비동기 + 완료 푸시 (v1.5)
+
+```
+[웹/앱] POST /mealplans → 202 {id, status:"processing"} → GenerationLoading + GET /mealplans/{id} 폴링(3s, 백오프, 최대 3분)
+[백엔드] BackgroundTasks 로 LLM 생성 실행 (MVP: FastAPI 인프로세스 — 단일 인스턴스 전제)
+     완료 → status=ready|over_budget 저장 → notification.service 호출
+     실패(폴백 포함 전부) → status=failed + notes
+[notification.service] mealplan_done enabled 확인 → 유저의 device_tokens 전체에 Expo Push 발송
+     → 응답 DeviceNotRegistered → 해당 토큰 삭제 / 발송 결과 notification_logs 기록
+[앱] 푸시 탭 → data.path 화이트리스트 검증 → 웹뷰 내비게이트 (/mealplan/{id})
+```
+- **푸시는 보조 채널** — 화면 폴링이 기본. 앱 미설치 웹 사용자도 동일 폴링으로 완주
+- 멀티 인스턴스 배포 시 확장점: BackgroundTasks → 외부 워커(큐), 5절 후속 확장점에 기록
+
+## 3-7. 식사 리마인더 스케줄러 (v1.5)
+
+```
+[스케줄러] FastAPI lifespan 에서 asyncio 태스크 기동 — 30초 주기:
+  SELECT ... FROM notification_settings
+   WHERE enabled AND next_send_at <= now()          ← partial index 스캔
+  각 행에 대해 발송 직전 재확인:
+    ① 오늘(설정 timezone 기준 로컬 날짜)의 해당 끼니 meal 존재?
+    ② completed_at IS NULL?
+    ③ 최신 enabled 상태? (race 방지)
+  전부 예 → 푸시 발송 ("오늘 점심: {recipeName} — 지금 만들어 볼까요?")
+  아니오 → 발송 스킵 (로그 없음)
+  공통 → next_send_at = 다음 날 동일 로컬시각의 UTC 환산값으로 갱신
+```
+- 단일 인스턴스 전제 (현 배포 구조). 멀티 인스턴스 시 어드바이저리 락 또는 스케줄러 프로세스 분리 — 후속 확장점
+- weekly_nudge(P2): 동일 스케줄러에 편입, notification_logs 로 주 1회 한도 판정
+
+## 3-8. 모바일 앱 쉘 구성 (v1.5 — 상세: mobile-app.md)
+
+```
+mobile/  (Expo — UI 프론트엔드 에이전트 관할 확장)
+  app.json / eas.json          # 앱 메타·스킴(jaringobe)·EAS 빌드 프로필
+  App.tsx                      # 스플래시 → WebView(배포 오리진) 단일 화면
+  src/
+    webview.tsx                # 오리진 allowlist·외부 링크 시스템 브라우저 위임·뒤로가기
+    bridge.ts                  # postMessage JSON 프로토콜 (v:1)
+    push.ts                    # expo-notifications 권한·토큰·수신 핸들러
+    deeplink.ts                # jaringobe:// 수신 (auth 코드 / 푸시 path 라우팅)
+```
+- 웹뷰 UA 에 `JaringobeApp/{version} ({platform})` 접미사 — 웹이 앱 내 실행 감지
+- frontend 는 `shared/bridge/` 모듈 신설 (ui-design.md 12장)
+
 ## 4. 환경 변수 (.env — 인프라 에이전트가 .env.example 관리)
 
 | 키 | 위치 | 용도 |
@@ -129,11 +195,15 @@ GET / → RSC 가 홈 셸 + 기본 샘플 렌더 (SSG 가능)
 | `KAKAO_CLIENT_ID/SECRET`, `GOOGLE_CLIENT_ID/SECRET`, (P1) `APPLE_*` | backend | OAuth |
 | `FRONTEND_ORIGIN` | backend | Origin 검증·리다이렉트 베이스 |
 | `BACKEND_URL` | frontend | rewrites 대상 |
+| `EXPO_ACCESS_TOKEN` | backend | Expo Push API 인증 (v1.5) |
+| `APP_SCHEME=jaringobe` | backend | 앱 로그인 코드 리다이렉트 스킴 (v1.5) |
+| `WEB_URL` | mobile (EAS) | 웹뷰가 로드할 배포 웹 오리진 (v1.5) |
 
 ## 5. 선행/후속 의존성
 - **선행**: docker-compose(postgres) + Alembic 초기 리비전 — `/인프라시작` (GATE 3)
-- **후속 확장점**: 홈 셸의 데이터 주입 인터페이스(게스트 샘플 ↔ 회원 실데이터), budget_plans 확장(budget 본설계), 애플 어댑터(P1), store 어댑터(마트 연동 기획 시), rate limit 인메모리 → Redis 교체(멀티 인스턴스 배포 시)
+- **후속 확장점**: 홈 셸의 데이터 주입 인터페이스(게스트 샘플 ↔ 회원 실데이터), budget_plans 확장(budget 본설계), 애플 어댑터(P1), store 어댑터(마트 연동 기획 시), rate limit 인메모리 → Redis 교체(멀티 인스턴스 배포 시), **BackgroundTasks → 워커/큐 분리 + 스케줄러 프로세스 분리(멀티 인스턴스 시)**, **Universal Links/App Links(P1)**, **Apple 4.2 리젝 시 네이티브 탭바 Plan B**
 
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 5라운드 합의)
 - 2026-07-09: v1.1 — 회원 홈 흐름(3-4) 추가
+- 2026-07-14: v1.5 — 앱 웹뷰 + 푸시: 3-5 앱 로그인(원타임 코드), 3-6 생성 비동기+푸시, 3-7 리마인더 스케줄러, 3-8 mobile/ 구조, 환경 변수 3종 추가

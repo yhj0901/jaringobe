@@ -14,9 +14,14 @@ import { budgetRange } from '@/features/household/onboardingLogic';
 import { createMealPlan, fetchLatestMealPlan, regenerateMealPlan } from '@/features/mealplan/api';
 import {
   MEALPLAN_DAYS_DEFAULT,
+  MEALPLAN_GENERATING_CODE,
   MEALPLAN_MEALS_PER_DAY,
   MEALPLAN_NOT_FOUND_CODE,
+  MEALPLAN_REGENERATE_EMPTY_CODE,
 } from '@/features/mealplan/constants';
+import { deleteDevice } from '@/features/notification/api';
+import { isApp } from '@/shared/bridge';
+import { useBridgeStore } from '@/shared/bridge/store';
 import { fetchStoreConnections, putStoreConnection } from '@/features/store/api';
 import { STORE_IDS } from '@/features/store/constants';
 import { VISITED_MARKER_KEY } from '@/shared/config/constants';
@@ -155,7 +160,8 @@ export function useSettings(): SettingsState {
     if (latest.ok) {
       planIdRef.current = latest.data.id;
       setPlanId(latest.data.id);
-      if (!budgetKnown) setBudget(latest.data.budgetSummary.budget);
+      // v1.5: processing/failed 는 budgetSummary=null — 폴백 없이 미확정 유지
+      if (!budgetKnown) setBudget(latest.data.budgetSummary?.budget ?? null);
     } else if (latest.status === 404 && latest.code === MEALPLAN_NOT_FOUND_CODE) {
       planIdRef.current = null;
       setPlanId(null);
@@ -260,23 +266,38 @@ export function useSettings(): SettingsState {
   const regenerate = useCallback(async (): Promise<RegenerateOutcome> => {
     setGenerating(true);
     const currentPlanId = planIdRef.current;
-    const result =
-      currentPlanId !== null
-        ? await regenerateMealPlan(currentPlanId)
-        : await createMealPlan({
-            days: MEALPLAN_DAYS_DEFAULT,
-            mealsPerDay: MEALPLAN_MEALS_PER_DAY,
-            allergies: [],
-            preferences: profileRef.current.cuisines.map((cuisine) => tCuisine(cuisine)),
-          });
+    const createNew = () =>
+      createMealPlan({
+        days: MEALPLAN_DAYS_DEFAULT,
+        mealsPerDay: MEALPLAN_MEALS_PER_DAY,
+        allergies: [],
+        preferences: profileRef.current.cuisines.map((cuisine) => tCuisine(cuisine)),
+      });
+    let result =
+      currentPlanId !== null ? await regenerateMealPlan(currentPlanId) : await createNew();
+    if (
+      !result.ok &&
+      result.status === 409 &&
+      result.code === MEALPLAN_REGENERATE_EMPTY_CODE
+    ) {
+      // v1.5.1: meals 0 failed 플랜 — 원 요청 파라미터 소실로 재생성 불가 → 기존 생성 폴백으로 신규 POST (api-spec 3-5, BUG-002)
+      result = await createNew();
+    }
     setGenerating(false);
     if (result.ok) return 'ok';
+    // 이미 생성 진행 중(409) — 홈에서 진행 중 플랜 폴링에 합류 (ui-design 12장)
+    if (result.status === 409 && result.code === MEALPLAN_GENERATING_CODE) return 'ok';
     return result.status === 429 ? 'rate-limited' : 'failed';
   }, [tCuisine]);
 
   /** FR-401: 로그아웃 — 204 성공 (401 은 이미 만료된 세션이므로 성공 취급) + visited 마커 */
   const logout = useCallback(async () => {
     setLoggingOut(true);
+    // 앱 내 한정: 이 기기 푸시 토큰 해제 선행 — 실패해도 로그아웃은 진행 (ui-design 12장, FR-003)
+    if (isApp()) {
+      const deviceToken = useBridgeStore.getState().deviceToken;
+      if (deviceToken !== null) await deleteDevice(deviceToken);
+    }
     const result = await postLogout();
     setLoggingOut(false);
     const success = result.ok || result.status === 401;

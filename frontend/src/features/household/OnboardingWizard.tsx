@@ -9,6 +9,8 @@ import {
   MEALPLAN_MEALS_PER_DAY,
 } from '@/features/mealplan/constants';
 import { createMealPlan } from '@/features/mealplan/api';
+import { runGenerationFlow } from '@/features/mealplan/generation';
+import { PushSoftAskSheet, usePushSoftAsk } from '@/features/notification/PushSoftAskSheet';
 import { putBudgetPlan, putHouseholdMembers } from '@/features/household/api';
 import {
   budgetRange,
@@ -84,6 +86,7 @@ export function OnboardingWizard({
   const tCuisine = useTranslations('cuisine');
   const locale = useLocale() as AppLocale;
   const router = useRouter();
+  const softAsk = usePushSoftAsk();
 
   const currency = LOCALE_CURRENCY[locale] ?? 'KRW';
 
@@ -234,21 +237,32 @@ export function OnboardingWizard({
     }
 
     // 선호 음식은 로캘 라벨로 preferences 전달 (FR-314)
+    // v1.5: 202 비동기 — 폴링으로 완료 확인 (ui-design 12장, 온보딩 흐름 동일 전환)
     setGenerating(true);
-    const result = await createMealPlan({
-      days: MEALPLAN_DAYS_DEFAULT,
-      mealsPerDay: MEALPLAN_MEALS_PER_DAY,
-      allergies: [],
-      preferences: cuisines.map((cuisine) => tCuisine(cuisine)),
-    });
-    if (!result.ok) {
-      fail(result.status === 429 ? 'rate-limited' : 'mealplan');
+    // FR-002: 앱 내 + 권한 미결정 → 생성 요청 직후 soft ask 1회
+    softAsk.requestSoftAsk();
+    const outcome = await runGenerationFlow(() =>
+      createMealPlan({
+        days: MEALPLAN_DAYS_DEFAULT,
+        mealsPerDay: MEALPLAN_MEALS_PER_DAY,
+        allergies: [],
+        preferences: cuisines.map((cuisine) => tCuisine(cuisine)),
+      }),
+    );
+    if (outcome.kind === 'failed') {
+      fail('mealplan');
+      return;
+    }
+    if (outcome.kind === 'rate-limited') {
+      fail('rate-limited');
       return;
     }
 
+    // completed → 홈. timeout(3분 초과) → 홈에서 진행 중 폴링 합류 + 완료 푸시 보조 (FR-005)
     clearOnboardingPrefill();
     router.replace('/');
   }, [
+    softAsk,
     submitting,
     mode,
     onComplete,
@@ -398,6 +412,8 @@ export function OnboardingWizard({
       ) : null}
       {/* 식단 생성 로딩 재사용 (FR-314) */}
       {generating ? <GenerationLoading /> : null}
+      {/* 푸시 권한 soft ask — 앱 내 생성 요청 직후 1회 (ui-design 12장) */}
+      <PushSoftAskSheet open={softAsk.open} onAccept={softAsk.accept} onDecline={softAsk.decline} />
     </main>
   );
 }

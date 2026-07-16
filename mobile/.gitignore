@@ -1,0 +1,20 @@
+# Expo / React Native
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# 네이티브 프리빌드 산출물 (EAS Build 사용 — 커밋 금지)
+ios/
+android/
+
+# 서명 자격증명 (EAS Secrets 로만 관리 — CWE-522)
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+credentials.json
+
+.DS_Store

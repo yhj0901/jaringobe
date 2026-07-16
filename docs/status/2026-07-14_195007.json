@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-07-14T19:50:07+09:00",
+  "session_topic": "앱 웹뷰 래핑 + 푸시 알림 — 설계 완료 (GATE 1 승인 후 /설계시작)",
+  "command": "/설계시작 앱 웹뷰 래핑 + 푸시 알림 — 기획서: docs/기획/앱-웹뷰-푸시알림.md",
+  "agent": "agents/design.md",
+  "status": "설계 산출물 6종 반영 완료 — GATE 2 승인 대기",
+  "tasks": [
+    {"id": 1, "subject": "기획 (GATE 1 승인 완료)", "status": "completed"},
+    {"id": 2, "subject": "설계 토론 5라운드 및 합의", "status": "completed"},
+    {"id": 3, "subject": "api-spec v1.5 / db-schema(0007) / architecture(3-5~3-8) / security(5-4) / ui-design(12장) / mobile-app.md 신규", "status": "completed"},
+    {"id": 4, "subject": "GATE 2 승인 → /인프라시작(0007) 선행 후 /API시작 + /UI시작 병렬", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/기획/앱-웹뷰-푸시알림.md",
+    "docs/설계/api-spec.md (v1.5)",
+    "docs/설계/db-schema.md (리비전 0007 계획)",
+    "docs/설계/architecture.md (v1.5)",
+    "docs/설계/security-design.md (v1.5)",
+    "docs/설계/ui-design.md (v1.5)",
+    "docs/설계/mobile-app.md (신규)"
+  ],
+  "key_findings": "핵심 설계: ① 앱 로그인은 원타임 코드 세션 인계(authorize?client=app → jaringobe://auth?code → GET /auth/app/session 이 웹뷰에 쿠키 세팅) — 커스텀 탭 쿠키 단절 해결, 3사 provider 통일. ② POST /mealplans·regenerate 202 비동기 전환, meal_plans.status 는 신규 컬럼 대신 기존 enum 확장(processing/failed 추가, 백필 불필요). GET /mealplans/{id} 가 폴링 겸용(rate limit 미적용), 409 MEALPLAN_GENERATING 신규. ③ DB 리비전 0007: device_tokens/notification_settings(partial index next_send_at)/notification_logs(90일, template_key만)/app_login_codes(60초 단일사용 해시) 4테이블 additive. ④ 리마인더 스케줄러는 FastAPI lifespan asyncio 30초 주기, 발송 직전 끼니 존재·미완료·enabled 재확인. ⑤ 브리지 프로토콜 v1(BRIDGE_READY/PUSH_TOKEN/PERMISSION_STATUS ↔ REQUEST_PUSH_PERMISSION/OPEN_OS_SETTINGS/LOGIN_PROVIDER)은 mobile-app.md 3장이 원본. CWE 신규 5종(598/939/345/359/601 접점).",
+  "recommended_actions": "GATE 2 승인 후: DB 변경 있으므로 /인프라시작(리비전 0007) 선행 → /API시작(notification 도메인 + mealplan 비동기) + /UI시작(shared/bridge + /settings/notifications + 폴링 전환 + mobile/ 쉘) 병렬. CLAUDE.md 에 mobile/ 관할(UI 프론트엔드) 반영은 문서 에이전트. 선행 외부 조건: Expo 계정, Play Console, Apple Developer(iOS 는 애플 로그인 P1 후)",
+  "pending_user_input": "GATE 2 승인 (\"설계 승인\")"
+}

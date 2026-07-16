@@ -16,8 +16,20 @@ export const PLAN_ITEM_MAX_LENGTH = 30;
 /** 알레르기/선호 목록당 최대 개수 (api-spec 3-2: 10개) */
 export const PLAN_ITEMS_MAX_COUNT = 10;
 
-/** POST /mealplans · regenerate 클라이언트 타임아웃 (ui-design 7장: 90초) */
-export const MEALPLAN_CREATE_TIMEOUT_MS = 90_000;
+/** 생성 상태 폴링 기본 간격 (ui-design 12장: 3초) */
+export const MEALPLAN_POLL_INTERVAL_MS = 3_000;
+/** 폴링 백오프 간격 (ui-design 12장: 5초) */
+export const MEALPLAN_POLL_BACKOFF_MS = 5_000;
+/** 백오프 진입 전 기본 간격 시도 횟수 (3초 × 10회 = 30초 후 5초 백오프) */
+export const MEALPLAN_POLL_BACKOFF_AFTER = 10;
+/** 폴링 총 한도 (ui-design 12장: 3분 — 초과 시 "완료되면 알려드릴게요" 안내) */
+export const MEALPLAN_POLL_MAX_MS = 180_000;
+
+/** 중복 생성 방지 409 코드 — 진행 중 플랜 폴링 합류 (api-spec 3-2 v1.5) */
+export const MEALPLAN_GENERATING_CODE = 'MEALPLAN_GENERATING';
+
+/** meals 0 failed 플랜 재생성 불가 409 코드 — 신규 생성 흐름 전환 (api-spec 3-5 v1.5.1, BUG-002) */
+export const MEALPLAN_REGENERATE_EMPTY_CODE = 'MEALPLAN_REGENERATE_EMPTY';
 
 /** 생성 로딩 단계 문구 로테이션 간격 (FR-204) */
 export const GENERATION_STEP_INTERVAL_MS = 2_500;

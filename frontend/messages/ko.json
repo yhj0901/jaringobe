@@ -28,6 +28,10 @@
     "settings": {
       "title": "설정 — 자린고비",
       "description": "계정, 식생활 설정, 자동 주문 연동 스토어를 관리하세요."
+    },
+    "notifications": {
+      "title": "알림 설정 — 자린고비",
+      "description": "식단 완성 알림과 식사 리마인더를 관리하세요."
     }
   },
   "common": {
@@ -150,6 +154,14 @@
       "step1": "예산과 가구 정보를 확인하고 있어요…",
       "step2": "예산 안에서 재료를 고르고 있어요…",
       "step3": "한 주 식단을 차곡차곡 담고 있어요…"
+    },
+    "generating": {
+      "background": "생성이 조금 길어지고 있어요. 완료되면 알려드릴게요!"
+    },
+    "failed": {
+      "description": "지난 식단 생성에 실패했어요. 다시 만들어 볼까요?",
+      "retry": "다시 생성하기",
+      "createRequired": "이전 요청 정보를 찾을 수 없어요. 새 식단으로 만들어 주세요."
     },
     "empty": {
       "lockLabel": "예산 락",
@@ -429,10 +441,52 @@
       "browse": "구경하기"
     }
   },
+  "notification": {
+    "settings": {
+      "title": "알림 설정",
+      "backLabel": "설정으로 돌아가기",
+      "loading": "알림 설정을 불러오고 있어요…",
+      "sectionDone": "이벤트 알림",
+      "sectionReminder": "식사 리마인더",
+      "mealplanDone": {
+        "title": "식단 완성 알림",
+        "description": "요청한 식단이 완성되면 바로 알려드려요."
+      },
+      "reminder": {
+        "timeLabel": "{meal} 알림 시각",
+        "toggleLabel": "{meal} 리마인더 알림"
+      },
+      "webNotice": {
+        "title": "푸시 알림은 앱에서 받을 수 있어요",
+        "description": "자린고비 앱을 설치하면 식단 완성과 식사 시간을 푸시로 알려드려요. 여기서 바꾼 설정은 앱에도 함께 적용돼요."
+      },
+      "permissionBanner": {
+        "message": "기기 설정에서 알림을 켜 주세요",
+        "openSettings": "설정 열기"
+      },
+      "error": {
+        "load": "알림 설정을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
+        "reload": "다시 불러오기",
+        "update": "알림 설정 변경에 실패했어요. 잠시 후 다시 시도해 주세요.",
+        "dismiss": "닫기"
+      }
+    },
+    "softAsk": {
+      "title": "완성되면 알려드릴까요?",
+      "description": "식단 생성은 잠시 시간이 걸려요. 알림을 켜 두면 완성되는 대로 푸시로 알려드려요.",
+      "accept": "좋아요",
+      "later": "나중에"
+    }
+  },
   "settings": {
     "title": "설정",
     "backLabel": "홈으로 돌아가기",
     "loading": "설정을 불러오고 있어요…",
+    "notifications": {
+      "section": "알림",
+      "title": "알림 설정",
+      "summary": "식단 완성 알림 · 식사 리마인더"
+    },
     "account": {
       "section": "계정",
       "loggedIn": "로그인됨",

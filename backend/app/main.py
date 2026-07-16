@@ -1,3 +1,8 @@
+import asyncio
+import contextlib
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -8,11 +13,30 @@ from app.core.config import get_settings
 from app.core.db import engine
 from app.core.errors import ApiError, api_error_handler, error_body, validation_error_handler
 from app.core.ratelimit import auth_ip_limiter
+from app.domains.notification.scheduler import run_scheduler_loop
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """앱 수명 주기 — 식사 리마인더 스케줄러 태스크 기동/정지 (architecture.md 3-7)."""
+    settings = get_settings()
+    scheduler_task: asyncio.Task | None = None
+    if settings.reminder_scheduler_enabled:
+        scheduler_task = asyncio.create_task(
+            run_scheduler_loop(settings.reminder_scheduler_interval_seconds)
+        )
+    yield
+    if scheduler_task is not None:
+        scheduler_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await scheduler_task
+
 
 app = FastAPI(
     title="JARINGOBE API",
     description="예산 안에서 식단 자동 생성 · 식재료 0 · 자동 주문",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # CORS 미허용(기본 차단) — 프론트는 Next.js rewrites 프록시로 동일 오리진 호출 (security-design.md §3)

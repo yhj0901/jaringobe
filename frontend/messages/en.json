@@ -28,6 +28,10 @@
     "settings": {
       "title": "Settings — JARINGOBE",
       "description": "Manage your account, eating profile, and auto-order store connections."
+    },
+    "notifications": {
+      "title": "Notification settings — JARINGOBE",
+      "description": "Manage meal plan completion alerts and meal reminders."
     }
   },
   "common": {
@@ -150,6 +154,14 @@
       "step1": "Checking your budget and household…",
       "step2": "Picking ingredients within your budget…",
       "step3": "Putting your weekly meals together…"
+    },
+    "generating": {
+      "background": "This is taking a little longer. We'll let you know as soon as it's ready!"
+    },
+    "failed": {
+      "description": "Your last meal plan didn't finish. Want to try again?",
+      "retry": "Generate again",
+      "createRequired": "We couldn't find your previous request details. Please create a new plan."
     },
     "empty": {
       "lockLabel": "Budget lock",
@@ -429,10 +441,52 @@
       "browse": "Just browsing"
     }
   },
+  "notification": {
+    "settings": {
+      "title": "Notifications",
+      "backLabel": "Back to settings",
+      "loading": "Loading notification settings…",
+      "sectionDone": "Event alerts",
+      "sectionReminder": "Meal reminders",
+      "mealplanDone": {
+        "title": "Meal plan ready alert",
+        "description": "Get notified as soon as your requested meal plan is ready."
+      },
+      "reminder": {
+        "timeLabel": "{meal} reminder time",
+        "toggleLabel": "{meal} reminder"
+      },
+      "webNotice": {
+        "title": "Get push notifications in the app",
+        "description": "Install the JARINGOBE app to get push alerts for meal plans and meal times. Settings you change here apply to the app too."
+      },
+      "permissionBanner": {
+        "message": "Please turn on notifications in your device settings",
+        "openSettings": "Open settings"
+      },
+      "error": {
+        "load": "Couldn't load notification settings. Please try again in a moment.",
+        "reload": "Reload",
+        "update": "Couldn't save the change. Please try again in a moment.",
+        "dismiss": "Dismiss"
+      }
+    },
+    "softAsk": {
+      "title": "Want to know when it's ready?",
+      "description": "Meal plan generation takes a moment. Turn on notifications and we'll ping you the second it's done.",
+      "accept": "Sounds good",
+      "later": "Later"
+    }
+  },
   "settings": {
     "title": "Settings",
     "backLabel": "Back to home",
     "loading": "Loading your settings…",
+    "notifications": {
+      "section": "Notifications",
+      "title": "Notification settings",
+      "summary": "Meal plan alerts · Meal reminders"
+    },
     "account": {
       "section": "Account",
       "loggedIn": "Signed in",

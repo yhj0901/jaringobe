@@ -35,6 +35,21 @@ class Settings(BaseSettings):
     # 프론트엔드 오리진 — Origin 검증 + OAuth 복귀 리다이렉트 베이스
     frontend_origin: str = "http://localhost:3000"
 
+    # 앱 로그인 (v1.5) — 원타임 코드 딥링크 스킴 + 코드 수명 (security-design.md 5-4)
+    app_scheme: str = "jaringobe"
+    app_login_code_expire_seconds: int = 60
+
+    # 푸시 알림 (v1.5) — Expo Push API 인증 토큰 (.env 전용, 하드코딩 금지)
+    expo_access_token: str = ""
+
+    # 식단 생성 stale 판정 (BUG-001) — processing 이 이 시간을 넘기면 failed 로 수렴
+    # (서버 재시작 등으로 BackgroundTasks 가 유실된 좀비 플랜의 영구 409 차단)
+    mealplan_generation_timeout_minutes: int = 10
+
+    # 식사 리마인더 스케줄러 (architecture.md 3-7) — 30초 주기, 테스트에서는 비활성화
+    reminder_scheduler_enabled: bool = True
+    reminder_scheduler_interval_seconds: float = 30.0
+
     # 쿠키 Secure 플래그 — 로컬 http 개발에서는 false, 배포(https) 시 true
     cookie_secure: bool = False
 

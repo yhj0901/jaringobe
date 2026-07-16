@@ -51,3 +51,16 @@ cd frontend && npm run test -- --coverage && npm run build
 - 배포 서버에 docker compose(db+backend) 구성 + `alembic upgrade head`
 - 프론트는 Vercel: **Root Directory = `frontend/`**, env `BACKEND_URL` = 백엔드 공개 https 주소
 - 백엔드 `.env`: `FRONTEND_ORIGIN` = Vercel 도메인, `COOKIE_SECURE=true` **필수**
+
+---
+
+## v0.2.0 증분 — mobile 로컬 기동 (2026-07-16)
+
+```bash
+cd mobile
+npm install
+npm test && npm run typecheck
+EXPO_PUBLIC_WEB_URL=http://{개발PC LAN IP}:3000 npx expo start   # Expo Go 로 QR 접속
+```
+- 푸시 토큰 발급은 Expo Go 불가 — development build 필요: `eas init`(projectId) → `eas build --profile development --platform android` → `npx expo start --dev-client`
+- 스토어 제출: `eas build --profile production`. **iOS 는 애플 로그인(P1) 완료 전 제출 금지** (스토어 정책)

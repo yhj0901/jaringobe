@@ -57,9 +57,9 @@ async def test_shopping_flow_subtracts_fridge(client, respx_mock):
     await login(client, respx_mock)
     assert (await _budget(client)).status_code == 201
 
-    # 식단 생성 (mock LLM → 된장찌개: 두부1ea, 된장30g, 애호박1ea, 쌀400g)
+    # 식단 생성 (mock LLM → 된장찌개: 두부1ea, 된장30g, 애호박1ea, 쌀400g) — v1.5 비동기 202
     mp = await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 1})
-    assert mp.status_code == 201
+    assert mp.status_code == 202
     plan_id = mp.json()["id"]
 
     # 냉장고에 두부 2ea → 두부는 장보기에서 빠져야 함

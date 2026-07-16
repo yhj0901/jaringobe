@@ -25,3 +25,14 @@
 - 로그에 토큰·code·이메일 원문 금지
 - 프론트: localStorage 에 PII/토큰 저장 금지 (게스트 키 `jaringobe.guest.v1` 은 비식별 데이터만), `dangerouslySetInnerHTML` 금지
 - `next` 류 리다이렉트 파라미터는 항상 상대경로 화이트리스트 (CWE-601)
+
+---
+
+## v0.2.0 증분 — 앱 웹뷰 + 푸시 보안 (2026-07-16)
+
+> 상세: `docs/설계/security-design.md` 5-4, 검증: `docs/테스트/보안테스트.md` (12항목)
+
+- 원타임 앱 로그인 코드: 해시 저장·60초·원자적 단일 소진(UPDATE...RETURNING)·실패 무구분·재사용 감사 로그. P1 에서 Universal/App Links 전환(CWE-939)
+- 웹뷰: 오리진 완전 일치만 내부 허용, 외부는 시스템 브라우저. 브리지 메시지 출처 검증, 쿠키/토큰은 브리지로 미전달
+- 푸시: 본문 메뉴명까지만(CWE-359), 이력 template_key 만, 딥링크 path 화이트리스트(CWE-601), Expo 토큰 로그 마스킹
+- 운영 권고: uvicorn 액세스 로그에서 `/auth/app/session` 쿼리 마스킹/제외 (CWE-598)

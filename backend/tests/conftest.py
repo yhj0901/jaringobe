@@ -15,6 +15,10 @@ os.environ["KAKAO_CLIENT_ID"] = "kakao-client-id"
 os.environ["KAKAO_CLIENT_SECRET"] = "kakao-client-secret"
 os.environ["GOOGLE_CLIENT_ID"] = "google-client-id"
 os.environ["GOOGLE_CLIENT_SECRET"] = "google-client-secret"
+os.environ["APP_SCHEME"] = "jaringobe"
+os.environ["EXPO_ACCESS_TOKEN"] = ""
+# 테스트에서는 리마인더 스케줄러 루프 비기동 (process_due_reminders 를 직접 호출해 검증)
+os.environ["REMINDER_SCHEDULER_ENABLED"] = "false"
 
 from urllib.parse import parse_qs, urlparse  # noqa: E402
 
@@ -25,8 +29,13 @@ from sqlalchemy import text  # noqa: E402
 import app.domains.auth.models  # noqa: E402, F401 - 메타데이터 등록
 import app.domains.budget.models  # noqa: E402, F401
 import app.domains.household.models  # noqa: E402, F401
+import app.domains.notification.models  # noqa: E402, F401
 from app.core.db import Base, SessionLocal, engine  # noqa: E402
-from app.core.ratelimit import auth_ip_limiter, budget_user_limiter  # noqa: E402
+from app.core.ratelimit import (  # noqa: E402
+    auth_ip_limiter,
+    budget_user_limiter,
+    notification_user_limiter,
+)
 from app.main import app  # noqa: E402
 
 FRONTEND = "http://localhost:3000"
@@ -50,6 +59,7 @@ async def _db_schema():
         await conn.run_sync(Base.metadata.create_all)
     auth_ip_limiter.reset()
     budget_user_limiter.reset()
+    notification_user_limiter.reset()
     yield
     await engine.dispose()
 

@@ -24,3 +24,15 @@ docker compose logs -f db
 ## 에스컬레이션
 - 인증 우회·토큰 탈취 의심 → 보안 이슈: 해당 유저 refresh_tokens 전체 revoke 후 원인 분석
 - 스키마 불일치 → 인프라 에이전트 (`alembic history` 와 `docs/설계/db-schema.md` 대조)
+
+---
+
+## v0.2.0 증분 — 푸시/생성 장애 대응 (2026-07-16)
+
+| 증상 | 점검 |
+|------|------|
+| 식단 생성이 "생성 중"에서 멈춤 | 10분 후 자동 failed 수렴(재시도 가능). 빈발 시 백엔드 로그에서 LLM/폴백 예외 확인 |
+| 푸시 미도달 | ① `notification_logs` status/error_code ② DeviceNotRegistered → 토큰 자동 삭제됨(재등록은 앱 재실행) ③ `EXPO_ACCESS_TOKEN` 설정 ④ 유저 settings enabled |
+| 리마인더 오발/미발 | `notification_settings.next_send_at`(UTC) 값과 timezone 확인. 최신 플랜에 당일 해당 끼니가 없으면 스킵이 정상 (FR-006) |
+| 앱 로그인 실패(AUTH_INVALID_APP_CODE) | 코드 60초 만료/재사용 — 재로그인 안내. 반복 시 서버 시계 동기화·APP_SCHEME 일치 확인 |
+| 웹뷰가 백지 | `EXPO_PUBLIC_WEB_URL` 오리진 확인 (완전 일치 검증이라 http/https·포트 불일치도 외부 처리됨) |

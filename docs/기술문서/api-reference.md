@@ -82,3 +82,21 @@
   → 배송 시 fridge/items 등록 → 식사완료 시 fridge/deduct 차감
   → 다음 주기: (스케줄러 미구현) mealplans/{id}/cart 또는 store/cart 재호출
 ```
+
+---
+
+## v1.5.1 증분 — notification 도메인 + mealplan 비동기 + 앱 로그인 (2026-07-16)
+
+> 원본 계약: `docs/설계/api-spec.md` v1.5.1 (§1-1 client 파라미터, §1-6, §3-2~3-6, §6-A). 여기는 요약만.
+
+| 메서드·경로 | 인증 | 요약 |
+|-------------|------|------|
+| `PUT /api/v1/notifications/devices` | 필요 | Expo 토큰 등록/갱신 (token upsert, 타 유저 소유 이전) — 앱 실행 시마다 호출 |
+| `DELETE /api/v1/notifications/devices/{token}` | 필요 | 로그아웃 시 해제 (idempotent 204) |
+| `GET /api/v1/notifications/settings` | 필요 | 5종 lazy 생성 조회 (리마인더 3종 08:00/12:00/18:30 기본) |
+| `PUT /api/v1/notifications/settings` | 필요 | 부분 갱신 — next_send_at(UTC) 서버 재계산 |
+| `GET /api/v1/auth/app/session?code=&next=` | 불필요 | 원타임 코드 → 웹뷰 쿠키 교환 (302). 앱 전용 |
+| `POST /api/v1/mealplans` · `/{id}/regenerate` | 필요 | **202 비동기** — `GET /mealplans/{id}` 폴링. 409 `MEALPLAN_GENERATING` / `MEALPLAN_REGENERATE_EMPTY`(신규 POST 전환) |
+
+- status 4종: `processing → ready|over_budget|failed` (processing 10분 초과 시 서버가 failed 수렴)
+- 푸시 페이로드: `{ title, body, data: { v: 1, path: "/mealplan/{id}" } }` — path 는 내부 상대경로만

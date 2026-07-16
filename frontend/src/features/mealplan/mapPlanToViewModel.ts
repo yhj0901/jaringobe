@@ -29,6 +29,8 @@ export function defaultSelectedDate(
   today: Date = new Date(),
 ): string {
   const todayIso = toLocalIsoDate(today);
+  // v1.5: processing/failed 는 기간이 null — 표시 경로엔 오지 않지만 방어적으로 오늘 반환
+  if (plan.periodStart === null || plan.periodEnd === null) return todayIso;
   if (todayIso >= plan.periodStart && todayIso <= plan.periodEnd) return todayIso;
   return plan.periodStart;
 }
@@ -110,16 +112,20 @@ export function mapPlanToViewModel(
       .map(toMealItem),
   }));
 
+  // v1.5: budgetSummary 는 processing/failed 에서 null — 표시 경로(ready/over_budget)엔 항상 존재, 방어 폴백만 둔다
+  const zero: Money = { amount: '0', currency: plan.currency };
+  const summary = plan.budgetSummary;
+
   return {
     mode: 'member',
     planId: plan.id,
-    overBudget: !plan.budgetSummary.withinBudget,
+    overBudget: summary !== null && !summary.withinBudget,
     selectedDate: options?.selectedDate ?? defaultSelectedDate(plan),
     budgetMood: {
-      remaining: plan.budgetSummary.remaining,
+      remaining: summary?.remaining ?? zero,
       // 회원 v0: 절약분 = 예산 - 편성 비용(= remaining). 폐기 절감은 냉장고 도입 전이라 0 (기획 Out of Scope)
-      saved: plan.budgetSummary.remaining,
-      wastePrevented: { amount: '0', currency: plan.currency },
+      saved: summary?.remaining ?? zero,
+      wastePrevented: zero,
     },
     weekPlan,
     // 냉장고/자동주문은 회원에게 "준비 중" 잠금 카드로 대체 (FR-208) — 셸 데이터는 비움

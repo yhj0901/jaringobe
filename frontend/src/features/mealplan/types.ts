@@ -1,10 +1,11 @@
 import type { Money } from '@/shared/api/types';
 
 /**
- * mealplan 도메인 API 타입 — docs/설계/api-spec.md 3장(v1.1)과 1:1 일치 (camelCase).
+ * mealplan 도메인 API 타입 — docs/설계/api-spec.md 3장(v1.5)과 1:1 일치 (camelCase).
  */
 
-export type MealPlanStatus = 'ready' | 'over_budget';
+/** v1.5 비동기 전환 — processing/failed 확장 (api-spec 3-2) */
+export type MealPlanStatus = 'processing' | 'ready' | 'over_budget' | 'failed';
 
 /** 조리 난이도 (MealOut.difficulty, api-spec 3-4 v1.4) */
 export type MealDifficulty = 'easy' | 'normal' | 'hard';
@@ -51,17 +52,26 @@ export interface MealPlanBudgetSummary {
   withinBudget: boolean;
 }
 
-/** GET /mealplans/latest · POST /mealplans — 200/201 MealPlanResponse (api-spec 3-1/3-2) */
+/**
+ * GET /mealplans/latest · GET /mealplans/{id} — 200 MealPlanResponse (api-spec 3-1/3-3).
+ * v1.5 status 별 규칙: processing/failed 는 meals=[], budgetSummary=null, periodStart/End=null.
+ */
 export interface MealPlanResponse {
   id: string;
   status: MealPlanStatus;
   region: string;
   currency: Money['currency'];
-  periodStart: string;
-  periodEnd: string;
-  budgetSummary: MealPlanBudgetSummary;
+  periodStart: string | null;
+  periodEnd: string | null;
+  budgetSummary: MealPlanBudgetSummary | null;
   meals: MealPlanMeal[];
   notes: string[];
+}
+
+/** POST /mealplans · regenerate — 202 MealPlanAcceptedResponse (api-spec 3-2 v1.5) */
+export interface MealPlanAcceptedResponse {
+  id: string;
+  status: MealPlanStatus;
 }
 
 /** POST /mealplans 요청 (api-spec 3-2) — 팀원 스키마 준수, 임의 확장 금지 */

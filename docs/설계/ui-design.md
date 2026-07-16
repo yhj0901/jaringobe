@@ -144,9 +144,35 @@ useMemberHome():
 - 하단 탭바: 홈/냉장고/장바구니/**마이** (식단 탭은 추후 프리미엄 구독 편입 예정이라 제외 — 홈의 주간 식단 표시는 유지). 설정 진입을 상단 GB 아바타 → 하단 마이 탭으로 이동, 상단 GB 는 브랜드 마크(비버튼)로만 남겨 중복 제거 (HomeShell onMyTabClick)
 - 마이 탭: 회원 → /settings, 게스트 → 가입 게이트. 홈 탭은 홈 화면 유지(대체 아님). 가구 구성원/식단 방향·선호/월 예산 편집은 설정 페이지(9장)에 그대로
 
+## 12. 앱 웹뷰 대응 + 알림 설정 (v1.5)
+
+**`shared/bridge/` 신규 (웹 쪽 브리지 모듈)**
+```ts
+isApp(): boolean                      // UA 'JaringobeApp/' + window.ReactNativeWebView 이중 확인
+onBridgeMessage(handler)              // 앱→웹: BRIDGE_READY / PUSH_TOKEN / PERMISSION_STATUS
+sendToApp({ v: 1, type, payload })    // 웹→앱: REQUEST_PUSH_PERMISSION / OPEN_OS_SETTINGS / LOGIN_PROVIDER / SYNC_REQUEST(구독 직후 1회 — BUG-006)
+```
+- 프로토콜 상세·버저닝 규칙은 `mobile-app.md` 3장이 원본 (웹·앱 공용 계약)
+- `PUSH_TOKEN` 수신 시 로그인 상태면 `PUT /notifications/devices` 호출 (locale·timezone 동봉). 미로그인이면 메모리 보류 → 로그인 완료 후 등록
+- 로그아웃 흐름 변경: 확인 후 **`DELETE /notifications/devices/{token}` 선행(앱 내 한정)** → `POST /auth/logout` (9장 갱신)
+
+**소셜 로그인 (앱 내)**: `isApp()` 이면 SocialLoginButtons 가 `location.href` 대신 `sendToApp(LOGIN_PROVIDER {provider, next})` — 3사 공통. 복귀는 앱이 웹뷰를 `/auth/app/session` 으로 내비게이트하므로 웹 변경 없음 (`?login=success` 기존 처리 재사용)
+
+**푸시 권한 soft ask**: 앱 내 + 권한 미결정 + 식단 생성 요청 직후 1회 — BottomSheet "완성되면 알려드릴까요?" [좋아요/나중에] → 수락 시 `REQUEST_PUSH_PERMISSION`. 거부 후엔 재노출 없이 알림 설정 화면에서만 유도
+
+**생성 비동기 폴링 (웹/앱 공통 — 7장 갱신)**: `POST /mealplans` 202 → `GenerationLoading` 유지하며 `GET /mealplans/{id}` 3초 폴링(백오프 5초, 최대 3분 — 초과 시 "완료되면 알려드릴게요" 안내로 전환, 앱은 푸시 수신). 90초 클라이언트 타임아웃 제거. `409 MEALPLAN_GENERATING` → 진행 중 플랜 폴링에 합류. 홈 `latest.status` 분기: `processing` → GenerationLoading / `failed` → 재시도 배너(ErrorRetryBanner)
+
+**`/settings/notifications` 신규 (보호 라우트, 설정 페이지 9장에서 진입)**
+- 섹션: ① 식단 완성 알림 토글 ② 식사 리마인더 3행(아침/점심/저녁 — 토글 + 시각 피커, HH:MM) ③ 앱 미설치(웹 브라우저) 시 "앱에서 받을 수 있어요" 안내 카드 ④ 앱 내 + OS 권한 거부 시 상단 배너 "기기 설정에서 알림을 켜 주세요" → `OPEN_OS_SETTINGS`
+- 저장: 행 단위 변경 즉시 `PUT /notifications/settings` (낙관적 갱신·실패 롤백 — 완료 버튼 없음)
+- `features/notification/` 신규 디렉토리 (도메인 분류 준수)
+
+**i18n 신규 키**: `notification.settings.*`(제목/유형 라벨/배너), `notification.softAsk.*`, `memberHome.generating.background`(3분 초과 안내), `memberHome.failed.*` — ko/en 동시. 푸시 본문 템플릿은 백엔드 카탈로그(api-spec 6-A-5) — 프론트 키 아님
+
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 3라운드 UI 교차 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — 회원 홈(member 모드) 7장 증보 (회원홈-식단연결 기획)
 - 2026-07-09: v1.2 — 온보딩 3스텝(프로토타입 1:1)·진입 순서 8장 증보
 - 2026-07-09: v1.2.1 — 게스트 체험을 동일 위저드(guest 모드)로 통일
 - 2026-07-10: v1.3 — 설정 페이지 9장 (계정/식생활 편집·재생성/스토어 연동 상태)
+- 2026-07-14: v1.5 — 12장 앱 웹뷰 대응(브리지/앱 로그인/soft ask) + 생성 비동기 폴링 + /settings/notifications

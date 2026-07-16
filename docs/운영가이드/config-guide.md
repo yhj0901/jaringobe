@@ -16,3 +16,15 @@
 
 - 애플 로그인(P1) 도입 시 추가 예정: `APPLE_CLIENT_ID / APPLE_TEAM_ID / APPLE_KEY_ID / APPLE_PRIVATE_KEY_PATH`
 - 키 추가/변경은 인프라 에이전트가 `.env.example` 과 이 문서를 함께 갱신한다
+
+---
+
+## v0.2.0 증분 — 푸시/앱 환경 변수 (2026-07-16)
+
+| 키 | 필수 | 설명 |
+|----|------|------|
+| `EXPO_ACCESS_TOKEN` | 운영 필수 | expo.dev Access Token — 미설정 시 무인증 발송 시도(개발용) |
+| `APP_SCHEME` | 기본 `jaringobe` | 앱 로그인 딥링크 스킴 — 앱 `app.json` scheme 과 일치해야 함 |
+| `MEALPLAN_GENERATION_TIMEOUT_MINUTES` | 선택(기본 10) | processing 좀비 failed 수렴 시간 |
+| `REMINDER_SCHEDULER_ENABLED` / `REMINDER_SCHEDULER_INTERVAL_SECONDS` | 선택(true/30) | 리마인더 스케줄러 — 멀티 인스턴스 배포 시 1개 인스턴스만 true |
+| `EXPO_PUBLIC_WEB_URL` | mobile 빌드 | 웹뷰가 로드할 웹 오리진 (eas.json 프로필별) |

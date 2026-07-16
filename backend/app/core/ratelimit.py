@@ -37,3 +37,5 @@ budget_user_limiter = InMemoryRateLimiter(limit=5, window_seconds=60)
 mealplan_user_limiter = InMemoryRateLimiter(limit=5, window_seconds=60)
 # 마트 조회는 네이버 순차조회+LLM으로 비싸므로 더 타이트하게
 store_user_limiter = InMemoryRateLimiter(limit=3, window_seconds=60)
+# notification devices/settings — 유저 기준 10회/분 (api-spec 6-A-1·6-A-4)
+notification_user_limiter = InMemoryRateLimiter(limit=10, window_seconds=60)

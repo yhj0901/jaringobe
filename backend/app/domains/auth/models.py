@@ -1,4 +1,8 @@
-"""auth 도메인 SQLAlchemy 모델 — 마이그레이션 0001(docs/설계/db-schema.md)과 1:1 일치."""
+"""auth 도메인 SQLAlchemy 모델 — 마이그레이션 0001·0008(docs/설계/db-schema.md)과 1:1 일치.
+
+app_login_codes 는 리비전 0008 에서 생성됐지만 세션 인계(로그인) 개념이므로
+refresh_tokens 와 같은 auth 도메인에 둔다.
+"""
 
 import uuid
 from datetime import UTC, datetime
@@ -115,6 +119,31 @@ class RefreshToken(Base):
     )
     expires_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, default=_utcnow, server_default=text("now()")
+    )
+
+
+class AppLoginCode(Base):
+    """원타임 앱 로그인 코드 — 마이그레이션 0008 과 1:1 일치 (60초 만료·단일 사용)."""
+
+    __tablename__ = "app_login_codes"
+    __table_args__ = (
+        UniqueConstraint("code_hash", name="uq_app_login_codes_code_hash"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    code_hash: Mapped[str] = mapped_column(CHAR(64), nullable=False)  # SHA-256 hex — 원문 저장 금지
+    expires_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, default=_utcnow, server_default=text("now()")
     )

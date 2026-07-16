@@ -43,8 +43,9 @@
 |----------|------|------|
 | `provider` (path) | `kakao \| google \| apple` | apple 은 P1 (미구현 시 404 `PROVIDER_NOT_SUPPORTED`) |
 | `next` (query, optional) | string | 로그인 완료 후 복귀할 **상대 경로**. 화이트리스트 검증(CWE-601), 기본 `/` |
+| `client` (query, optional) | `web \| app` | **v1.5 신규.** 기본 `web`. `app` 이면 콜백에서 쿠키 대신 원타임 코드 발급(1-6) — 앱은 전 provider 를 커스텀 탭/시스템 브라우저에서 진행 |
 
-- 동작: 서명된 `state`(nonce + next + 10분 만료) 생성 → provider 인가 URL 로 302
+- 동작: 서명된 `state`(nonce + next + client + 10분 만료) 생성 → provider 인가 URL 로 302
 
 ### 1-2. `GET /api/v1/auth/{provider}/callback` — 인증 불필요
 provider 콜백. 성공 시 쿠키 세팅 후 프론트로 302. (JSON API 아님)
@@ -60,6 +61,19 @@ provider 콜백. 성공 시 쿠키 세팅 후 프론트로 302. (JSON API 아님
 | `AUTH_EMAIL_CONFLICT_NOTICE` | 동일 이메일 타 provider 계정 존재 — **로그인은 정상 진행**되며 프론트가 안내 배너만 표시 (FR-004). 이 경우 `302 {next}?login=success&notice=AUTH_EMAIL_CONFLICT_NOTICE` |
 
 - 신규/기존 판정은 콜백에서 내리지 않는다 — 프론트는 복귀 후 `GET /users/me` 로 분기
+- **`client=app` 분기 (v1.5)**: 쿠키를 세팅하지 않고 **원타임 앱 로그인 코드**(256bit 랜덤, 60초 만료, 단일 사용, DB 에 SHA-256 해시만 저장) 발급 → `302 jaringobe://auth?code={원문}&next={next}` / 실패 시 `302 jaringobe://auth?error={code}` — 커스텀 탭에서 진행된 OAuth 의 세션을 웹뷰로 인계하기 위함 (상세 흐름: architecture.md 3-5)
+
+### 1-6. `GET /api/v1/auth/app/session` — 인증 불필요 (v1.5 신규)
+원타임 앱 로그인 코드 → 웹뷰 쿠키 교환. **앱이 웹뷰를 이 URL 로 내비게이트**해야 쿠키가 웹뷰 쿠키 저장소에 세팅된다. (JSON API 아님)
+
+| 파라미터 | 타입 | 설명 |
+|----------|------|------|
+| `code` (query) | string | 원타임 코드 원문 |
+| `next` (query, optional) | string | 상대 경로 화이트리스트 검증 (CWE-601), 기본 `/` |
+
+- 성공: 코드 해시 대조·만료·단일사용 검증 → `used_at` 마킹 → `Set-Cookie`(access/refresh) → `302 {next}?login=success`
+- 실패: `302 /login?error=AUTH_INVALID_APP_CODE` (만료/재사용/위조 동일 코드 — 재사용 시도는 감사 로그)
+- rate limit: IP 10회/분
 
 ### 1-3. `POST /api/v1/auth/refresh` — refresh 쿠키 필요
 Access 재발급 + refresh 회전.
@@ -147,7 +161,7 @@ Access 재발급 + refresh 회전.
 | `200` | `MealPlanResponse` (3-2 와 동일 구조) |
 | `404 MEALPLAN_NOT_FOUND` | 생성 이력 없음 — 프론트 빈 상태 분기 전용 코드 |
 
-### 3-2. `POST /api/v1/mealplans` — 인증 필요 (기존)
+### 3-2. `POST /api/v1/mealplans` — 인증 필요 **(v1.5 변경 — 비동기 전환)**
 ```json
 // 요청 MealPlanCreateRequest
 { "days": 7, "mealsPerDay": 3, "allergies": ["땅콩"], "preferences": ["한식"] }
@@ -155,12 +169,21 @@ Access 재발급 + refresh 회전.
 - `days` 1~31, `mealsPerDay` 1~5. `allergies`/`preferences` 는 항목당 30자·최대 10개 (서버 검증, 로그 기록 금지)
 - 예산은 서버가 유저의 `budget_plans` 에서 조회 — 없으면 `409 BUDGET_PLAN_REQUIRED`
 - rate limit: 유저 5회/분 (`429 RATE_LIMITED`)
-- LLM 실패 시 서버 내부 규칙 기반 폴백 생성 (5xx 아님)
+- LLM 실패 시 서버 내부 규칙 기반 폴백 생성, 폴백까지 실패 시에만 `status=failed`
+- **v1.5**: 동기 `201` → **`202 Accepted`** 로 전환. 생성은 백그라운드 수행, 완료/실패 시 등록 디바이스에 푸시 발송
 
 ```json
-// 201 MealPlanResponse
+// 202 MealPlanAcceptedResponse
+{ "id": "uuid", "status": "processing" }
+```
+- 클라이언트(웹/앱 공통)는 `GET /mealplans/{id}` 를 폴링(3초 간격, 점진 백오프, 최대 3분)해 완료 확인 — **푸시는 보조 채널, 화면 폴링이 기본**
+- 이미 `processing` 인 플랜이 있으면 `409 MEALPLAN_GENERATING` (중복 생성 방지)
+- **v1.5.1 (QA BUG-001)**: `processing` 이 `MEALPLAN_GENERATION_TIMEOUT_MINUTES`(기본 10분) 초과 시 서버가 failed 로 수렴시킨다 — 접수·조회 경로에서 지연 정리 (좀비 processing 의 영구 409 방지)
+
+```json
+// (참고) 완료 후 GET 이 반환하는 MealPlanResponse
 {
-  "id": "uuid", "status": "ready",            // ready | over_budget
+  "id": "uuid", "status": "ready",            // processing | ready | over_budget | failed  (v1.5 확장)
   "region": "KR", "currency": "KRW",
   "periodStart": "2026-07-09", "periodEnd": "2026-07-15",
   "budgetSummary": {
@@ -177,20 +200,27 @@ Access 재발급 + refresh 회전.
 }
 ```
 - `status=over_budget` 시 `withinBudget=false` + `notes` 에 초과 사유 — 프론트는 초과 배너 + 재생성 유도 (FR-206)
+- **status 별 응답 규칙 (v1.5)**: `processing`/`failed` 는 `meals: []`, `budgetSummary: null`, `periodStart/End: null`. `failed` 는 `notes` 에 사유 코드(`GENERATION_FAILED`)
 
-### 3-3. `GET /api/v1/mealplans/{id}` — 인증 필요 (기존)
-- `200` MealPlanResponse / `404 NOT_FOUND` / `403 FORBIDDEN`(타인 소유)
+### 3-3. `GET /api/v1/mealplans/{id}` — 인증 필요 **(v1.5 — 생성 상태 폴링 겸용)**
+- `200` MealPlanResponse (status 4종) / `404 NOT_FOUND` / `403 FORBIDDEN`(타인 소유)
+- 읽기 전용 — rate limit 미적용 (폴링 용도). 별도 `/status` 엔드포인트는 만들지 않는다 (기존 상세 조회 재사용)
 
 ### 3-4. `PUT /api/v1/mealplans/{planId}/meals/{mealId}/completion` — 인증 필요 (v1.4 신규)
 식사 완료 설정/해제. body `{ "completed": true|false }` → `200` 갱신된 MealOut. 404 NOT_FOUND / 403 FORBIDDEN(타인 소유).
 
 **MealOut 확장 (v1.4, 하위 호환 옵셔널)**: `steps: string[]`(조리 단계), `completedAt: datetime|null`, `timeMinutes: int|null`, `difficulty: "easy"|"normal"|"hard"|null` — time/difficulty 는 신규 생성분부터 LLM 이 채움(부재 시 프론트 기본값).
 
-### 3-5. `POST /api/v1/mealplans/{id}/regenerate` — 인증 필요 (기존, 프론트 P1)
+### 3-5. `POST /api/v1/mealplans/{id}/regenerate` — 인증 필요 **(v1.5 변경 — 비동기 전환, v1.5.1 증보)**
 ```json
 { "scope": "all" }   // all | meal (meal 이면 mealId 필수 — 프론트 P2)
 ```
-- rate limit 유저 5회/분. `200` 갱신된 MealPlanResponse
+- rate limit 유저 5회/분. **`202 MealPlanAcceptedResponse`** (3-2 와 동일 패턴 — 폴링·완료 푸시 동일)
+- **v1.5.1**: meals 0 인 failed 플랜(최초 생성부터 실패)은 원 요청 파라미터를 알 수 없어 재생성 불가 → `409 MEALPLAN_REGENERATE_EMPTY`. **프론트는 이 코드 수신 시 신규 `POST /mealplans` 흐름(생성 시트)으로 전환** (QA BUG-002 — 조용한 mealsPerDay 붕괴 제거)
+- **v1.5.1**: 재생성 접수 시 서버가 플랜 `createdAt` 을 갱신 → 해당 플랜이 `GET /mealplans/latest` 의 최신이 된다 (stale 오판 방지 겸)
+
+### 3-6. `GET /api/v1/mealplans/latest` — status 분기 (v1.5 규칙 추가)
+- 최신 1건을 status 무관 반환 — 프론트 분기: `processing` → 생성 중 화면 / `failed` → 재시도 배너 / `ready·over_budget` → 기존 표시
 
 
 ---
@@ -239,6 +269,57 @@ KR 4종 전체 상태 반환 (미저장 스토어는 disconnected).
 
 ---
 
+## 6-A. notification 도메인 (v1.5 신규)
+
+> 대상 기획: `docs/기획/앱-웹뷰-푸시알림.md`. 발송 인프라는 Expo Push Service (KR/US 공통).
+> **원칙 예외 명시**: 푸시 제목/본문은 백엔드가 사용자 로캘(ko/en) 템플릿으로 렌더해 발송한다 — "API 응답에 노출 문구 미포함" 원칙은 HTTP 응답에만 적용 (UI 대변인 합의).
+
+### 6-A-1. `PUT /api/v1/notifications/devices` — 인증 필요
+디바이스 토큰 등록/갱신 (token 기준 idempotent upsert — 앱 실행 시마다 호출해 `lastSeenAt`·locale·timezone 최신화).
+```json
+// 요청 DeviceRegisterRequest
+{ "token": "ExponentPushToken[xxx]", "platform": "ios",    // ios | android
+  "locale": "ko", "timezone": "Asia/Seoul", "appVersion": "1.0.0" }
+```
+- 검증: token 최대 4096자·Expo 토큰 형식, platform 열거, timezone 은 IANA 유효값, locale `ko|en`
+- 타 유저에 등록돼 있던 token 이면 소유자를 현재 유저로 이전(기기 양도/계정 전환 케이스)
+- `200 { "id": "uuid" }` / rate limit 유저 10회/분
+
+### 6-A-2. `DELETE /api/v1/notifications/devices/{token}` — 인증 필요
+로그아웃/알림 전체 해제 시 토큰 삭제. token 은 URL 인코딩. 본인 소유만 삭제(CWE-639), 없는 토큰도 `204` (idempotent).
+
+### 6-A-3. `GET /api/v1/notifications/settings` — 인증 필요
+```json
+// 200 NotificationSettingsResponse
+{ "settings": [
+  { "type": "meal_reminder_breakfast", "enabled": true,  "localTime": "08:00", "timezone": "Asia/Seoul" },
+  { "type": "meal_reminder_lunch",     "enabled": true,  "localTime": "12:00", "timezone": "Asia/Seoul" },
+  { "type": "meal_reminder_dinner",    "enabled": true,  "localTime": "18:30", "timezone": "Asia/Seoul" },
+  { "type": "mealplan_done",           "enabled": true,  "localTime": null,    "timezone": null },
+  { "type": "weekly_nudge",            "enabled": false, "localTime": null,    "timezone": null }
+] }
+```
+- 설정 행이 없으면 이 호출에서 기본값으로 **lazy 생성** 후 반환. timezone 기본값은 최근 등록 디바이스의 timezone
+- `weekly_nudge`(식단 부재 유도, 주 1회 한도)는 P2 — 스키마만 선확정, 기본 off
+
+### 6-A-4. `PUT /api/v1/notifications/settings` — 인증 필요
+부분 갱신 — 보낸 type 만 반영.
+```json
+{ "settings": [ { "type": "meal_reminder_dinner", "enabled": true, "localTime": "19:00" } ] }
+```
+- 검증: type 열거, `localTime` HH:MM (리마인더 3종만 허용, 그 외 type 에 localTime 오면 422), timezone IANA
+- 갱신 시 서버가 `next_send_at`(UTC) 재계산. `200` 전체 settings 재반환 / rate limit 유저 10회/분
+
+### 6-A-5. 푸시 페이로드 규약 (프론트/앱 계약)
+```json
+{ "title": "...", "body": "...",                       // 백엔드 ko/en 템플릿 렌더
+  "data": { "v": 1, "path": "/mealplan/{id}" } }      // path: 내부 상대경로 화이트리스트만 (CWE-601)
+```
+- 템플릿 키: `push.mealplanDone` (변수 없음) / `push.mealReminder` (변수: mealType, recipeName) / `push.mealplanFailed` / `push.weeklyNudge`
+- 본문에 예산액·가구 구성 등 개인정보 금지 — 메뉴명까지만 (CWE-359, 잠금화면 노출 전제)
+
+---
+
 ## 7. 엔드포인트 요약
 
 | # | 메서드·경로 | 인증 | 유형 |
@@ -259,8 +340,15 @@ KR 4종 전체 상태 반환 (미저장 스토어는 disconnected).
 | 14 | `GET /api/v1/stores/connections` | 필요 | JSON (v1.3 신규) |
 | 15 | `PUT /api/v1/stores/connections/{store}` | 필요 | JSON (v1.3 신규) |
 | 16 | `PUT /api/v1/mealplans/{planId}/meals/{mealId}/completion` | 필요 | JSON (v1.4 신규) |
+| 17 | `GET /api/v1/auth/app/session` | 불필요 | 302 리다이렉트 (v1.5 신규) |
+| 18 | `PUT /api/v1/notifications/devices` | 필요 | JSON (v1.5 신규) |
+| 19 | `DELETE /api/v1/notifications/devices/{token}` | 필요 | JSON (v1.5 신규) |
+| 20 | `GET /api/v1/notifications/settings` | 필요 | JSON (v1.5 신규) |
+| 21 | `PUT /api/v1/notifications/settings` | 필요 | JSON (v1.5 신규) |
 
 ## 변경 이력
+- 2026-07-14: **v1.5.1** — QA 수정 반영: `409 MEALPLAN_REGENERATE_EMPTY`(프론트 신규 POST 전환), processing 타임아웃 수렴(기본 10분), 재생성 시 createdAt 갱신→latest 동작 명시. UI 대변인 동의 완료
+- 2026-07-14: **v1.5** — 앱 웹뷰 + 푸시 알림: notification 도메인 4종 + 앱 로그인(`client=app`·`/auth/app/session`) + **mealplan 생성/재생성 202 비동기 전환**(status 4종 확장, `GET /mealplans/{id}` 폴링 겸용, `409 MEALPLAN_GENERATING` 신규) + 푸시 페이로드 규약(6-A-5). UI 대변인 동의 완료
 - 2026-07-10: **v1.4** — 식사 완료 API + MealOut 확장(steps/completedAt/timeMinutes/difficulty). UI 대변인 동의
 - 2026-07-10: **v1.3** — store 연동 상태 2종 (설정 페이지, 자격증명 미수집 1단계). UI 대변인 동의
 - 2026-07-09: **v1.2** — household 도메인(PUT/GET /households/me) + PUT /budget/plans(locked·cuisines 확장). 온보딩 3스텝(프로토타입 1:1) 대응. UI 대변인 동의 완료

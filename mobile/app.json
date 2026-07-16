@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "자린고비",
+    "slug": "jaringobe",
+    "version": "1.0.0",
+    "scheme": "jaringobe",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0B1B3A"
+    },
+    "ios": {
+      "bundleIdentifier": "cloud.jaringobe.app",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "cloud.jaringobe.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1B3A"
+      }
+    },
+    "plugins": [
+      "expo-notifications",
+      "expo-web-browser",
+      "expo-localization"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

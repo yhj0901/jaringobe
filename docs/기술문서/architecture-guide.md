@@ -39,3 +39,15 @@
 1. `/기획시작` → GATE 1 → `/설계시작` → GATE 2 (api-spec.md 갱신은 설계 변경 프로세스 필수)
 2. DB 변경 시 `/인프라시작` (GATE 3) — 모델은 마이그레이션과 1:1 유지
 3. `/API시작` + `/UI시작` → `/QA시작` (GATE 4) → `/문서시작`
+
+---
+
+## v0.2.0 증분 — 모바일 앱 쉘 + 푸시 알림 (2026-07-16)
+
+> 상세: `docs/설계/architecture.md` 3-5~3-8, `docs/설계/mobile-app.md`
+
+- **mobile/ (Expo 쉘)**: 배포 웹 오리진을 웹뷰 1장으로 로드 — 제품 UI 는 웹 배포만으로 갱신. 네이티브는 스플래시·푸시·브리지·딥링크·커스텀 탭만
+- **앱 로그인**: 구글의 웹뷰 OAuth 차단 → 3사 공통 커스텀 탭 + 원타임 코드(60초·단일사용) → 웹뷰가 `/auth/app/session` 에서 쿠키 수령
+- **식단 생성 비동기**: 202 접수 → FastAPI BackgroundTasks → 완료/실패 푸시. 화면 폴링이 기본, 푸시는 보조
+- **리마인더 스케줄러**: lifespan asyncio 30초 주기, `notification_settings.next_send_at`(UTC) partial index 스캔 → 최신 활성 플랜에서 당일(사용자 타임존)·미완료 끼니만 발송
+- 단일 인스턴스 전제 (BackgroundTasks·스케줄러) — 멀티 인스턴스 시 워커/큐·스케줄러 분리

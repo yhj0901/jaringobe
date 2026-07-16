@@ -74,6 +74,10 @@ function baseState(overrides: Partial<MemberHomeState> = {}): MemberHomeState {
     householdSize: 4,
     generation: 'idle',
     generationError: null,
+    backgroundNotice: false,
+    planFailed: false,
+    createRequired: false,
+    ackCreateRequired: vi.fn(),
     pendingMealIds: new Set<string>(),
     selectDate: vi.fn(),
     createPlan: vi.fn().mockResolvedValue(undefined),
@@ -81,6 +85,7 @@ function baseState(overrides: Partial<MemberHomeState> = {}): MemberHomeState {
     toggleMealCompletion: vi.fn().mockResolvedValue(undefined),
     retryGenerate: vi.fn().mockResolvedValue(undefined),
     dismissGenerationError: vi.fn(),
+    dismissBackgroundNotice: vi.fn(),
     completeBudgetPlan: vi.fn().mockResolvedValue('created'),
     reload: vi.fn(),
     ...overrides,
@@ -193,6 +198,34 @@ describe('MemberHomeController 빈 상태 — 샘플 홈 + 배너 (FR-316/202/20
     fireEvent.click(screen.getByRole('button', { name: '닫기' }));
     expect(state.current.dismissGenerationError).toHaveBeenCalledTimes(1);
   });
+
+  it('폴링 3분 초과 → "완료되면 알려드릴게요" 안내 배너 + 닫기 (ui-design 12장)', () => {
+    state.current = baseState({ status: 'empty', backgroundNotice: true });
+    renderWithIntl(<MemberHomeController />);
+    expect(screen.getByText(/완료되면 알려드릴게요/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '닫기' }));
+    expect(state.current.dismissBackgroundNotice).toHaveBeenCalledTimes(1);
+  });
+
+  it('createRequired → 생성 시트 오픈 + 안내 토스트 + 신호 소비 (api-spec 3-5 v1.5.1)', () => {
+    state.current = baseState({ status: 'empty', createRequired: true });
+    renderWithIntl(<MemberHomeController />);
+
+    expect(state.current.ackCreateRequired).toHaveBeenCalledTimes(1);
+    // 기존 PlanCreateSheet 재사용 — 시트 제목으로 오픈 확인
+    expect(screen.getByRole('heading', { name: '내 식단 만들기' })).toBeInTheDocument();
+    expect(
+      screen.getByText('이전 요청 정보를 찾을 수 없어요. 새 식단으로 만들어 주세요.'),
+    ).toBeInTheDocument();
+  });
+
+  it('latest.status=failed → 재시도 배너 → 재생성 호출 (ui-design 12장)', () => {
+    state.current = baseState({ status: 'empty', planFailed: true });
+    renderWithIntl(<MemberHomeController />);
+    expect(screen.getByRole('alert')).toHaveTextContent('지난 식단 생성에 실패했어요');
+    fireEvent.click(screen.getByRole('button', { name: '다시 생성하기' }));
+    expect(state.current.regeneratePlan).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
@@ -256,7 +289,12 @@ describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
     const overPlan: MealPlanResponse = {
       ...PLAN,
       status: 'over_budget',
-      budgetSummary: { ...PLAN.budgetSummary, withinBudget: false },
+      budgetSummary: {
+        budget: { amount: '700000.00', currency: 'KRW' },
+        plannedCost: { amount: '712300.00', currency: 'KRW' },
+        remaining: { amount: '-12300.00', currency: 'KRW' },
+        withinBudget: false,
+      },
     };
     state.current = readyState(overPlan);
     renderWithIntl(<MemberHomeController />);

@@ -23,3 +23,11 @@
 - 예산 프리셋: ko 30/50/70/100만원 / en $300~1000 (`shared/config/constants.ts`)
 - 샘플 매트릭스: `features/guest/sample-matrix/{ko,en}.json` (ko 한식 / en 미국 가정식)
 - SEO 메타: 로캘별 generateMetadata + hreflang (`app/[locale]/layout.tsx`)
+
+---
+
+## v0.2.0 증분 (2026-07-16)
+
+- 프론트 신규 키: `notification.settings.*` / `notification.softAsk.*` / `memberHome.generating.background` / `memberHome.failed.*` / `settings.notifications.*` / `metadata.notifications.*` — ko/en 동시 (동치성 diff 0 유지)
+- **푸시 본문은 프론트 키가 아님** — 백엔드 템플릿 카탈로그(`backend/app/domains/notification/sender.py`, push.* 4종 ko/en). 추가 시 양 로캘 동시 작성
+- mobile 오프라인 화면만 예외적 네이티브 하드코딩(ko/en) — mobile-app.md 4장 승인 사항

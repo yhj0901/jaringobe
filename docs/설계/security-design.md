@@ -68,6 +68,28 @@ provider → GET /auth/{provider}/callback?code&state
 ## 5-3. 설정/스토어 연동 접점 (v1.3)
 - CWE-639 본인 스코프(connections) / CWE-20 store·status enum 검증 / **자격증명 미수집**(1단계) — 실연동 시 암호화 저장 설계 필수(store 본설계)
 
+## 5-4. 앱 웹뷰 + 푸시 알림 접점 (v1.5)
+
+**원타임 앱 로그인 코드 (`/auth/app/session`)**
+- 코드: 256bit 랜덤, DB 에 SHA-256 해시만(원문 저장 금지), **60초 만료 + 단일 사용**(used_at 마킹)
+- 재사용 시도 → 401 동일 에러 + 감사 로그 (만료/위조/재사용 응답 구분 없음 — oracle 차단)
+- **CWE-598**: 코드가 URL 쿼리로 이동 — 커스텀 스킴 딥링크는 서버·프록시 로그를 남기지 않음. `app/session` 요청 로그에서 code 마스킹
+- **CWE-939**: 커스텀 스킴(`jaringobe://`) 하이재킹 — 악성 앱이 스킴 선점 시에도 코드는 단일사용·60초라 피해 창 최소. **P1 에서 Universal Links(iOS)/App Links(Android) 전환** (도메인 검증 기반 — 스킴 하이재킹 원천 차단)
+- rate limit IP 10회/분 (CWE-307). state 에 client 포함해 서명 — 콜백 분기 위조 불가 (CWE-352)
+
+**웹뷰 / 브리지**
+- **CWE-345**: 웹뷰는 자사 오리진(`WEB_URL`)만 내부 로드 — 그 외 내비게이션은 시스템 브라우저 위임(`onShouldStartLoadWithRequest`). RN `onMessage` 는 mainFrame origin 검증 후 처리, 웹 쪽은 UA(`JaringobeApp/`) + `window.ReactNativeWebView` 존재 이중 확인 후에만 브리지 활성화
+- 브리지로 전달되는 것은 푸시 토큰·권한 상태·명령 열거값만 — 인증 토큰/쿠키를 브리지로 넘기지 않는다 (쿠키는 `app/session` 302 로만 세팅)
+- injectedJavaScript 는 UA 마킹·브리지 초기화로 한정 (동적 코드 주입 금지)
+
+**푸시**
+- **CWE-359**: 본문은 메뉴명·완료 여부까지만 — 예산액·가구 구성·알레르기 등 금지 (잠금화면 노출 전제). notification_logs 에도 본문 원문 대신 template_key 만 저장
+- **CWE-601**: 푸시 `data.path` 는 `/` 시작 상대경로 화이트리스트(기존 next 검증 규칙 재사용) — 앱은 검증 실패 시 홈으로
+- **CWE-639**: devices/settings 전부 인증 유저 본인 스코프. 토큰 upsert 시 타 유저 소유 토큰은 현 유저로 이전(기기 재사용 — 이전 소유자에게 오발송 차단)
+- **CWE-522**: `EXPO_ACCESS_TOKEN` 은 backend `.env`, 앱 서명 자격증명은 EAS Secrets. 디바이스 토큰은 로그 마스킹
+- 로그아웃 시 프론트가 `DELETE /notifications/devices/{token}` 선행 호출 (세션 종료 후 오발송 차단). 스케줄러는 발송 직전 enabled·완료 여부 재확인 (race 방지)
+- 규제: 본 범위 알림은 트랜잭션/리마인더 성격 — 광고성 푸시 도입 시 별도 동의 + 야간(21~08시) 제한 선행 (기획서 확정)
+
 ## 6. 시크릿 관리
 
 - 전 시크릿 `.env` 전용 (`JWT_SECRET`, provider client secret). `.env.example` 만 커밋, 코드/로그/status JSON 기록 금지
@@ -86,9 +108,14 @@ provider → GET /auth/{provider}/callback?code&state
 | CWE-79 | XSS | httpOnly 쿠키, React 이스케이프, dangerouslySetInnerHTML 금지 |
 | CWE-20 / 602 | 입력 검증 | budget/plans 서버 전량 재검증 |
 | CWE-922 | 클라이언트 저장 | localStorage 비식별 데이터만 |
-| CWE-307 | 무차별 대입 | auth/budget rate limit |
+| CWE-307 | 무차별 대입 | auth/budget rate limit + app/session IP 제한 |
+| CWE-598 | URL 민감정보 | 앱 로그인 코드 60초·단일사용·해시 저장·로그 마스킹 |
+| CWE-939 | URL 스킴 검증 | 커스텀 스킴 피해 최소화 + P1 Universal/App Links |
+| CWE-345 | 출처 검증 | 웹뷰 오리진 allowlist + 브리지 이중 확인 |
+| CWE-359 | 개인정보 노출 | 푸시 본문 메뉴명까지만, logs 는 template_key 만 |
 
 ## 변경 이력
 - 2026-07-09: 최초 작성 (설계 토론 4라운드 보안 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — mealplan 접점 5-1 증보
 - 2026-07-09: v1.2 — household/온보딩 접점 5-2 증보
+- 2026-07-14: v1.5 — 앱 웹뷰+푸시 접점 5-4 증보 (원타임 코드/브리지/푸시, CWE 5종 추가)

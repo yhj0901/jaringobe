@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing, isAppLocale } from '@/i18n/routing';
+import { BridgeProvider } from '@/features/notification/BridgeProvider';
 import '@/app/globals.css';
 
 interface LocaleLayoutProps {
@@ -82,7 +83,11 @@ export default async function LocaleLayout({ children, params: { locale } }: Loc
   return (
     <html lang={locale}>
       <body>
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider messages={messages}>
+          {/* 앱 웹뷰 브리지 리스너 — 앱 내에서만 동작 (ui-design 12장) */}
+          <BridgeProvider />
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

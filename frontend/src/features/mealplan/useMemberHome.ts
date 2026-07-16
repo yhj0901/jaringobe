@@ -12,21 +12,28 @@ import {
   regenerateMealPlan,
   setMealCompletion,
 } from '@/features/mealplan/api';
+import {
+  pollMealPlan,
+  runGenerationFlow,
+  type GenerationOutcome,
+} from '@/features/mealplan/generation';
 import { fetchHousehold } from '@/features/household/api';
 import {
   MEALPLAN_MEALS_PER_DAY,
   MEALPLAN_NOT_FOUND_CODE,
+  MEALPLAN_REGENERATE_EMPTY_CODE,
 } from '@/features/mealplan/constants';
 import { defaultSelectedDate, mapPlanToViewModel } from '@/features/mealplan/mapPlanToViewModel';
 import type { MealPlanResponse } from '@/features/mealplan/types';
 import type { HomeViewModel } from '@/features/home/types';
 import type { GuestPlan } from '@/features/guest/store';
 import type { Money } from '@/shared/api/types';
-import type { ApiResult } from '@/shared/api/client';
 
 /**
- * 회원 홈 데이터 어댑터 (ui-design 7장, FR-201)
+ * 회원 홈 데이터 어댑터 (ui-design 7장·12장, FR-201/005)
  * GET /users/me → hasBudgetPlan 분기 → GET /mealplans/latest 분기 → HomeViewModel.
+ * v1.5: 생성/재생성은 202 비동기 — 폴링(runGenerationFlow)으로 완료 확인,
+ * latest.status=processing 이면 진행 중 폴링 합류, failed 면 재시도 배너.
  */
 
 export type MemberHomeStatus =
@@ -60,6 +67,14 @@ export interface MemberHomeState {
   householdSize: number | null;
   generation: GenerationPhase;
   generationError: GenerationErrorKind | null;
+  /** 폴링 3분 초과 — "완료되면 알려드릴게요" 안내 (ui-design 12장, 앱은 푸시 수신) */
+  backgroundNotice: boolean;
+  /** latest.status=failed — 재시도 배너 분기 (ui-design 12장) */
+  planFailed: boolean;
+  /** 재생성 불가(409 MEALPLAN_REGENERATE_EMPTY) — 신규 생성 시트 전환 신호 (api-spec 3-5 v1.5.1) */
+  createRequired: boolean;
+  /** 전환 신호 소비 — 컨트롤러가 생성 시트를 연 뒤 호출 */
+  ackCreateRequired: () => void;
   /** 완료 토글 진행 중인 끼니 id 집합 — 연타 방지 (FR-503) */
   pendingMealIds: ReadonlySet<string>;
   selectDate: (date: string) => void;
@@ -70,6 +85,7 @@ export interface MemberHomeState {
   /** 실패 배너의 재시도 — 마지막 생성/재생성 요청을 그대로 재실행 (FR-204) */
   retryGenerate: () => Promise<void>;
   dismissGenerationError: () => void;
+  dismissBackgroundNotice: () => void;
   completeBudgetPlan: (plan: GuestPlan) => Promise<CreateOnboardingPlanResult['kind']>;
   reload: () => void;
 }
@@ -83,9 +99,14 @@ export function useMemberHome(): MemberHomeState {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [generation, setGeneration] = useState<GenerationPhase>('idle');
   const [generationError, setGenerationError] = useState<GenerationErrorKind | null>(null);
+  const [backgroundNotice, setBackgroundNotice] = useState(false);
+  const [planFailed, setPlanFailed] = useState(false);
+  const [createRequired, setCreateRequired] = useState(false);
   const [pendingMealIds, setPendingMealIds] = useState<ReadonlySet<string>>(new Set());
 
   const generationRef = useRef<GenerationPhase>('idle');
+  /** 이번 재생성이 409 MEALPLAN_REGENERATE_EMPTY 였는지 — 신규 생성 전환 신호 (api-spec 3-5 v1.5.1) */
+  const regenerateEmptyRef = useRef(false);
   const lastCreateInputRef = useRef<PlanCreateInput | null>(null);
   const lastActionRef = useRef<'create' | 'regenerate' | null>(null);
   const planRef = useRef<MealPlanResponse | null>(null);
@@ -98,9 +119,60 @@ export function useMemberHome(): MemberHomeState {
     setStatus('ready');
   }, []);
 
+  /** 생성 흐름 종료 처리 — completed/failed/timeout/rate-limited (ui-design 12장) */
+  const handleOutcome = useCallback(
+    (outcome: GenerationOutcome) => {
+      switch (outcome.kind) {
+        case 'completed':
+          setPlanFailed(false);
+          applyPlan(outcome.plan);
+          break;
+        case 'timeout':
+          // 3분 초과 — 생성은 서버에서 계속, 완료 푸시가 보조 채널 (FR-005)
+          setBackgroundNotice(true);
+          break;
+        case 'rate-limited':
+          setGenerationError('rate-limited');
+          break;
+        default:
+          setGenerationError('failed');
+      }
+    },
+    [applyPlan],
+  );
+
+  /** 진행 중 플랜 폴링 합류 — latest.status=processing 진입 시 (ui-design 12장) */
+  const resumePolling = useCallback(
+    async (planId: string) => {
+      if (generationRef.current !== 'idle') return;
+      generationRef.current = 'creating';
+      setGeneration('creating');
+      const outcome = await pollMealPlan(planId);
+      handleOutcome(outcome);
+      generationRef.current = 'idle';
+      setGeneration('idle');
+    },
+    [handleOutcome],
+  );
+
   const loadLatest = useCallback(async () => {
     const result = await fetchLatestMealPlan();
     if (result.ok) {
+      if (result.data.status === 'processing') {
+        // 생성 진행 중 — GenerationLoading 유지하며 폴링 합류 (ui-design 12장)
+        planRef.current = result.data;
+        setStatus('empty');
+        void resumePolling(result.data.id);
+        return;
+      }
+      if (result.data.status === 'failed') {
+        // 실패 플랜 — 재시도 배너 (regenerate 대상으로 보관)
+        planRef.current = result.data;
+        setPlanFailed(true);
+        setStatus('empty');
+        return;
+      }
+      setPlanFailed(false);
       applyPlan(result.data);
       return;
     }
@@ -109,7 +181,7 @@ export function useMemberHome(): MemberHomeState {
       return;
     }
     setStatus('error');
-  }, [applyPlan]);
+  }, [applyPlan, resumePolling]);
 
   /** 가구 인원 조회 — 레시피 "N인분" 표시용. 실패(404 등)해도 홈 흐름은 계속 (기본값 폴백) */
   const loadHousehold = useCallback(async () => {
@@ -137,23 +209,31 @@ export function useMemberHome(): MemberHomeState {
     void load();
   }, [load]);
 
-  /** 생성/재생성 공통 실행 — 진행 중이면 무시(연타 방지), 429 → 대기 안내 (FR-204) */
+  /** 생성/재생성 공통 실행 — 진행 중이면 무시(연타 방지), 202 → 폴링 (FR-204/005) */
   const runGeneration = useCallback(
-    async (phase: Exclude<GenerationPhase, 'idle'>, exec: () => Promise<ApiResult<MealPlanResponse>>) => {
+    async (
+      phase: Exclude<GenerationPhase, 'idle'>,
+      begin: Parameters<typeof runGenerationFlow>[0],
+    ) => {
       if (generationRef.current !== 'idle') return;
       generationRef.current = phase;
       setGeneration(phase);
       setGenerationError(null);
-      const result = await exec();
-      if (result.ok) {
-        applyPlan(result.data);
+      setBackgroundNotice(false);
+      setPlanFailed(false);
+      const outcome = await runGenerationFlow(begin);
+      if (regenerateEmptyRef.current) {
+        // BUG-002/v1.5.1: 원 요청 파라미터 소실 — 실패 배너 대신 신규 생성 시트 전환 (api-spec 3-5)
+        regenerateEmptyRef.current = false;
+        setPlanFailed(true); // 시트를 닫아도 재시도 배너 유지 (서버 플랜은 여전히 failed)
+        setCreateRequired(true);
       } else {
-        setGenerationError(result.status === 429 ? 'rate-limited' : 'failed');
+        handleOutcome(outcome);
       }
       generationRef.current = 'idle';
       setGeneration('idle');
     },
-    [applyPlan],
+    [handleOutcome],
   );
 
   const createPlan = useCallback(
@@ -176,7 +256,18 @@ export function useMemberHome(): MemberHomeState {
     const current = planRef.current;
     if (current === null) return;
     lastActionRef.current = 'regenerate';
-    await runGeneration('regenerating', () => regenerateMealPlan(current.id));
+    await runGeneration('regenerating', async () => {
+      const result = await regenerateMealPlan(current.id);
+      if (
+        !result.ok &&
+        result.status === 409 &&
+        result.code === MEALPLAN_REGENERATE_EMPTY_CODE
+      ) {
+        // meals 0 failed 플랜 — 재생성 불가, 신규 생성 흐름 전환 신호 (api-spec 3-5 v1.5.1)
+        regenerateEmptyRef.current = true;
+      }
+      return result;
+    });
   }, [runGeneration]);
 
   const retryGenerate = useCallback(async () => {
@@ -184,12 +275,15 @@ export function useMemberHome(): MemberHomeState {
       await createPlan(lastCreateInputRef.current);
       return;
     }
-    if (lastActionRef.current === 'regenerate') {
+    // regenerate 재시도 + 폴링 합류/실패 플랜 재시도 (planRef 보관분)
+    if (planRef.current !== null) {
       await regeneratePlan();
     }
   }, [createPlan, regeneratePlan]);
 
   const dismissGenerationError = useCallback(() => setGenerationError(null), []);
+  const dismissBackgroundNotice = useCallback(() => setBackgroundNotice(false), []);
+  const ackCreateRequired = useCallback(() => setCreateRequired(false), []);
 
   /** pendingRef 와 렌더용 state 동기화 */
   const syncPending = useCallback((next: Set<string>) => {
@@ -290,6 +384,10 @@ export function useMemberHome(): MemberHomeState {
     householdSize,
     generation,
     generationError,
+    backgroundNotice,
+    planFailed,
+    createRequired,
+    ackCreateRequired,
     pendingMealIds,
     selectDate,
     createPlan,
@@ -297,6 +395,7 @@ export function useMemberHome(): MemberHomeState {
     toggleMealCompletion,
     retryGenerate,
     dismissGenerationError,
+    dismissBackgroundNotice,
     completeBudgetPlan,
     reload,
   };
