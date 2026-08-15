@@ -73,6 +73,20 @@ provider → GET /auth/{provider}/callback?code&state
 - **CWE-639**: region·connections 모두 경로에 user_id 없이 **인증 유저 본인 스코프**만 (별도 소유자 검증 불필요한 구조)
 - 지역 전환은 **신규 민감 표면 없음**: 자격증명 여전히 미수집, 소급 통화 변환 없음(기존 데이터 불변 — 무결성 리스크 없음)
 
+## 5-5. 자동주문 P0 접점 (v1.6)
+
+| CWE | 항목 | 요구사항 |
+|-----|------|----------|
+| CWE-639 | IDOR / 본인 스코프 | 경로에 user_id 없음. preview/POST/latest 전부 인증 유저 본인 행만. 타인 order_id 조회 API 자체를 P0 에 두지 않음 (`GET /orders/{id}` 없음) |
+| CWE-20 | 입력 검증 | `store` 는 country 세트 enum. `status`/`frequency`/`line_type` 은 서버가 부여(클라이언트 설정 불가). 수량 Decimal>0 |
+| CWE-602 | 클라이언트 검증 의존 금지 | POST 는 라인·가격·matched 를 **받지 않음** (`extra='forbid'`). 서버가 식단+냉장고+build_cart 를 재계산. 프론트 preview 캐시로 확정 금지 |
+| CWE-770 | 자원 소모 | preview(네이버+LLM) 기존 store 리미터 **3회/분**. POST 확정 **5회/분**. GET latest 리미터 없음. 프론트 버튼 비활성 |
+| CWE-522 | 자격증명 보호 | `orders`/`order_items` 에 스토어 시크릿·쿠키·토큰 컬럼 금지. Naver 키는 기존 `.env` 만. 로그에 키·장바구니 링크 쿼리 시크릿 금지 |
+| CWE-79 | XSS | 상품 title/mallName 은 네이버 HTML 태그 기존 스트립 유지 + React 이스케이프. **link 는 https 만 허용**(그 외 저장·렌더 null). `dangerouslySetInnerHTML` 금지 |
+
+- **정직 표시**: `simulation: true` 고정. `paid`/`charged` 상태값 도입 금지. 가짜 승인번호·카드 마스킹 영수증 생성 금지
+- 게스트 주문 persist 금지. 확정 inbound 는 서버 내부 `fridge.add_items` 만 (프론트 이중 POST 로 source 위조 여지 차단)
+
 ## 6. 시크릿 관리
 
 - 전 시크릿 `.env` 전용 (`JWT_SECRET`, provider client secret). `.env.example` 만 커밋, 코드/로그/status JSON 기록 금지
@@ -92,8 +106,11 @@ provider → GET /auth/{provider}/callback?code&state
 | CWE-20 / 602 | 입력 검증 | budget/plans 서버 전량 재검증 + region country 열거·currency 서버 매핑·store 국가별 enum |
 | CWE-922 | 클라이언트 저장 | localStorage 비식별 데이터만 |
 | CWE-307 | 무차별 대입 | auth/budget rate limit |
+| CWE-639 | IDOR | order preview/POST/latest 본인 스코프, `/orders/{id}` 미제공 (v1.6) |
+| CWE-770 | 자원 소모 | order preview 3/분(store 재사용) · POST 5/분 (v1.6) |
 
 ## 변경 이력
+- 2026-08-15: **v1.6** — 자동주문 P0 접점 5-5 (CWE-639/20/602/770/522/79). simulation=true, paid 상태 없음, 주문 테이블에 스토어 시크릿 없음, 상품 링크 https-only. 설계 토론 5라운드 합의
 - 2026-07-09: 최초 작성 (설계 토론 4라운드 보안 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — mealplan 접점 5-1 증보
 - 2026-07-09: v1.2 — household/온보딩 접점 5-2 증보
