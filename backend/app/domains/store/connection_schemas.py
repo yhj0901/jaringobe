@@ -6,7 +6,7 @@ from pydantic import field_serializer
 
 from app.core.schema import CamelModel, serialize_utc
 
-# 국가별 지원 스토어 세트 (api-spec.md §6, FR-603). DB CHECK(리비전 0007)는 전체 합집합을 허용하고,
+# 국가별 지원 스토어 세트 (api-spec.md §6, FR-603). DB CHECK(리비전 0008)는 전체 합집합을 허용하고,
 # 노출/검증 세트는 user.country 로 결정한다 (지역 전환 시 타 국가 연동 행 보존).
 STORES_BY_COUNTRY: dict[str, tuple[str, ...]] = {
     "KR": ("kurly", "coupang", "ssg", "naver"),

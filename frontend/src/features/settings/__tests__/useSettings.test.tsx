@@ -431,6 +431,23 @@ describe('useSettings 지역 전환 (FR-601/602)', () => {
     expect(done).toBe(false);
     expect(result.current.user?.country).toBe('KR');
   });
+
+  it('전환 성공 + 스토어 재조회 실패 → user는 갱신되고 스토어는 새 국가 빈 세트', async () => {
+    seedHappyPath();
+    regionMock.mockResolvedValue(ok({ ...ME, country: 'US', currency: 'USD' }));
+    const { result } = await renderReady();
+    storesMock.mockResolvedValueOnce(err(500, 'STORE_FETCH_FAILED'));
+
+    let done = false;
+    await act(async () => {
+      done = await result.current.switchRegion('US');
+    });
+
+    expect(done).toBe(true);
+    expect(result.current.user?.currency).toBe('USD');
+    expect(result.current.storeIds).toEqual(['walmart', 'instacart']);
+    expect(result.current.connections).toEqual({ walmart: false, instacart: false });
+  });
 });
 
 describe('useSettings 재생성·로그아웃 (FR-401/403)', () => {

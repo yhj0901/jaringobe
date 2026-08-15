@@ -285,7 +285,12 @@ export function useSettings(): SettingsState {
       if (result.ok) {
         setUser(result.data);
         const stores = await fetchStoreConnections();
-        if (stores.ok) applyStoreConnections(result.data.country, stores.data);
+        if (stores.ok) {
+          applyStoreConnections(result.data.country, stores.data);
+        } else {
+          // 재조회 실패해도 이전 국가 스토어가 남지 않게 새 국가 빈 세트로 교체
+          applyStoreConnections(result.data.country, { connections: [] });
+        }
       }
       setSwitchingRegion(false);
       return result.ok;
