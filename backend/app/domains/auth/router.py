@@ -23,7 +23,7 @@ from app.core.security import (
 from app.domains.auth import service
 from app.domains.auth.adapters.base import OAuthProviderError
 from app.domains.auth.models import User
-from app.domains.auth.schemas import UserMeResponse
+from app.domains.auth.schemas import UserMeResponse, UserRegionUpdateRequest
 
 router = APIRouter()
 
@@ -137,3 +137,13 @@ async def users_me(
 ) -> UserMeResponse:
     """로그인 직후 분기 판정용 단일 콜 (auth 도메인에서 제공)."""
     return await service.build_user_me(db, user)
+
+
+@router.put("/users/me/region", response_model=UserMeResponse)
+async def update_user_region(
+    payload: UserRegionUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> UserMeResponse:
+    """지역 수동 전환 — country 저장 + currency 서버 매핑 (api-spec.md §1-6, 본인 스코프)."""
+    return await service.update_region(db, user, payload.country)

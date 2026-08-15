@@ -144,7 +144,16 @@ useMemberHome():
 - 하단 탭바: 홈/냉장고/장바구니/**마이** (식단 탭은 추후 프리미엄 구독 편입 예정이라 제외 — 홈의 주간 식단 표시는 유지). 설정 진입을 상단 GB 아바타 → 하단 마이 탭으로 이동, 상단 GB 는 브랜드 마크(비버튼)로만 남겨 중복 제거 (HomeShell onMyTabClick)
 - 마이 탭: 회원 → /settings, 게스트 → 가입 게이트. 홈 탭은 홈 화면 유지(대체 아님). 가구 구성원/식단 방향·선호/월 예산 편집은 설정 페이지(9장)에 그대로
 
+## 12. 지역·통화 전환 + 글로벌 배지 (v1.6 — 글로벌-지역전환)
+
+- **설정 "지역·통화" 행**(9장 설정 페이지에 신설 — 계정 카드 아래·식생활 설정 위): 현재 지역 표시(`한국 ₩` / `글로벌 $`) + 전환 토글. 전환 시 **확인 시트**("기존 예산안·식단은 기존 통화로 유지됩니다" 안내, FR-606) → `PUT /users/me/region {country}` → 성공 시 `GET /users/me` 재조회 → 통화·스토어 세트·배지 즉시 반영
+- **글로벌 배지**(FR-605): `user.country !== 'KR'` 일 때 `Badge`(tone `neutral`) "글로벌" 노출 — **홈 헤더**(HomeShell 인사말 옆, `TrialModeBadge` 와 병렬 슬롯 L144) + **설정 지역 행**. 통화 표기는 `MoneyText` 가 currency 기준 자동(추가 작업 없음)
+- **국가별 스토어 리스트**: `features/store/constants.ts` 의 `STORE_IDS`/`STORE_BRAND_COLORS` 를 country 별 세트로 분기(KR 4 / US 2). US 브랜드 — Walmart `#0071CE`(mono W), Instacart `#43B02A`(mono I). `StoreConnectionsCard` 는 현재 country 세트만 렌더(9장 ③ 재사용)
+- **재사용**: `MoneyText`(currency 포맷)·`Badge`·store 토글 인프라·`useSettings`(user.currency). **신규**: 지역 토글 컴포넌트 + `putUserRegion(country)` API 클라이언트(`features/settings` 또는 `features/store` 인접)
+- i18n(ko/en 동시): `settings.region.{section, korea, global, switchConfirm.{title,description,confirm}, noRetroNotice}`, `common.globalBadge`(또는 `guestHome.globalBadge`), `store.{walmart|instacart}.{name,mono}`
+
 ## 변경 이력
+- 2026-07-10: v1.6 — 지역·통화 전환 행 + 글로벌 배지 + 국가별 스토어 세트 12장 증보 (글로벌-지역전환)
 - 2026-07-09: 최초 작성 (설계 토론 3라운드 UI 교차 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — 회원 홈(member 모드) 7장 증보 (회원홈-식단연결 기획)
 - 2026-07-09: v1.2 — 온보딩 3스텝(프로토타입 1:1)·진입 순서 8장 증보

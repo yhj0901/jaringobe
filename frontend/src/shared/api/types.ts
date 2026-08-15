@@ -21,6 +21,14 @@ export interface UserMeResponse {
   hasBudgetPlan: boolean;
 }
 
+/** 지원 지역(국가) — KR/US (api-spec 1-6, FR-602) */
+export type Country = 'KR' | 'US';
+
+/** PUT /api/v1/users/me/region 요청 (api-spec 1-6) — currency 는 서버가 매핑 */
+export interface UserRegionUpdateRequest {
+  country: Country;
+}
+
 export type MealDirection = 'health' | 'diet' | 'hearty' | 'kids';
 
 /** POST /api/v1/budget/plans 요청 (api-spec 2-1) */

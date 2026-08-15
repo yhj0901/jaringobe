@@ -109,4 +109,15 @@ describe('HomeShell (FR-101)', () => {
     const badges = screen.getAllByText(/일 남음/);
     expect(badges[0]).toHaveTextContent('1일 남음');
   });
+
+  it('globalBadge=true 시 인사 헤더에 "글로벌" 배지를 렌더한다 (FR-605)', () => {
+    const vm = { ...getDefaultViewModel('ko'), mode: 'member' as const };
+    renderWithIntl(<HomeShell viewModel={vm} globalBadge />);
+    expect(screen.getByText('글로벌')).toBeInTheDocument();
+  });
+
+  it('globalBadge 미지정 시 배지를 렌더하지 않는다', () => {
+    renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} />);
+    expect(screen.queryByText('글로벌')).not.toBeInTheDocument();
+  });
 });

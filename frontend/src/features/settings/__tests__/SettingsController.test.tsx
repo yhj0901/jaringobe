@@ -45,15 +45,18 @@ function baseState(overrides: Partial<SettingsState> = {}): SettingsState {
     budget: { amount: '420000.00', currency: 'KRW' },
     planId: 'plan-1',
     connections: { kurly: true, coupang: false, ssg: false, naver: false },
+    storeIds: ['kurly', 'coupang', 'ssg', 'naver'],
     profile: { direction: 'health', cuisines: [], locked: true, known: false },
     saving: false,
     togglingStore: null,
+    switchingRegion: false,
     generating: false,
     loggingOut: false,
     saveHousehold: vi.fn().mockResolvedValue(true),
     saveBudget: vi.fn().mockResolvedValue(true),
     savePreference: vi.fn().mockResolvedValue(true),
     toggleStore: vi.fn().mockResolvedValue(true),
+    switchRegion: vi.fn().mockResolvedValue(true),
     regenerate: vi.fn().mockResolvedValue('ok'),
     logout: vi.fn().mockResolvedValue(true),
     reload: vi.fn(),
@@ -320,6 +323,58 @@ describe('스토어 연동 토글 (FR-404)', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: '연동하기' }));
 
     expect(await screen.findByText(/연동 상태 변경에 실패했어요/)).toBeInTheDocument();
+  });
+});
+
+describe('지역·통화 전환 (FR-601/605)', () => {
+  const US_STATE: Partial<SettingsState> = {
+    user: { ...USER, country: 'US', currency: 'USD' },
+    connections: { walmart: false, instacart: false },
+    storeIds: ['walmart', 'instacart'],
+  };
+
+  it('KR 기본 → 글로벌 배지 없음 + 한국/글로벌 토글 노출', () => {
+    renderWithIntl(<SettingsController />);
+    expect(screen.getByRole('button', { name: '한국 ₩' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '글로벌 $' })).toBeInTheDocument();
+    expect(screen.queryByText('글로벌')).not.toBeInTheDocument();
+  });
+
+  it('글로벌 $ 클릭 → 전환 확인 시트 → 수락 시 switchRegion(US)', async () => {
+    renderWithIntl(<SettingsController />);
+
+    fireEvent.click(screen.getByRole('button', { name: '글로벌 $' }));
+    expect(screen.getByText('지역을 전환할까요?')).toBeInTheDocument();
+
+    const sheet = screen.getByRole('dialog');
+    fireEvent.click(within(sheet).getByRole('button', { name: '전환하기' }));
+    await waitFor(() => expect(state.current.switchRegion).toHaveBeenCalledWith('US'));
+  });
+
+  it('전환 취소 → switchRegion 미호출', () => {
+    renderWithIntl(<SettingsController />);
+    fireEvent.click(screen.getByRole('button', { name: '글로벌 $' }));
+    fireEvent.click(screen.getByRole('button', { name: '취소' }));
+    expect(state.current.switchRegion).not.toHaveBeenCalled();
+  });
+
+  it('US 지역 → 글로벌 배지 + US 스토어(월마트/인스타카트) 렌더', () => {
+    state.current = baseState(US_STATE);
+    renderWithIntl(<SettingsController />);
+    expect(screen.getByText('글로벌')).toBeInTheDocument();
+    expect(screen.getByText('월마트')).toBeInTheDocument();
+    expect(screen.getByText('인스타카트')).toBeInTheDocument();
+    expect(screen.queryByText('마켓컬리')).not.toBeInTheDocument();
+  });
+
+  it('전환 실패 → 오류 배너', async () => {
+    state.current = baseState({ switchRegion: vi.fn().mockResolvedValue(false) });
+    renderWithIntl(<SettingsController />);
+
+    fireEvent.click(screen.getByRole('button', { name: '글로벌 $' }));
+    const sheet = screen.getByRole('dialog');
+    fireEvent.click(within(sheet).getByRole('button', { name: '전환하기' }));
+    expect(await screen.findByText(/지역 전환에 실패했어요/)).toBeInTheDocument();
   });
 });
 

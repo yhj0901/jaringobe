@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-07-10T15:45:00+09:00",
+  "session_topic": "글로벌 지역 전환 + 국가별 스토어 (설계→구현 완료, 리뷰 대기)",
+  "command": "/설계시작 → /인프라시작 → /API시작 → /UI시작",
+  "agent": "orchestrator (design→infra→backend→frontend)",
+  "status": "구현 완료·feature/global-region 커밋. 검증(테스트/마이그레이션 왕복)은 실행 환경 부재로 미실행 — 리뷰·CI 필요",
+  "tasks": [
+    {"id": 1, "subject": "설계 5문서 확장 (GATE 2 승인)", "status": "completed"},
+    {"id": 2, "subject": "마이그레이션 0007 (GATE 3, 팀원 리뷰 대기)", "status": "completed"},
+    {"id": 3, "subject": "백엔드 PUT /users/me/region + 국가별 스토어", "status": "completed"},
+    {"id": 4, "subject": "프론트 지역 행 + 글로벌 배지 + 국가별 스토어", "status": "completed"},
+    {"id": 5, "subject": "테스트 실행/커버리지 검증 (node·postgres 환경)", "status": "pending"},
+    {"id": 6, "subject": "PR 리뷰·머지 (store 제약 팀원 리뷰 포함)", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/설계/{api-spec,db-schema,ui-design,security-design,architecture}.md",
+    "backend/alembic/versions/0007_store_connections_global.py",
+    "backend/app/domains/auth/{router,service,schemas}.py",
+    "backend/app/domains/store/{connection_router,connection_service,connection_schemas,connection_models}.py",
+    "backend/tests/{test_user_region.py,test_store_connections.py}",
+    "frontend/src/features/settings/{RegionCard.tsx,regionApi.ts,useSettings.ts,SettingsController.tsx,StoreConnectionsCard.tsx}",
+    "frontend/src/features/store/{types.ts,constants.ts}",
+    "frontend/src/features/home/HomeShell.tsx",
+    "frontend/src/features/mealplan/{useMemberHome.ts,MemberHomeController.tsx}",
+    "frontend/messages/{ko,en}.json"
+  ],
+  "key_findings": "커밋 4건(d117b1d 설계 / 35729e3 0007 / c5dfe04 백엔드 / 1ed73fe 프론트) on feature/global-region(origin/main 기반). 로컬 정적검증만 통과(py_compile·JSON·리비전체인). node/postgres 부재로 pytest/vitest/tsc/alembic 왕복 미실행.",
+  "recommended_actions": "① 클린 체크아웃에서 pytest+vitest+tsc 실행(0004_household.py 미추적 파일 없는 상태) ② 마이그레이션 왕복 검증 ③ store 제약 변경 팀원 리뷰 ④ PR 머지",
+  "pending_user_input": "PR 머지 여부 (검증·리뷰 후)"
+}

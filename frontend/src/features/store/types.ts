@@ -3,8 +3,8 @@
  * 1단계: 연동 상태 관리만 (자격증명 미수집 — FR-404/405).
  */
 
-/** KR 지원 스토어 (api-spec 6-2 열거값 — 그 외 404 STORE_NOT_SUPPORTED) */
-export type StoreId = 'kurly' | 'coupang' | 'ssg' | 'naver';
+/** 지원 스토어 (api-spec 6-2 열거값 — 국가별 세트, 그 외 404 STORE_NOT_SUPPORTED). v1.5 US 편입 */
+export type StoreId = 'kurly' | 'coupang' | 'ssg' | 'naver' | 'walmart' | 'instacart';
 
 export type StoreConnectionStatus = 'connected' | 'disconnected';
 

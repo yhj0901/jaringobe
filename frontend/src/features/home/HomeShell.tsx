@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import { Badge } from '@/shared/ui/Badge';
 import { TrialModeBadge } from '@/features/home/TrialModeBadge';
 import { BudgetMoodCard } from '@/features/home/BudgetMoodCard';
 import { MealPlanSection } from '@/features/home/MealPlanSection';
@@ -31,6 +32,8 @@ interface HomeShellProps {
   pendingMealIds?: ReadonlySet<string>;
   /** 하단 "마이" 탭 클릭 — 회원: /settings 이동, 게스트: 가입 게이트 (ui-design 9장, FR-401) */
   onMyTabClick?: () => void;
+  /** [member 옵셔널 확장] country != KR 시 "글로벌" 배지 노출 (FR-605, ui-design 12장) */
+  globalBadge?: boolean;
 }
 
 /** 하단 탭바 아이콘 — 디자인 마크업의 인라인 SVG 재사용 */
@@ -128,6 +131,7 @@ export function HomeShell({
   onMyTabClick,
   onToggleMealComplete,
   pendingMealIds,
+  globalBadge = false,
 }: HomeShellProps) {
   const t = useTranslations('guestHome');
   const isGuest = viewModel.mode !== 'member';
@@ -142,6 +146,7 @@ export function HomeShell({
                 {t('header.greeting')}
               </span>
               {isGuest && !hideTrialBadge ? <TrialModeBadge /> : null}
+              {globalBadge ? <Badge tone="neutral">{t('globalBadge')}</Badge> : null}
             </div>
             <h1 className="text-xl font-extrabold tracking-tight text-navy-900">
               {t('header.title')} <span className="text-brand-600">{t('header.accent')}</span>

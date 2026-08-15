@@ -68,6 +68,7 @@ function baseState(overrides: Partial<MemberHomeState> = {}): MemberHomeState {
   return {
     status: 'loading',
     onboardingCompleted: true,
+    country: 'KR',
     plan: null,
     viewModel: null,
     budget: null,
@@ -283,6 +284,18 @@ describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '식단' }));
     expect(screen.getByText('프리미엄 구독 서비스로 준비 중이에요. 곧 만나요!')).toBeInTheDocument();
+  });
+
+  it('country=US → 홈 헤더 "글로벌" 배지 노출 (FR-605)', () => {
+    state.current = readyState(PLAN, { country: 'US' });
+    renderWithIntl(<MemberHomeController />);
+    expect(screen.getByText('글로벌')).toBeInTheDocument();
+  });
+
+  it('country=KR → 글로벌 배지 미노출', () => {
+    state.current = readyState();
+    renderWithIntl(<MemberHomeController />);
+    expect(screen.queryByText('글로벌')).not.toBeInTheDocument();
   });
 
   it('끼니 행 클릭 → 레시피 시트(메타 3칩·재료 칩·기본 조리법) 오픈 후 닫기 (FR-504)', () => {

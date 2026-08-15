@@ -89,6 +89,23 @@ Access 재발급 + refresh 회전.
 }
 ```
 
+### 1-6. `PUT /api/v1/users/me/region` — 인증 필요 (v1.5 신규)
+지역(국가) **수동 전환**. `country` 만 받고 **currency 는 서버가 매핑**(KR→KRW, US→USD)해 저장한다 — 클라이언트가 보낸 currency 는 무시(통화·국가 정합 강제).
+
+```json
+// 요청 UserRegionUpdateRequest
+{ "country": "US" }        // KR | US (그 외 422)
+```
+
+| HTTP | 내용 |
+|------|------|
+| `200` | `UserMeResponse` (country/currency 갱신 반영 — 1-5 와 동일 구조) |
+| `422 VALIDATION_ERROR` | country 열거 위반 |
+
+- **소급 변환 없음(FR-606)**: 기존 `budget_plans`·`meal_plans` 의 저장 통화는 그대로 유지. 전환은 이후 **신규 데이터**(예산안/온보딩 통화 기본값)와 **표시**(글로벌 배지·스토어 세트)에만 적용. 프론트는 전환 시 "기존 플랜은 기존 통화로 유지" 안내 표시
+- 본인 스코프 — 경로에 user_id 없음, 인증 유저 자신만 (CWE-639)
+- users 리소스지만 계정 도메인이므로 **auth 도메인 라우터**에서 제공(GET /users/me 와 동일 위치)
+
 ---
 
 ## 2. budget 도메인
@@ -224,18 +241,25 @@ Access 재발급 + refresh 회전.
 
 ---
 
-## 6. store 연동 상태 (v1.3 신규 — 설정 페이지, 실연동 아님)
+## 6. store 연동 상태 (v1.3 신규 / v1.5 국가별 확장 — 설정 페이지, 실연동 아님)
+
+스토어 세트는 **`user.country` 기준**으로 분기한다 (FR-603).
+
+| country | 스토어 세트 |
+|---------|-------------|
+| `KR` | `kurly` · `coupang` · `ssg` · `naver` |
+| `US` | `walmart` · `instacart` |
 
 ### 6-1. `GET /api/v1/stores/connections` — 인증 필요
-KR 4종 전체 상태 반환 (미저장 스토어는 disconnected).
+`user.country` 의 스토어 세트 전체 상태 반환 (미저장 스토어는 disconnected). 타 국가 스토어의 기존 연동 행은 **삭제하지 않고 응답에서 제외만** 한다 — 지역 재전환 시 이전 연동 상태 복원.
 ```json
 { "connections": [ { "store": "kurly", "status": "connected", "connectedAt": "2026-07-10T00:00:00Z" },
                    { "store": "coupang", "status": "disconnected", "connectedAt": null } ] }
 ```
 
 ### 6-2. `PUT /api/v1/stores/connections/{store}` — 인증 필요
-`store ∈ kurly|coupang|ssg|naver`(그 외 404 STORE_NOT_SUPPORTED). body `{ "connected": true|false }` → 200 (upsert).
-> 1단계: 연동 상태 관리만(자격증명 미수집). 실계정 연동·자동 결제는 store 본설계에서 확장.
+`store` 는 **`user.country` 의 허용 세트**에 속해야 함(그 외 404 `STORE_NOT_SUPPORTED`). body `{ "connected": true|false }` → 200 (upsert).
+> 1단계: 연동 상태 관리만(자격증명 미수집). 실계정 연동·자동 결제(US Walmart/Instacart 공식 API 포함)는 store 본설계에서 확장.
 
 ---
 
@@ -256,11 +280,13 @@ KR 4종 전체 상태 반환 (미저장 스토어는 disconnected).
 | 11 | `PUT /api/v1/households/me` | 필요 | JSON (v1.2 신규) |
 | 12 | `GET /api/v1/households/me` | 필요 | JSON (v1.2 신규) |
 | 13 | `PUT /api/v1/budget/plans` | 필요 | JSON (v1.2 신규) |
-| 14 | `GET /api/v1/stores/connections` | 필요 | JSON (v1.3 신규) |
-| 15 | `PUT /api/v1/stores/connections/{store}` | 필요 | JSON (v1.3 신규) |
+| 14 | `GET /api/v1/stores/connections` | 필요 | JSON (v1.3 / v1.5 국가별) |
+| 15 | `PUT /api/v1/stores/connections/{store}` | 필요 | JSON (v1.3 / v1.5 국가별) |
 | 16 | `PUT /api/v1/mealplans/{planId}/meals/{mealId}/completion` | 필요 | JSON (v1.4 신규) |
+| 17 | `PUT /api/v1/users/me/region` | 필요 | JSON (v1.5 신규) |
 
 ## 변경 이력
+- 2026-07-10: **v1.5** — 지역 전환 API(`PUT /users/me/region`, currency 서버 매핑·소급 변환 없음) + store 연동 국가별 세트 분기(KR 4 / US 2, walmart·instacart 편입). UI 대변인 동의
 - 2026-07-10: **v1.4** — 식사 완료 API + MealOut 확장(steps/completedAt/timeMinutes/difficulty). UI 대변인 동의
 - 2026-07-10: **v1.3** — store 연동 상태 2종 (설정 페이지, 자격증명 미수집 1단계). UI 대변인 동의
 - 2026-07-09: **v1.2** — household 도메인(PUT/GET /households/me) + PUT /budget/plans(locked·cuisines 확장). 온보딩 3스텝(프로토타입 1:1) 대응. UI 대변인 동의 완료

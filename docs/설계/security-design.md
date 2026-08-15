@@ -68,6 +68,11 @@ provider → GET /auth/{provider}/callback?code&state
 ## 5-3. 설정/스토어 연동 접점 (v1.3)
 - CWE-639 본인 스코프(connections) / CWE-20 store·status enum 검증 / **자격증명 미수집**(1단계) — 실연동 시 암호화 저장 설계 필수(store 본설계)
 
+## 5-4. 지역 전환 / 국가별 스토어 접점 (v1.5)
+- **CWE-20**: `PUT /users/me/region` 의 `country` 열거(KR/US) 검증. **currency 는 클라이언트 입력 불신 — 서버가 country 로부터 매핑**(통화·국가 불일치 상태를 원천 차단). store enum 검증은 `user.country` 허용 세트 기준(국가 밖 스토어 PUT → 404 `STORE_NOT_SUPPORTED`)
+- **CWE-639**: region·connections 모두 경로에 user_id 없이 **인증 유저 본인 스코프**만 (별도 소유자 검증 불필요한 구조)
+- 지역 전환은 **신규 민감 표면 없음**: 자격증명 여전히 미수집, 소급 통화 변환 없음(기존 데이터 불변 — 무결성 리스크 없음)
+
 ## 6. 시크릿 관리
 
 - 전 시크릿 `.env` 전용 (`JWT_SECRET`, provider client secret). `.env.example` 만 커밋, 코드/로그/status JSON 기록 금지
@@ -84,7 +89,7 @@ provider → GET /auth/{provider}/callback?code&state
 | CWE-613 | 세션 만료 | Access 30분 / Refresh 14일 + 회전 + 재사용 감지 전체 폐기 |
 | CWE-798 / 522 | 자격증명 | 시크릿 .env, provider 토큰 즉시 폐기, refresh 해시 저장 |
 | CWE-79 | XSS | httpOnly 쿠키, React 이스케이프, dangerouslySetInnerHTML 금지 |
-| CWE-20 / 602 | 입력 검증 | budget/plans 서버 전량 재검증 |
+| CWE-20 / 602 | 입력 검증 | budget/plans 서버 전량 재검증 + region country 열거·currency 서버 매핑·store 국가별 enum |
 | CWE-922 | 클라이언트 저장 | localStorage 비식별 데이터만 |
 | CWE-307 | 무차별 대입 | auth/budget rate limit |
 
@@ -92,3 +97,4 @@ provider → GET /auth/{provider}/callback?code&state
 - 2026-07-09: 최초 작성 (설계 토론 4라운드 보안 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — mealplan 접점 5-1 증보
 - 2026-07-09: v1.2 — household/온보딩 접점 5-2 증보
+- 2026-07-10: v1.5 — 지역 전환/국가별 스토어 접점 5-4 증보 (country 열거·currency 서버 매핑·본인 스코프)

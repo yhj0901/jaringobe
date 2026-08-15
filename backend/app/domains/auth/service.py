@@ -164,6 +164,20 @@ async def revoke_refresh_token(db: AsyncSession, raw_refresh: str) -> None:
     await db.commit()
 
 
+COUNTRY_CURRENCY: dict[str, str] = {"KR": "KRW", "US": "USD"}
+
+
+async def update_region(db: AsyncSession, user: User, country: str) -> UserMeResponse:
+    """지역 수동 전환 — country 저장 + currency 서버 매핑 (api-spec.md §1-6, FR-602).
+
+    통화·국가 정합 강제(클라이언트 currency 불신). 기존 budget_plans/meal_plans 는 소급 변환 없음(FR-606).
+    """
+    user.country = country
+    user.currency = COUNTRY_CURRENCY[country]
+    await db.commit()
+    return await build_user_me(db, user)
+
+
 async def build_user_me(db: AsyncSession, user: User) -> UserMeResponse:
     """GET /users/me 응답 — onboardingCompleted / hasBudgetPlan 분기 필드 포함."""
     has_plan = bool(await db.scalar(select(exists().where(BudgetPlan.user_id == user.id))))
