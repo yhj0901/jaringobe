@@ -80,6 +80,8 @@ export interface HomeViewModel {
     stores: StoreBadge[];
     /** 주문 추천 품목 (샘플 매트릭스 콘텐츠) — 선택 필드, 셸 계약 호환 확장 */
     recommendedItems?: string[];
+    /** 추천 칩 초과 개수 — 회원 preview 캡 초과분 "+K" (게스트 미사용) */
+    moreCount?: number;
   };
 }
 

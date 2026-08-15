@@ -28,6 +28,10 @@
     "settings": {
       "title": "Settings — JARINGOBE",
       "description": "Manage your account, eating profile, and auto-order store connections."
+    },
+    "orders": {
+      "title": "Cart — JARINGOBE",
+      "description": "Review the grocery list (remaining meals minus fridge stock) and confirm a simulation order."
     }
   },
   "common": {
@@ -227,6 +231,16 @@
         "title": "Create your own budget-fit meal plan",
         "cta": "Create my meal plan"
       }
+    },
+    "autoOrder": {
+      "title": "Auto grocery orders",
+      "connectCta": "Connect a store",
+      "viewCartCta": "View cart",
+      "disconnectedHint": "Connect a store to confirm your grocery list.",
+      "recommendedLabel": "Recommended this week",
+      "moreCount": "+{count}",
+      "statusActive": "Ready",
+      "statusInactive": "Standby"
     }
   },
   "mealplan": {
@@ -539,6 +553,54 @@
     "instacart": {
       "name": "Instacart",
       "mono": "I"
+    }
+  },
+  "orders": {
+    "title": "Cart",
+    "backLabel": "Back to home",
+    "loading": "Preparing your grocery list…",
+    "needed": {
+      "title": "To buy"
+    },
+    "covered": {
+      "title": "Covered by fridge"
+    },
+    "emptyMealplan": {
+      "title": "Create a meal plan first",
+      "description": "We build your grocery list from remaining meals.",
+      "cta": "Go home"
+    },
+    "nothingToOrder": "Nothing to buy",
+    "noPrice": "No price",
+    "estimateTotal": "Estimated total",
+    "estimateSource": "Based on Naver Shopping (Kurly) search",
+    "priceBasisKurly": "Based on Naver Shopping (Kurly) search",
+    "simulationNotice": "Simulation based on linked stores (not a real charge)",
+    "confirmCta": "Confirm cart",
+    "confirming": "Confirming…",
+    "confirmedBadge": "Simulation confirmed",
+    "nextSuggested": "Next suggested order {date}",
+    "fridgeInbound": "Added to your fridge",
+    "reconfirmWarning": "Confirming again will add more stock to your fridge",
+    "noStore": {
+      "title": "No store connected",
+      "description": "Connect a store in settings before confirming your cart.",
+      "cta": "Connect in settings"
+    },
+    "retry": "Try again",
+    "dismiss": "Dismiss",
+    "loadFailed": "We couldn’t load your grocery list. Please try again in a moment.",
+    "qty": "{qty}{unit}",
+    "fromFridge": "Fridge {qty}{unit}",
+    "error": {
+      "STORE_NOT_CONNECTED": "No store is connected. Connect one in settings.",
+      "NOTHING_TO_ORDER": "There’s nothing to buy, so you can’t confirm.",
+      "MEALPLAN_NOT_FOUND": "Create a meal plan first.",
+      "ORDER_NOT_FOUND": "You don’t have a confirmed order yet.",
+      "RATE_LIMITED": "Too many requests for now. Please try again shortly.",
+      "STORE_NOT_SUPPORTED": "This store isn’t available in your region.",
+      "VALIDATION_ERROR": "That request wasn’t valid. Please try again.",
+      "AUTH_REQUIRED": "Sign-in is required."
     }
   }
 }
