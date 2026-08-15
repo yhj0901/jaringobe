@@ -20,7 +20,7 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -80,6 +80,8 @@ class Meal(Base):
     )
     time_minutes: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     difficulty: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    # 완료 시 실제 냉장고 차감 스냅샷 (마이그레이션 0007). 해제 복원은 이 값만 사용.
+    fridge_deducted: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
     meal_plan: Mapped["MealPlan"] = relationship(back_populates="meals")
     ingredients: Mapped[list["MealIngredient"]] = relationship(

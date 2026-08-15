@@ -77,7 +77,7 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 | 테이블 | 요약 |
 |--------|------|
 | `meal_plans` | 유저별 식단 플랜 (status ready/over_budget, region, currency, period, 금액 numeric+통화). `ix_meal_plans_user_created(user_id, created_at)` — **latest 조회 커버(추가 인덱스 불필요)** |
-| `meals` | 플랜별 끼니 (plan_date, meal_type, recipe_name). `ix_meals_plan_date` |
+| `meals` | 플랜별 끼니 (plan_date, meal_type, recipe_name). `ix_meals_plan_date`. **0006** completed_at/time_minutes/difficulty. **0007** `fridge_deducted jsonb NULL` — 완료 시 실제 냉장고 차감 스냅샷. 해제 복원은 이 수량만 (레시피 전량 복원 금지) |
 | `meal_ingredients` | 끼니별 재료 (수량/단위/추정가). `ix_meal_ingredients_meal` |
 | `ingredient_price_refs` | 지역별 기준가 테이블. `ix_price_region_name(region, name)` |
 
@@ -120,11 +120,13 @@ users 1 ──── 1 budget_plans        (v0: 유저당 활성 예산안 1개 
 | `0004_household_budget_ext` | household_members 신규 + budget_plans locked/cuisines (down_revision=0003) | **작성·로컬 왕복 검증 PASS** (2026-07-09, GATE 3 통과) |
 | `0005_store_connections` | store_connections 신규 (down_revision=0004) | **작성·로컬 왕복 검증 PASS** (2026-07-10, GATE 3 통과) |
 | `0006_meal_completion` | meals 에 completed_at·time_minutes·difficulty(NULL) 3컬럼 (down_revision=0005) | **작성·로컬 왕복 검증 PASS** (2026-07-10, GATE 3 통과) |
+| `0007_meal_fridge_deducted` | meals.fridge_deducted jsonb NULL (down_revision=0006). 완료 시 실제 차감 스냅샷, 해제는 이 수량만 복원 | **작성** (2026-08-15) |
 
 - 롤백: 4테이블 역순 drop (최초 리비전이므로 단순, pgcrypto 확장은 유지)
 - 파일: `backend/alembic/versions/0001_initial_auth_budget.py`
 
 ## 변경 이력
+- 2026-08-15: v1.4.1 — meals.fridge_deducted (0007) 실제 차감 스냅샷. 완료 해제 시 레시피 전량 복원 금지
 - 2026-07-09: v1.2 — 2-6 household_members + budget_plans 확장 설계 (리비전 0004 계획)
 - 2026-07-09: 최초 작성 — auth 3테이블 + budget_plans v0 (설계 토론 5라운드 합의)
 - 2026-07-09: 리비전 0001 작성·로컬 검증 완료 (GATE 3 통과). rotated_from FK 는 ON DELETE SET NULL 로 확정
