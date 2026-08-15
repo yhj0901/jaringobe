@@ -297,8 +297,9 @@ async def set_meal_completion(
 
     가상 냉장고 연동 (Zero-UX 축):
     - 미완료→완료 전환: 끼니 재료를 냉장고에서 차감(deduct, 유통기한 임박 FIFO).
-    - 완료→미완료 전환: 차감분 되돌리기 — 같은 수량을 냉장고에 재등록(source=mealplan, 유통기한 없음).
-      원래 유통기한/재고 부족분은 복원하지 않음(수량 기준 원복).
+      실제 차감량(재고 부족 시 requested보다 작음)을 meal.fridge_deducted 에 저장.
+    - 완료→미완료 전환: fridge_deducted 스냅샷 수량만 재등록(source=mealplan, 유통기한 없음).
+      레시피 전량으로 복원하지 않는다(재고 부족 후 해제 시 인플레 방지).
     - 상태 변화가 없으면(멱등) 냉장고를 건드리지 않는다.
     """
     plan = await _reload_or_none(db, plan_id)
@@ -315,18 +316,33 @@ async def set_meal_completion(
     meal.completed_at = utcnow() if completed else None
 
     if completed and not was_completed and consumption:
-        # 완료 전환 → 냉장고 차감 (deduct 내부에서 commit)
-        await fridge_service.deduct(
+        # 완료 전환 → 냉장고 차감 (deduct 내부에서 commit). 실제 차감량만 스냅샷.
+        result = await fridge_service.deduct(
             db, user.id,
             [FridgeNeed(name=n, quantity=q, unit=u) for (_nl, u), (n, q) in consumption.items()],
         )
-    elif not completed and was_completed and consumption:
-        # 해제 전환 → 차감분 되돌리기 (add_items 내부에서 commit)
-        await fridge_service.add_items(
-            db, user.id,
-            [FridgeItemCreate(name=n, quantity=q, unit=u, source="mealplan")
-             for (_nl, u), (n, q) in consumption.items()],
-        )
+        meal.fridge_deducted = [
+            {"name": line.name, "quantity": line.deducted, "unit": line.unit}
+            for line in result.items
+            if Decimal(line.deducted) > 0
+        ]
+        await db.commit()
+    elif not completed and was_completed:
+        # 해제 전환 → 스냅샷 수량만 되돌리기 (없으면 복원 없음 = 인플레 방지)
+        snapshot = list(meal.fridge_deducted or [])
+        meal.fridge_deducted = None
+        restores = [
+            FridgeItemCreate(
+                name=row["name"], quantity=Decimal(str(row["quantity"])),
+                unit=row["unit"], source="mealplan",
+            )
+            for row in snapshot
+            if Decimal(str(row.get("quantity", "0"))) > 0
+        ]
+        if restores:
+            await fridge_service.add_items(db, user.id, restores)
+        else:
+            await db.commit()
     else:
         await db.commit()
 

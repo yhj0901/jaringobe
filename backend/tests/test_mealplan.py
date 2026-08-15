@@ -401,6 +401,65 @@ async def test_meal_completion_deducts_and_restores_fridge(client, respx_mock):
         assert totals.get(key, Decimal("0")) == q * 2, f"{key} 복원 후 수량 불일치"
 
 
+async def test_meal_completion_restore_does_not_inflate_shortfall(client, respx_mock):
+    """재고 부족 차감 후 해제 → 레시피 전량이 아니라 실제 차감분(원래 재고)만 복원."""
+    await login(client, respx_mock)
+    await _create_budget(client)
+    body = (
+        await client.post("/api/v1/mealplans", json={"days": 1, "mealsPerDay": 2})
+    ).json()
+    plan_id = body["id"]
+    meal = body["meals"][0]
+    meal_id = meal["id"]
+
+    needed: dict[tuple[str, str], Decimal] = defaultdict(lambda: Decimal("0"))
+    names: dict[tuple[str, str], str] = {}
+    for ing in meal["ingredients"]:
+        q = Decimal(ing["quantity"])
+        if q <= 0:
+            continue
+        key = (ing["name"].lower(), ing["unit"])
+        needed[key] += q
+        names.setdefault(key, ing["name"])
+    assert needed, "끼니에 차감할 재료가 있어야 함"
+
+    # 필요량의 절반만 채움 (최소 0.001 이상)
+    stock = {
+        k: (q / 2 if q / 2 > 0 else q)
+        for k, q in needed.items()
+    }
+    add = await client.post(
+        "/api/v1/fridge/items",
+        json={"items": [
+            {"name": names[k], "quantity": str(q), "unit": k[1]}
+            for k, q in stock.items()
+        ]},
+    )
+    assert add.status_code == 201, add.text
+    before = _fridge_totals((await client.get("/api/v1/fridge")).json())
+
+    res = await client.put(
+        f"/api/v1/mealplans/{plan_id}/meals/{meal_id}/completion",
+        json={"completed": True},
+    )
+    assert res.status_code == 200, res.text
+    after_complete = _fridge_totals((await client.get("/api/v1/fridge")).json())
+    for key, q in needed.items():
+        left = before.get(key, Decimal("0")) - min(before.get(key, Decimal("0")), q)
+        assert after_complete.get(key, Decimal("0")) == left, f"{key} 부족 차감 후 잔량 불일치"
+
+    res = await client.put(
+        f"/api/v1/mealplans/{plan_id}/meals/{meal_id}/completion",
+        json={"completed": False},
+    )
+    assert res.status_code == 200, res.text
+    after_restore = _fridge_totals((await client.get("/api/v1/fridge")).json())
+    for key in needed:
+        assert after_restore.get(key, Decimal("0")) == before.get(key, Decimal("0")), (
+            f"{key} 복원이 레시피 전량으로 부풀었거나 원래 재고와 다름"
+        )
+
+
 async def test_meal_completion_requires_auth(client):
     plan_id = "00000000-0000-0000-0000-000000000000"
     meal_id = "00000000-0000-0000-0000-000000000001"
