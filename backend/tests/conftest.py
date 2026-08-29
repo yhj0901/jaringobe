@@ -4,9 +4,23 @@
 """
 
 import os
+from pathlib import Path
 
-os.environ["DATABASE_URL"] = (
-    "postgresql+asyncpg://jaringobe:jaringobe@localhost:5432/jaringobe_test"
+from dotenv import dotenv_values
+
+# 테스트 DB 주소는 .env 의 TEST_DATABASE_URL 로 덮어쓸 수 있다 (호스트 포트 충돌 대응).
+# os.environ 을 오염시키지 않도록 dotenv_values 로 읽기만 한다.
+_BACKEND_DIR = Path(__file__).resolve().parents[1]
+_REPO_ROOT = _BACKEND_DIR.parent
+_DOTENV = {
+    **dotenv_values(_REPO_ROOT / ".env"),
+    **dotenv_values(_BACKEND_DIR / ".env"),
+    **os.environ,
+}
+
+os.environ["DATABASE_URL"] = _DOTENV.get(
+    "TEST_DATABASE_URL",
+    "postgresql+asyncpg://jaringobe:jaringobe@localhost:5432/jaringobe_test",
 )
 os.environ["JWT_SECRET"] = "test-jwt-secret"
 os.environ["FRONTEND_ORIGIN"] = "http://localhost:3000"
@@ -15,6 +29,10 @@ os.environ["KAKAO_CLIENT_ID"] = "kakao-client-id"
 os.environ["KAKAO_CLIENT_SECRET"] = "kakao-client-secret"
 os.environ["GOOGLE_CLIENT_ID"] = "google-client-id"
 os.environ["GOOGLE_CLIENT_SECRET"] = "google-client-secret"
+# 외부 API 는 항상 mock — 개발자 .env 의 실 키가 테스트로 새지 않도록 명시적으로 비운다.
+os.environ["ANTHROPIC_API_KEY"] = ""
+os.environ["NAVER_CLIENT_ID"] = ""
+os.environ["NAVER_CLIENT_SECRET"] = ""
 
 from urllib.parse import parse_qs, urlparse  # noqa: E402
 
@@ -45,8 +63,11 @@ GOOGLE_PROFILE_URL = "https://openidconnect.googleapis.com/v1/userinfo"
 async def _db_schema():
     """테스트마다 스키마 재생성 + rate limiter 초기화 + 엔진 dispose(이벤트 루프 격리)."""
     async with engine.begin() as conn:
+        # 스키마 전체를 재생성한다 — metadata.drop_all 은 현재 브랜치가 아는 테이블만 지우므로,
+        # 다른 브랜치 리비전이 남긴 잔여 테이블(FK 포함)이 있으면 drop 이 실패한다.
+        await conn.execute(text("DROP SCHEMA public CASCADE"))
+        await conn.execute(text("CREATE SCHEMA public"))
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pgcrypto"))
-        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     auth_ip_limiter.reset()
     budget_user_limiter.reset()

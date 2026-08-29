@@ -1,12 +1,25 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# backend/app/core/config.py 기준 경로 — 실행 CWD 와 무관하게 .env 를 찾는다.
+_BACKEND_DIR = Path(__file__).resolve().parents[2]  # .../backend
+_REPO_ROOT = _BACKEND_DIR.parent  # 저장소 루트 (컨테이너에서는 존재하지 않을 수 있음)
+
 
 class Settings(BaseSettings):
-    """환경변수 기반 설정. .env 자동 로드. 시크릿은 .env 로만 관리(하드코딩 금지)."""
+    """환경변수 기반 설정. .env 자동 로드. 시크릿은 .env 로만 관리(하드코딩 금지).
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    .env 탐색 순서: 저장소 루트 → backend/ (뒤쪽이 우선).
+    실제 OS 환경변수가 항상 최우선이므로 컨테이너/PaaS 배포에는 영향이 없다.
+    """
+
+    model_config = SettingsConfigDict(
+        env_file=(_REPO_ROOT / ".env", _BACKEND_DIR / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # PostgreSQL (async, asyncpg)
     database_url: str = "postgresql+asyncpg://jaringobe:jaringobe@localhost:5432/jaringobe"

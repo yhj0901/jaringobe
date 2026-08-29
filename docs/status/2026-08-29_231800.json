@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-08-29T23:18:00+09:00",
+  "session_topic": "백엔드 서버 로컬 재구성 + 어느 호스트로든 이관 가능한 실행 환경 정비",
+  "command": "(직접 요청) 진행 상태 파악 + 로컬 백엔드 셋업 + 이관 대응",
+  "agent": "orchestrator (+ 인프라 영역 작업)",
+  "status": "로컬 백엔드 기동 완료(http://localhost:8001). 마이그레이션 0001~0008 자동 적용, 테스트 216 PASS(커버리지 96%), 덤프/복원 왕복 검증 완료. 커밋 대기",
+  "tasks": [
+    {"id": 1, "subject": "저장소·브랜치·문서 기준 진행 상태 파악", "status": "completed"},
+    {"id": 2, "subject": "컨테이너 런타임(OrbStack) 기동 + 포트 충돌 파악(5432/8000 타 프로젝트 점유)", "status": "completed"},
+    {"id": 3, "subject": "docker-compose.yml 로컬 개발 구성 일원화 (포트 env화·initdb)", "status": "completed"},
+    {"id": 4, "subject": "backend/docker-entrypoint.sh — DB 대기 → alembic upgrade head → uvicorn($PORT)", "status": "completed"},
+    {"id": 5, "subject": "config.py 루트 .env 자동 로드 (실행 CWD 무관)", "status": "completed"},
+    {"id": 6, "subject": "conftest 격리 — TEST_DATABASE_URL 지원 + 외부 API 키 강제 비움 + 스키마 전체 재생성", "status": "completed"},
+    {"id": 7, "subject": "docker/docker-compose.server.yml + Caddyfile 도메인 env화 (API_DOMAIN)", "status": "completed"},
+    {"id": 8, "subject": "scripts/db-dump.sh · db-restore.sh (데이터 이관)", "status": "completed"},
+    {"id": 9, "subject": "docs/운영가이드/backend-portable-guide.md 신규 + install-guide 갱신", "status": "completed"},
+    {"id": 10, "subject": "검증 — health/OpenAPI 25경로, pytest 216 PASS 96%, 마이그레이션 왕복 8up/8down/8up, 덤프·복원", "status": "completed"},
+    {"id": 11, "subject": "커밋 + PR (사용자 승인 필요)", "status": "pending"},
+    {"id": 12, "subject": "옵시디언 볼트 미러링 — 이 머신에 볼트 경로 부재로 미실행", "status": "pending"}
+  ],
+  "artifacts": [
+    "docker-compose.yml (로컬 기본 — docker-compose.local.yml 흡수·삭제)",
+    "docker/docker-compose.server.yml",
+    "docker/Caddyfile",
+    "docker/initdb/01-create-test-db.sh",
+    "backend/docker-entrypoint.sh",
+    "backend/Dockerfile",
+    "backend/app/core/config.py",
+    "backend/tests/conftest.py",
+    "scripts/db-dump.sh",
+    "scripts/db-restore.sh",
+    ".env.example",
+    ".gitignore (backups/ 추가)",
+    "docs/운영가이드/backend-portable-guide.md",
+    "docs/운영가이드/install-guide.md"
+  ],
+  "key_findings": {
+    "제품_진행도": "origin/main = efc8376. auth·budget·household·mealplan·store·fridge 6개 도메인 API 25경로 구현. 프론트 9 features / 5 라우트(ko·en). v0.1.0 릴리즈노트 발행, QA Critical/High 0건. subscription·order 도메인은 main 미반영",
+    "미머지_브랜치": "feature/auto-order-p0(main+4, alembic 0009 orders) / feature/app-webview-push(main+2, main-10, alembic 0008_notification_app)",
+    "리비전_충돌_주의": "app-webview-push 의 0008_notification_app 이 main 의 0008_store_connections_global 과 리비전 번호 충돌 — 머지 전 리베이스 필요 (인프라 전담)",
+    "로컬_환경": "OrbStack. 5432/8000 은 타 프로젝트 점유 → 이 머신 .env 는 POSTGRES_PORT=5433 / BACKEND_PORT=8001",
+    "테스트_이슈_해결": "jaringobe_test 에 타 브랜치 잔여 테이블(orders)이 FK 로 남아 metadata.drop_all 실패 → conftest 를 DROP SCHEMA public CASCADE 방식으로 변경해 브랜치 전환에 무관하게 동작"
+  },
+  "recommended_actions": "① 변경분 커밋(chore: 백엔드 로컬/이관 실행 환경 정비) 후 PR ② 옵시디언 볼트 경로 확정되면 docs 미러링 ③ app-webview-push 알렘빅 리비전 리베이스 ④ 이관 대상 호스트 확정 시 backend-portable-guide 3장 절차 수행",
+  "pending_user_input": "커밋/PR 진행 여부, 이관 목적지(VPS·PaaS) 선택"
+}
