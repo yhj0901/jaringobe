@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { formatMoney } from '@/shared/ui/MoneyText';
 import { GenerationLoading } from '@/features/mealplan/GenerationLoading';
+import { CycleSettingsCard } from '@/features/cycle/CycleSettingsCard';
 import { AccountCard } from '@/features/settings/AccountCard';
 import { RegionCard } from '@/features/settings/RegionCard';
 import { DietSettingsCard } from '@/features/settings/DietSettingsCard';
@@ -223,6 +224,7 @@ export function SettingsController() {
             budgetSummary={budgetSummary}
             onEdit={openEdit}
           />
+          <CycleSettingsCard country={user.country} />
           {/* 알림 설정 진입점 (ui-design 12장 — /settings/notifications) */}
           <section aria-label={t('notifications.section')} className="mt-[22px]">
             <h2 className="mx-0.5 mb-2 text-xs font-extrabold tracking-wide text-ink-400">

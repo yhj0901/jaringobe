@@ -23,6 +23,8 @@ interface AutoOrderCardProps {
   moreCountLabel?: string;
   /** preview 로딩 중 aria-busy (회원 홈) */
   busy?: boolean;
+  /** 회원 사이클 상태 라벨 — 미지정 시 기존 활성/비활성 라벨 */
+  statusLabel?: string;
 }
 
 /**
@@ -39,6 +41,7 @@ export function AutoOrderCard({
   recommendedLabel,
   moreCountLabel,
   busy = false,
+  statusLabel,
 }: AutoOrderCardProps) {
   const t = useTranslations('guestHome.autoOrder');
   const { active } = autoOrder;
@@ -96,7 +99,7 @@ export function AutoOrderCard({
             active ? 'bg-white/15 text-mint-300' : 'bg-[#F0F2F6] text-ink-400'
           }`}
         >
-          {active ? t('statusActive') : t('statusInactive')}
+          {statusLabel ?? (active ? t('statusActive') : t('statusInactive'))}
         </span>
       </div>
 

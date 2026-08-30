@@ -6,11 +6,26 @@ import { useRouter } from '@/i18n/routing';
 import { isApp, sendToApp, BRIDGE_VERSION } from '@/shared/bridge';
 import { useBridgeStore } from '@/shared/bridge/store';
 import {
+  CYCLE_NOTIFICATION_TYPES,
   REMINDER_DEFAULT_TIMES,
   REMINDER_TYPES,
 } from '@/features/notification/constants';
 import { useNotificationSettings } from '@/features/notification/useNotificationSettings';
-import type { NotificationSetting, NotificationType, ReminderType } from '@/features/notification/types';
+import type {
+  CycleNotificationType,
+  NotificationSetting,
+  NotificationType,
+  ReminderType,
+} from '@/features/notification/types';
+
+const CYCLE_NOTIFICATION_KEYS: Record<
+  CycleNotificationType,
+  'orderApproval' | 'fridgeInbound' | 'cyclePaused'
+> = {
+  order_approval: 'orderApproval',
+  fridge_inbound: 'fridgeInbound',
+  cycle_paused: 'cyclePaused',
+};
 
 /** 토글 스위치 — 온보딩 예산 락 토글과 동일 패턴 (role="switch") */
 function ToggleSwitch({
@@ -53,6 +68,8 @@ function ToggleSwitch({
  */
 export function NotificationSettingsController() {
   const t = useTranslations('notification.settings');
+  const tNotification = useTranslations('notification');
+  const tCycleType = useTranslations('settings.notifications.type');
   const tMeal = useTranslations('mealplan.mealType');
   const router = useRouter();
   const state = useNotificationSettings();
@@ -198,6 +215,30 @@ export function NotificationSettingsController() {
                 }
               />
             </div>
+            {CYCLE_NOTIFICATION_TYPES.map((type) => {
+              const setting = byType.get(type);
+              const key = CYCLE_NOTIFICATION_KEYS[type];
+              const saving = state.savingTypes.has(type);
+              const label = tCycleType(key);
+              return (
+                <div key={type} className="flex items-center gap-3 border-t border-[#F1F3F8] py-3.5">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14.5px] font-bold text-ink-800">{label}</span>
+                    <span className="block text-xs text-ink-300">
+                      {tNotification(`${key}.body`)}
+                    </span>
+                  </span>
+                  <ToggleSwitch
+                    label={label}
+                    checked={setting?.enabled ?? false}
+                    disabled={setting === undefined || saving}
+                    onToggle={() =>
+                      void state.update(type, { enabled: !(setting?.enabled ?? false) })
+                    }
+                  />
+                </div>
+              );
+            })}
           </div>
         </section>
 

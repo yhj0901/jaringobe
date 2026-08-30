@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { fetchOrderPreview } from '@/features/order/api';
-import { RECOMMENDED_CHIP_CAP } from '@/features/order/types';
+import { fetchLatestOrder, fetchOrderPreview } from '@/features/order/api';
+import { RECOMMENDED_CHIP_CAP, type OrderResponse } from '@/features/order/types';
 import { fetchStoreConnections } from '@/features/store/api';
 import type { StoreBadge } from '@/features/home/types';
 
@@ -12,6 +12,7 @@ export interface MemberAutoOrderState {
   stores: StoreBadge[];
   recommendedItems: string[];
   moreCount: number;
+  latestOrder: OrderResponse | null;
   loading: boolean;
 }
 
@@ -20,6 +21,7 @@ const INITIAL: MemberAutoOrderState = {
   stores: [],
   recommendedItems: [],
   moreCount: 0,
+  latestOrder: null,
   loading: true,
 };
 
@@ -35,9 +37,10 @@ export function useMemberAutoOrder(): MemberAutoOrderState {
     let cancelled = false;
 
     async function load() {
-      const [storesRes, previewRes] = await Promise.all([
+      const [storesRes, previewRes, latestRes] = await Promise.all([
         fetchStoreConnections(),
         fetchOrderPreview(),
+        fetchLatestOrder(),
       ]);
       if (cancelled) return;
 
@@ -58,6 +61,7 @@ export function useMemberAutoOrder(): MemberAutoOrderState {
         stores,
         recommendedItems,
         moreCount,
+        latestOrder: latestRes.ok ? latestRes.data : null,
         loading: false,
       });
     }

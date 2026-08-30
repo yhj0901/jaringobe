@@ -8,8 +8,15 @@ export type ReminderType =
   | 'meal_reminder_lunch'
   | 'meal_reminder_dinner';
 
+/** 주간 자동 사이클 이벤트 알림 3종 (api-spec 11-1 v1.8). */
+export type CycleNotificationType = 'order_approval' | 'fridge_inbound' | 'cycle_paused';
+
 /** 알림 유형 — weekly_nudge 는 P2 (스키마만 선확정, UI 미노출) */
-export type NotificationType = ReminderType | 'mealplan_done' | 'weekly_nudge';
+export type NotificationType =
+  | ReminderType
+  | CycleNotificationType
+  | 'mealplan_done'
+  | 'weekly_nudge';
 
 /** GET/PUT /notifications/settings 의 설정 행 (api-spec 6-A-3) */
 export interface NotificationSetting {

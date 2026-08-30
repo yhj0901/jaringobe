@@ -58,12 +58,12 @@ describe('notification API 클라이언트 (api-spec 6-A v1.5)', () => {
 
   it('putNotificationSettings → PUT — 보낸 type 만 부분 갱신 (api-spec 6-A-4)', async () => {
     const fetchMock = mockFetch(200, { settings: [] });
-    await putNotificationSettings([{ type: 'meal_reminder_dinner', enabled: true, localTime: '19:00' }]);
+    await putNotificationSettings([{ type: 'order_approval', enabled: true }]);
 
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(init.method).toBe('PUT');
     expect(JSON.parse(init.body as string)).toEqual({
-      settings: [{ type: 'meal_reminder_dinner', enabled: true, localTime: '19:00' }],
+      settings: [{ type: 'order_approval', enabled: true }],
     });
   });
 });

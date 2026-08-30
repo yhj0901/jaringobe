@@ -15,6 +15,10 @@ import { RecipeSheet } from '@/features/mealplan/RecipeSheet';
 import { PushSoftAskSheet, usePushSoftAsk } from '@/features/notification/PushSoftAskSheet';
 import { LOCKED_NOTICE_MS } from '@/features/mealplan/constants';
 import { useMemberAutoOrder } from '@/features/order/useMemberAutoOrder';
+import { approveOrder, cancelOrder, fetchLatestOrder } from '@/features/order/api';
+import { ORDER_ALREADY_CONFIRMED_CODE } from '@/features/order/types';
+import { CycleStatusCard } from '@/features/cycle/CycleStatusCard';
+import { useCycle } from '@/features/cycle/useCycle';
 import { useRouter, type AppLocale } from '@/i18n/routing';
 import type { HomeViewModel, MealItem } from '@/features/home/types';
 
@@ -25,10 +29,13 @@ import type { HomeViewModel, MealItem } from '@/features/home/types';
  */
 export function MemberHomeController() {
   const t = useTranslations('memberHome');
+  const tCycle = useTranslations('cycle');
+  const tCommon = useTranslations('common');
   const locale = useLocale() as AppLocale;
   const router = useRouter();
   const home = useMemberHome();
   const autoOrder = useMemberAutoOrder();
+  const cycle = useCycle();
   const softAsk = usePushSoftAsk();
 
   // FR-605: country != KR 시 홈 헤더 "글로벌" 배지 (조회 전 null 은 미노출)
@@ -38,6 +45,8 @@ export function MemberHomeController() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [lockedNotice, setLockedNotice] = useState<string | null>(null);
   const [recipeMeal, setRecipeMeal] = useState<MealItem | null>(null);
+  const [cycleActionBusy, setCycleActionBusy] = useState(false);
+  const [cycleNotice, setCycleNotice] = useState<string | null>(null);
   const noticeTimerRef = useRef<number | null>(null);
 
   useEffect(
@@ -97,6 +106,58 @@ export function MemberHomeController() {
     router.push(autoOrder.active ? '/orders' : '/settings');
   };
 
+  const showCycleError = (code: string | null) => {
+    if (code === 'RATE_LIMITED' || code === 'CYCLE_ALREADY_CONFIRMED') {
+      setCycleNotice(tCycle(`error.${code}`));
+      return;
+    }
+    setCycleNotice(tCommon('error.fallback'));
+  };
+
+  const handleCycleApprove = async () => {
+    const id = cycle.cycle?.draftOrder?.id;
+    if (!id || cycleActionBusy) return;
+    setCycleActionBusy(true);
+    setCycleNotice(null);
+    const result = await approveOrder(id);
+    setCycleActionBusy(false);
+    if (!result.ok) {
+      if (result.code === ORDER_ALREADY_CONFIRMED_CODE) {
+        setCycleNotice(tCycle('notice.alreadyConfirmed'));
+        cycle.reload();
+        return;
+      }
+      showCycleError(result.code);
+      return;
+    }
+    setCycleNotice(tCycle('notice.approved'));
+    cycle.reload();
+  };
+
+  const handleCycleSkip = async () => {
+    if (cycleActionBusy) return;
+    setCycleActionBusy(true);
+    setCycleNotice(null);
+    const ok = await cycle.skip();
+    setCycleActionBusy(false);
+    if (!ok) showCycleError(cycle.errorCode);
+  };
+
+  const handleCycleCancel = async () => {
+    if (cycleActionBusy) return;
+    setCycleActionBusy(true);
+    setCycleNotice(null);
+    const latest = await fetchLatestOrder();
+    const result = latest.ok ? await cancelOrder(latest.data.id) : latest;
+    setCycleActionBusy(false);
+    if (!result.ok) {
+      showCycleError(result.code);
+      return;
+    }
+    setCycleNotice(tCycle('notice.cancelled'));
+    cycle.reload();
+  };
+
   const withAutoOrder = (vm: HomeViewModel): HomeViewModel => ({
     ...vm,
     autoOrder: {
@@ -107,6 +168,23 @@ export function MemberHomeController() {
       moreCount: autoOrder.moreCount > 0 ? autoOrder.moreCount : undefined,
     },
   });
+
+  const cycleSlot =
+    cycle.status === 'ready' && cycle.cycle !== null ? (
+      <CycleStatusCard
+        cycle={cycle.cycle}
+        busy={cycleActionBusy || cycle.saving}
+        notice={cycleNotice}
+        onApprove={() => void handleCycleApprove()}
+        onViewOrder={() => router.push('/orders')}
+        onSkip={() => void handleCycleSkip()}
+        onCreateNow={() => setCreateOpen(true)}
+        onViewMealPlan={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onViewFridge={() => router.push('/fridge')}
+        onGoSettings={() => router.push('/settings')}
+        onCancelOrder={() => void handleCycleCancel()}
+      />
+    ) : null;
 
   if (home.status === 'loading') {
     return (
@@ -291,6 +369,15 @@ export function MemberHomeController() {
       <HomeShell
         viewModel={withAutoOrder(viewModel)}
         autoOrderBusy={autoOrder.loading}
+        cycleSlot={cycleSlot}
+        autoOrderCycle={
+          cycle.cycle
+            ? {
+                stage: cycle.cycle.stage,
+                deliveryEta: autoOrder.latestOrder?.deliveryEta ?? null,
+              }
+            : undefined
+        }
         onAutoOrderStart={goAutoOrder}
         topSlot={
           <>
@@ -323,6 +410,12 @@ export function MemberHomeController() {
         meal={recipeMeal}
         householdSize={home.householdSize ?? undefined}
         onClose={() => setRecipeMeal(null)}
+      />
+      <PlanCreateSheet
+        open={createOpen}
+        busy={generating}
+        onClose={() => setCreateOpen(false)}
+        onSubmit={handleCreateSubmit}
       />
       {generating ? <GenerationLoading /> : null}
       <PushSoftAskSheet open={softAsk.open} onAccept={softAsk.accept} onDecline={softAsk.decline} />
