@@ -4,7 +4,7 @@ PK uuid + timestamptz UTC. 금액 numeric(float 금지). 자격증명 컬럼 없
 (평문/암호문 모두 금지 — 실연동 시 store 본설계의 암호화 참조를 쓰지, orders 에 복사하지 않음).
 보관: 확정 후 24개월 후 배치 삭제(P0 는 잡 미구현 — 기간만 명시). 게스트 주문 행 없음.
 
-Revision ID: 0009_orders
+Revision ID: 0009
 Revises: 0008
 Create Date: 2026-08-15
 
@@ -15,7 +15,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
 
-revision: str = "0009_orders"
+revision: str = "0009"
 down_revision: Union[str, None] = "0008"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
