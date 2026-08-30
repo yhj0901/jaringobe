@@ -307,8 +307,6 @@ async def confirm_order(db: AsyncSession, user: User, store: str) -> OrderRespon
 
     order.items = lines
     db.add(order)
-    # add_items 가 session.commit 하므로 expire 되면 async lazy-load 가 실패한다 (#37 과 동일)
-    db.expire_on_commit = False
     try:
         await fridge_service.add_items(db, user.id, inbound)
     except Exception:

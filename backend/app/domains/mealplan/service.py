@@ -414,7 +414,7 @@ async def build_shopping_cart(
     # 식단 − 냉장고 재고 = 필요 품목 (재고 불변)
     shortfall = await fridge_service.compute_shortfall(db, user.id, needed)
     to_buy = [
-        StoreNeed(name=line.name, quantity=Decimal(line.to_buy), unit=line.unit)
+        StoreNeed(name=line.name, quantity=float(Decimal(line.to_buy)), unit=line.unit)
         for line in shortfall.items if Decimal(line.to_buy) > 0
     ]
 
@@ -471,7 +471,7 @@ async def build_monthly_plan(
     needed = [FridgeNeed(name=n, quantity=q, unit=u) for (_nl, u), (n, q) in agg.items()]
     shortfall = await fridge_service.compute_shortfall(db, user.id, needed)
     to_buy = [
-        StoreNeed(name=line.name, quantity=Decimal(line.to_buy), unit=line.unit)
+        StoreNeed(name=line.name, quantity=float(Decimal(line.to_buy)), unit=line.unit)
         for line in shortfall.items if Decimal(line.to_buy) > 0
     ]
     cart = await store_service.build_cart(to_buy, req.mall, req.max_pages)
