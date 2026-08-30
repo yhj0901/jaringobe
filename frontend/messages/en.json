@@ -14,7 +14,23 @@
     "expired": "Expired",
     "deleteLabel": "Delete {name}",
     "loginRequired": "Please log in.",
-    "loadError": "Failed to load inventory."
+    "loadError": "Failed to load inventory.",
+    "loading": "Loading your fridge…",
+    "editQuantityLabel": "Edit quantity for {name}",
+    "saveQuantity": "Update"
+  },
+  "fridge": {
+    "delivery": {
+      "title": "Did it arrive?",
+      "body": "We'll stock these items in your fridge. You can adjust any quantity that differs.",
+      "yes": "Yes, it did",
+      "adjust": "Adjust quantities",
+      "notYet": "Not yet",
+      "unknownBanner": "Let us know when it arrives"
+    },
+    "expiring": {
+      "nextPlanHint": "Expiring ingredients will be used first in your next meal plan"
+    }
   },
   "metadata": {
     "home": {
@@ -240,7 +256,21 @@
       "recommendedLabel": "Recommended this week",
       "moreCount": "+{count}",
       "statusActive": "Ready",
-      "statusInactive": "Standby"
+      "statusInactive": "Standby",
+      "cycle": {
+        "status": {
+          "generated": "Generated",
+          "awaiting": "Awaiting approval",
+          "confirmed": "Confirmed",
+          "deliveryScheduled": "Delivery scheduled"
+        },
+        "description": {
+          "generated": "Your cart is ready to be prepared for this cycle.",
+          "awaiting": "Review this week's cart and approve it in one tap.",
+          "confirmed": "The delivery has been registered in your fridge.",
+          "deliveryScheduled": "Your order is confirmed and expected {date}."
+        }
+      }
     }
   },
   "mealplan": {
@@ -444,6 +474,144 @@
       "browse": "Just browsing"
     }
   },
+  "cycle": {
+    "card": {
+      "title": "Weekly auto cycle"
+    },
+    "stage": {
+      "idle": {
+        "title": "Waiting for the next cycle",
+        "body": "We'll prepare next week's plan at {time}"
+      },
+      "generating": {
+        "title": "Preparing next week's plan",
+        "body": "We're checking your budget and fridge inventory"
+      },
+      "generated": {
+        "title": "Next week's plan is ready",
+        "body": "Review the plan before we prepare your cart"
+      },
+      "generateFailed": {
+        "title": "We couldn't create next week's plan",
+        "body": "You can start creating a meal plan yourself"
+      },
+      "drafted": {
+        "title": "Cart awaiting approval",
+        "body": "Review what to buy and what your fridge already covers",
+        "autoConfirmAt": "Automatically confirms at {time}"
+      },
+      "awaitingUser": {
+        "title": "Your input is needed",
+        "body": "Check the reason below and decide what to do with this cart"
+      },
+      "confirmed": {
+        "title": "Order confirmed",
+        "body": "Your confirmed order is waiting for delivery"
+      },
+      "delivered": {
+        "title": "This week is in progress",
+        "body": "Mark meals complete to keep fridge inventory accurate"
+      },
+      "nothingToOrder": {
+        "title": "Your fridge has enough this week",
+        "body": "We prioritized ingredients you already have"
+      },
+      "skippedUser": {
+        "title": "Taking this week off",
+        "body": "Your next cycle will resume with the same settings"
+      },
+      "skippedDormant": {
+        "title": "Create this week's meal plan?",
+        "body": "Start again whenever you're ready"
+      },
+      "deferredQuota": {
+        "title": "We'll prepare it soon",
+        "body": "Today's generation limit was reached, so you're next in line"
+      },
+      "paused": {
+        "title": "Your auto cycle is off",
+        "body": "Turn it back on anytime in settings"
+      }
+    },
+    "blocked": {
+      "BUDGET_EXCEEDED": {
+        "title": "This may exceed your budget",
+        "cta": "Approve anyway"
+      },
+      "UNMATCHED_RATIO": {
+        "title": "Many ingredients couldn't be matched",
+        "cta": "Review cart"
+      },
+      "STORE_DISCONNECTED": {
+        "title": "Your store connection was lost",
+        "cta": "Go to settings"
+      },
+      "AUTO_CONFIRM_OFF": {
+        "title": "Waiting for your approval",
+        "cta": "Approve"
+      },
+      "US_NO_PRICE": {
+        "title": "Price information needs your review",
+        "cta": "Review cart"
+      },
+      "MEALPLAN_OVER_BUDGET": {
+        "title": "This meal plan is over budget",
+        "cta": "Rebuild meal plan"
+      }
+    },
+    "cta": {
+      "approve": "Approve",
+      "view": "View",
+      "skip": "Skip this week",
+      "createNow": "Create manually",
+      "dismiss": "Dismiss",
+      "goSettings": "Go to settings",
+      "cancelOrder": "Cancel order",
+      "viewMealPlan": "View meal plan",
+      "viewFridge": "View fridge"
+    },
+    "dormant": {
+      "title": "Create this week's meal plan?",
+      "body": "Restart your paused cycle when you're ready",
+      "cta": "Create"
+    },
+    "settings": {
+      "section": "Auto orders",
+      "enabled": "Cycle",
+      "enabledOn": "Active",
+      "enabledOff": "Paused",
+      "frequency": "Frequency",
+      "frequencyWeekly": "Once a week",
+      "frequencyBiweekly": "Twice a week",
+      "frequencyUsHint": "Once a week is recommended in the US",
+      "biweeklyGraceHint": "The grace period is shorter at 12 hours",
+      "anchorWeekday": "Anchor weekday",
+      "autoConfirm": "Auto-confirm",
+      "autoConfirmOffHint": "I'll always approve it myself",
+      "autoConfirmPushNotice": "Auto-confirm works regardless of whether a notification arrives",
+      "timezone": "Time zone",
+      "loadError": "We couldn't load your auto-order settings.",
+      "retry": "Reload"
+    },
+    "weekday": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    },
+    "error": {
+      "CYCLE_ALREADY_CONFIRMED": "A confirmed cycle can't be skipped.",
+      "RATE_LIMITED": "Too many requests. Please try again shortly."
+    },
+    "notice": {
+      "approved": "Cart approved.",
+      "alreadyConfirmed": "This cycle is already confirmed.",
+      "cancelled": "Order cancelled."
+    }
+  },
   "settings": {
     "title": "Settings",
     "backLabel": "Back to home",
@@ -576,6 +744,40 @@
     "estimateSource": "Based on Naver Shopping (Kurly) search",
     "priceBasisKurly": "Based on Naver Shopping (Kurly) search",
     "simulationNotice": "Simulation based on linked stores (not a real charge)",
+    "status": {
+      "draft": "Draft",
+      "awaitingUser": "Needs review",
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled",
+      "expired": "Expired",
+      "failed": "Failed"
+    },
+    "autoConfirmAt": "Automatically confirms at {time}",
+    "approveCta": "Approve",
+    "approving": "Approving…",
+    "editItemsCta": "Edit items (coming soon)",
+    "skipCta": "Skip this week",
+    "autoConfirmedBadge": "Automatically confirmed",
+    "recalculatedNotice": "A few ingredients changed",
+    "alreadyConfirmed": "Already confirmed",
+    "deliveryEta": "Expected {date}",
+    "cancelCta": "Cancel order",
+    "recalculateCta": "Calculate again",
+    "recalculating": "Recalculating…",
+    "terminal": {
+      "cancelled": {
+        "title": "This order was cancelled",
+        "body": "Check your next suggested order on {date}"
+      },
+      "expired": {
+        "title": "The approval window expired",
+        "body": "Check your next suggested order on {date}"
+      },
+      "failed": {
+        "title": "We couldn't prepare your cart",
+        "body": "Calculate again using your latest meal plan and fridge inventory"
+      }
+    },
     "confirmCta": "Confirm cart",
     "confirming": "Confirming…",
     "confirmedBadge": "Simulation confirmed",
@@ -597,6 +799,10 @@
       "NOTHING_TO_ORDER": "There’s nothing to buy, so you can’t confirm.",
       "MEALPLAN_NOT_FOUND": "Create a meal plan first.",
       "ORDER_NOT_FOUND": "You don’t have a confirmed order yet.",
+      "ORDER_INVALID_STATE": "That action isn't available for this order status.",
+      "ORDER_ALREADY_CONFIRMED": "This cycle already has a confirmed order.",
+      "ORDER_CANCEL_WINDOW_CLOSED": "The cancellation window has closed.",
+      "CYCLE_ALREADY_CONFIRMED": "A confirmed cycle can't be skipped.",
       "RATE_LIMITED": "Too many requests for now. Please try again shortly.",
       "STORE_NOT_SUPPORTED": "This store isn’t available in your region.",
       "VALIDATION_ERROR": "That request wasn’t valid. Please try again.",

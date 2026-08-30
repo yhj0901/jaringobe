@@ -1,5 +1,6 @@
 import { apiFetch, type ApiResult } from '@/shared/api/client';
 import type {
+  OrderApproveRequest,
   OrderCreateRequest,
   OrderPreviewResponse,
   OrderResponse,
@@ -11,8 +12,10 @@ import type {
  */
 
 /** GET /api/v1/orders/preview — 인증 필요. 연동 없어도 200. 404 MEALPLAN_NOT_FOUND */
-export function fetchOrderPreview(): Promise<ApiResult<OrderPreviewResponse>> {
-  return apiFetch<OrderPreviewResponse>('/api/v1/orders/preview');
+export function fetchOrderPreview(refresh = false): Promise<ApiResult<OrderPreviewResponse>> {
+  return apiFetch<OrderPreviewResponse>(
+    refresh ? '/api/v1/orders/preview?refresh=true' : '/api/v1/orders/preview',
+  );
 }
 
 /**
@@ -29,4 +32,33 @@ export function createOrder(body: OrderCreateRequest): Promise<ApiResult<OrderRe
 /** GET /api/v1/orders/latest — 없으면 404 ORDER_NOT_FOUND */
 export function fetchLatestOrder(): Promise<ApiResult<OrderResponse>> {
   return apiFetch<OrderResponse>('/api/v1/orders/latest');
+}
+
+/** POST /api/v1/orders/{id}/approve — 서버 재계산 결과를 그대로 반환한다. */
+export function approveOrder(
+  id: string,
+  body: OrderApproveRequest = {},
+): Promise<ApiResult<OrderResponse>> {
+  return apiFetch<OrderResponse>(`/api/v1/orders/${encodeURIComponent(id)}/approve`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** POST /api/v1/orders/{id}/cancel — 확정 주문 취소. */
+export function cancelOrder(id: string): Promise<ApiResult<OrderResponse>> {
+  return apiFetch<OrderResponse>(`/api/v1/orders/${encodeURIComponent(id)}/cancel`, {
+    method: 'POST',
+  });
+}
+
+/** POST /api/v1/orders/{id}/delivery — 배송 도착 여부 보정. */
+export function confirmOrderDelivery(
+  id: string,
+  received: boolean,
+): Promise<ApiResult<OrderResponse>> {
+  return apiFetch<OrderResponse>(`/api/v1/orders/${encodeURIComponent(id)}/delivery`, {
+    method: 'POST',
+    body: JSON.stringify({ received }),
+  });
 }

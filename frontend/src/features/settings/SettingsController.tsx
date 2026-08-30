@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { formatMoney } from '@/shared/ui/MoneyText';
 import { GenerationLoading } from '@/features/mealplan/GenerationLoading';
+import { CycleSettingsCard } from '@/features/cycle/CycleSettingsCard';
 import { AccountCard } from '@/features/settings/AccountCard';
 import { RegionCard } from '@/features/settings/RegionCard';
 import { DietSettingsCard } from '@/features/settings/DietSettingsCard';
@@ -223,6 +224,7 @@ export function SettingsController() {
             budgetSummary={budgetSummary}
             onEdit={openEdit}
           />
+          <CycleSettingsCard country={user.country} />
           <StoreConnectionsCard
             connections={connections}
             storeIds={settings.storeIds}

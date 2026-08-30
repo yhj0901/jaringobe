@@ -10,6 +10,9 @@ const routerMock = { push: vi.fn(), replace: vi.fn(), refresh: vi.fn() };
 vi.mock('@/features/settings/useSettings', () => ({
   useSettings: () => state.current,
 }));
+vi.mock('@/features/cycle/CycleSettingsCard', () => ({
+  CycleSettingsCard: () => <section>자동 주문</section>,
+}));
 vi.mock('@/i18n/routing', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/i18n/routing')>();
   return {

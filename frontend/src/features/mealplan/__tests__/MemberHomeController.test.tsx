@@ -4,6 +4,9 @@ import { MemberHomeController } from '@/features/mealplan/MemberHomeController';
 import { mapPlanToViewModel } from '@/features/mealplan/mapPlanToViewModel';
 import type { MealPlanResponse } from '@/features/mealplan/types';
 import type { MemberHomeState } from '@/features/mealplan/useMemberHome';
+import type { CycleHookState } from '@/features/cycle/useCycle';
+import type { CycleState } from '@/features/cycle/types';
+import { approveOrder, cancelOrder, fetchLatestOrder } from '@/features/order/api';
 import { renderWithIntl } from '@/test/renderWithIntl';
 
 const state: { current: MemberHomeState } = { current: undefined as unknown as MemberHomeState };
@@ -21,6 +24,7 @@ const autoOrderState: {
     stores: { id: string; name: string }[];
     recommendedItems: string[];
     moreCount: number;
+    latestOrder: null;
     loading: boolean;
   };
 } = {
@@ -29,11 +33,31 @@ const autoOrderState: {
     stores: [],
     recommendedItems: [],
     moreCount: 0,
+    latestOrder: null,
     loading: false,
   },
 };
 vi.mock('@/features/order/useMemberAutoOrder', () => ({
   useMemberAutoOrder: () => autoOrderState.current,
+}));
+const cycleState: { current: CycleHookState } = {
+  current: {
+    status: 'error',
+    cycle: null,
+    saving: false,
+    errorCode: null,
+    reload: vi.fn(),
+    updateSettings: vi.fn(),
+    skip: vi.fn(),
+  },
+};
+vi.mock('@/features/cycle/useCycle', () => ({
+  useCycle: () => cycleState.current,
+}));
+vi.mock('@/features/order/api', () => ({
+  approveOrder: vi.fn(),
+  cancelOrder: vi.fn(),
+  fetchLatestOrder: vi.fn(),
 }));
 vi.mock('@/i18n/routing', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/i18n/routing')>();
@@ -84,6 +108,30 @@ const PLAN: MealPlanResponse = {
   notes: [],
 };
 
+const CYCLE: CycleState = {
+  enabled: true,
+  frequency: 'weekly',
+  anchorWeekday: 0,
+  timezone: 'Asia/Seoul',
+  autoConfirm: true,
+  cycleStart: '2026-09-06',
+  cycleDays: 7,
+  stage: 'drafted',
+  nextRunAt: '2026-09-13T00:00:00Z',
+  skippedCycleStart: null,
+  weeklyLimit: null,
+  mealPlan: { id: 'plan-1', status: 'ready' },
+  draftOrder: {
+    id: 'order-1',
+    status: 'draft',
+    estimatedTotal: { amount: '22000', currency: 'KRW' },
+    autoConfirmAt: '2026-09-06T12:00:00Z',
+    blockedReason: null,
+    deliveryEta: null,
+  },
+  simulation: true,
+};
+
 function baseState(overrides: Partial<MemberHomeState> = {}): MemberHomeState {
   return {
     status: 'loading',
@@ -125,7 +173,17 @@ beforeEach(() => {
     stores: [],
     recommendedItems: [],
     moreCount: 0,
+    latestOrder: null,
     loading: false,
+  };
+  cycleState.current = {
+    status: 'error',
+    cycle: null,
+    saving: false,
+    errorCode: null,
+    reload: vi.fn(),
+    updateSettings: vi.fn().mockResolvedValue(true),
+    skip: vi.fn().mockResolvedValue(true),
   };
 });
 
@@ -323,6 +381,7 @@ describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
       stores: [{ id: 'kurly', name: '마켓컬리' }],
       recommendedItems: ['계란', '양파'],
       moreCount: 0,
+      latestOrder: null,
       loading: false,
     };
     state.current = readyState();
@@ -384,5 +443,114 @@ describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
     state.current = readyState(PLAN, { generation: 'regenerating' });
     renderWithIntl(<MemberHomeController />);
     expect(screen.getByText('예산에 맞는 식단을 만들고 있어요')).toBeInTheDocument();
+  });
+
+  it('사이클 초안을 홈에서 1탭 승인하고 최신 상태를 다시 불러온다', async () => {
+    cycleState.current = { ...cycleState.current, status: 'ready', cycle: CYCLE };
+    vi.mocked(approveOrder).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        id: 'order-1',
+        store: 'coupang',
+        status: 'confirmed',
+        frequency: 'weekly',
+        nextSuggestedAt: '2026-09-13T00:00:00Z',
+        estimatedTotal: { amount: '22000', currency: 'KRW' },
+        confirmedAt: '2026-09-06T03:00:00Z',
+        simulation: true,
+        items: [],
+        cycleStart: '2026-09-06',
+        deliveryEta: null,
+        inboundAt: null,
+        deliveryState: 'pending',
+        deliveryConfirmAttempts: 0,
+        autoConfirmed: false,
+        autoConfirmAt: null,
+        blockedReason: null,
+      },
+    });
+    state.current = readyState();
+    renderWithIntl(<MemberHomeController />);
+
+    fireEvent.click(screen.getByRole('button', { name: '승인하기' }));
+    expect(await screen.findByText('장바구니를 승인했어요.')).toBeInTheDocument();
+    expect(approveOrder).toHaveBeenCalledWith('order-1');
+    expect(cycleState.current.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('사이클 건너뛰기 실패를 공통 오류로 안내한다', async () => {
+    cycleState.current = {
+      ...cycleState.current,
+      status: 'ready',
+      cycle: CYCLE,
+      skip: vi.fn().mockResolvedValue(false),
+    };
+    state.current = readyState();
+    renderWithIntl(<MemberHomeController />);
+
+    fireEvent.click(screen.getByRole('button', { name: '이번 주 건너뛰기' }));
+    expect(await screen.findByText(/일시적인 오류가 발생했어요/)).toBeInTheDocument();
+  });
+
+  it('확정 사이클 주문을 홈에서 취소하고 상태를 갱신한다', async () => {
+    cycleState.current = {
+      ...cycleState.current,
+      status: 'ready',
+      cycle: { ...CYCLE, stage: 'confirmed' },
+    };
+    vi.mocked(fetchLatestOrder).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        id: 'order-1',
+        store: 'coupang',
+        status: 'confirmed',
+        frequency: 'weekly',
+        nextSuggestedAt: '2026-09-13T00:00:00Z',
+        estimatedTotal: { amount: '22000', currency: 'KRW' },
+        confirmedAt: '2026-09-06T03:00:00Z',
+        simulation: true,
+        items: [],
+        cycleStart: '2026-09-06',
+        deliveryEta: null,
+        inboundAt: null,
+        deliveryState: 'pending',
+        deliveryConfirmAttempts: 0,
+        autoConfirmed: false,
+        autoConfirmAt: null,
+        blockedReason: null,
+      },
+    });
+    vi.mocked(cancelOrder).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        id: 'order-1',
+        store: 'coupang',
+        status: 'cancelled',
+        frequency: 'weekly',
+        nextSuggestedAt: '2026-09-13T00:00:00Z',
+        estimatedTotal: { amount: '22000', currency: 'KRW' },
+        confirmedAt: '2026-09-06T03:00:00Z',
+        simulation: true,
+        items: [],
+        cycleStart: '2026-09-06',
+        deliveryEta: null,
+        inboundAt: null,
+        deliveryState: 'pending',
+        deliveryConfirmAttempts: 0,
+        autoConfirmed: false,
+        autoConfirmAt: null,
+        blockedReason: null,
+      },
+    });
+    state.current = readyState();
+    renderWithIntl(<MemberHomeController />);
+
+    fireEvent.click(screen.getByRole('button', { name: '주문 취소' }));
+    expect(await screen.findByText('주문을 취소했어요.')).toBeInTheDocument();
+    expect(cancelOrder).toHaveBeenCalledWith('order-1');
+    expect(cycleState.current.reload).toHaveBeenCalledTimes(1);
   });
 });

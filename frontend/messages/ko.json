@@ -14,7 +14,23 @@
     "expired": "기한 지남",
     "deleteLabel": "{name} 삭제",
     "loginRequired": "로그인이 필요해요.",
-    "loadError": "재고를 불러오지 못했어요."
+    "loadError": "재고를 불러오지 못했어요.",
+    "loading": "냉장고를 불러오고 있어요…",
+    "editQuantityLabel": "{name} 수량 수정",
+    "saveQuantity": "수정"
+  },
+  "fridge": {
+    "delivery": {
+      "title": "받으셨나요?",
+      "body": "이 재료들을 냉장고에 담아둘게요. 실제 수량이 다르면 수정할 수 있어요.",
+      "yes": "맞아요",
+      "adjust": "수량 수정",
+      "notYet": "아직 안 왔어요",
+      "unknownBanner": "받으면 알려주세요"
+    },
+    "expiring": {
+      "nextPlanHint": "임박 재료는 다음 식단에 먼저 쓰여요"
+    }
   },
   "metadata": {
     "home": {
@@ -240,7 +256,21 @@
       "recommendedLabel": "이번 주 주문 추천",
       "moreCount": "+{count}",
       "statusActive": "준비 완료",
-      "statusInactive": "대기 중"
+      "statusInactive": "대기 중",
+      "cycle": {
+        "status": {
+          "generated": "생성됨",
+          "awaiting": "승인 대기",
+          "confirmed": "확정",
+          "deliveryScheduled": "배송 예정"
+        },
+        "description": {
+          "generated": "이번 사이클 장바구니를 만들 준비가 됐어요.",
+          "awaiting": "이번 주 장바구니를 확인하고 한 번에 승인해 주세요.",
+          "confirmed": "배송분이 냉장고에 등록됐어요.",
+          "deliveryScheduled": "주문이 확정됐어요. {date} 도착 예정이에요."
+        }
+      }
     }
   },
   "mealplan": {
@@ -444,6 +474,144 @@
       "browse": "구경하기"
     }
   },
+  "cycle": {
+    "card": {
+      "title": "주간 자동 사이클"
+    },
+    "stage": {
+      "idle": {
+        "title": "다음 사이클을 기다리고 있어요",
+        "body": "다음 주 식단은 {time}에 준비할게요"
+      },
+      "generating": {
+        "title": "다음 주 식단 준비 중",
+        "body": "예산과 냉장고 재고를 함께 살펴보고 있어요"
+      },
+      "generated": {
+        "title": "다음 주 식단이 나왔어요",
+        "body": "식단을 확인하면 장바구니 준비로 이어져요"
+      },
+      "generateFailed": {
+        "title": "다음 주 식단을 만들지 못했어요",
+        "body": "직접 식단 만들기를 시작할 수 있어요"
+      },
+      "drafted": {
+        "title": "장바구니 승인 대기",
+        "body": "살 재료와 냉장고 충당분을 확인해 주세요",
+        "autoConfirmAt": "{time}에 자동으로 확정돼요"
+      },
+      "awaitingUser": {
+        "title": "확인이 필요해요",
+        "body": "아래 사유를 확인하고 이번 장바구니를 결정해 주세요"
+      },
+      "confirmed": {
+        "title": "주문 확정",
+        "body": "주문이 확정되어 배송을 기다리고 있어요"
+      },
+      "delivered": {
+        "title": "이번 주 진행 중",
+        "body": "식사 완료 체크로 냉장고 재고를 맞춰 주세요"
+      },
+      "nothingToOrder": {
+        "title": "이번 주는 냉장고로 충분해요",
+        "body": "남은 재료를 먼저 쓰도록 식단에 반영했어요"
+      },
+      "skippedUser": {
+        "title": "이번 주는 쉬어가요",
+        "body": "다음 사이클은 설정대로 다시 시작해요"
+      },
+      "skippedDormant": {
+        "title": "이번 주 식단 만들까요?",
+        "body": "다시 시작하고 싶을 때 바로 만들 수 있어요"
+      },
+      "deferredQuota": {
+        "title": "곧 준비할게요",
+        "body": "오늘 생성 한도에 도달해 다음 순서로 준비 중이에요"
+      },
+      "paused": {
+        "title": "자동 사이클이 꺼져 있어요",
+        "body": "설정에서 언제든 다시 켤 수 있어요"
+      }
+    },
+    "blocked": {
+      "BUDGET_EXCEEDED": {
+        "title": "예산을 넘을 것 같아요",
+        "cta": "그래도 승인하기"
+      },
+      "UNMATCHED_RATIO": {
+        "title": "못 찾은 재료가 많아요",
+        "cta": "장바구니 확인"
+      },
+      "STORE_DISCONNECTED": {
+        "title": "스토어 연동이 풀렸어요",
+        "cta": "설정으로"
+      },
+      "AUTO_CONFIRM_OFF": {
+        "title": "승인을 기다리고 있어요",
+        "cta": "승인하기"
+      },
+      "US_NO_PRICE": {
+        "title": "가격 정보가 없어 직접 확인이 필요해요",
+        "cta": "장바구니 확인"
+      },
+      "MEALPLAN_OVER_BUDGET": {
+        "title": "예산을 넘는 식단이에요",
+        "cta": "식단 다시 만들기"
+      }
+    },
+    "cta": {
+      "approve": "승인하기",
+      "view": "보기",
+      "skip": "이번 주 건너뛰기",
+      "createNow": "직접 만들기",
+      "dismiss": "닫기",
+      "goSettings": "설정으로",
+      "cancelOrder": "주문 취소",
+      "viewMealPlan": "식단 보기",
+      "viewFridge": "냉장고 보기"
+    },
+    "dormant": {
+      "title": "이번 주 식단 만들까요?",
+      "body": "쉬었던 사이클을 다시 시작할 수 있어요",
+      "cta": "만들기"
+    },
+    "settings": {
+      "section": "자동 주문",
+      "enabled": "사이클",
+      "enabledOn": "활성",
+      "enabledOff": "일시정지",
+      "frequency": "주기",
+      "frequencyWeekly": "주 1회",
+      "frequencyBiweekly": "주 2회",
+      "frequencyUsHint": "미국 지역은 주 1회를 권장해요",
+      "biweeklyGraceHint": "그레이스가 12시간으로 짧아져요",
+      "anchorWeekday": "기준 요일",
+      "autoConfirm": "자동확정",
+      "autoConfirmOffHint": "항상 내가 승인할게요",
+      "autoConfirmPushNotice": "자동확정은 알림 도달 여부와 무관하게 동작합니다",
+      "timezone": "타임존",
+      "loadError": "자동 주문 설정을 불러오지 못했어요.",
+      "retry": "다시 불러오기"
+    },
+    "weekday": {
+      "0": "일",
+      "1": "월",
+      "2": "화",
+      "3": "수",
+      "4": "목",
+      "5": "금",
+      "6": "토"
+    },
+    "error": {
+      "CYCLE_ALREADY_CONFIRMED": "이미 확정된 사이클은 건너뛸 수 없어요.",
+      "RATE_LIMITED": "요청이 많아요. 잠시 후 다시 시도해 주세요."
+    },
+    "notice": {
+      "approved": "장바구니를 승인했어요.",
+      "alreadyConfirmed": "이미 확정됐어요.",
+      "cancelled": "주문을 취소했어요."
+    }
+  },
   "settings": {
     "title": "설정",
     "backLabel": "홈으로 돌아가기",
@@ -576,6 +744,40 @@
     "estimateSource": "네이버 쇼핑(컬리) 검색 기준",
     "priceBasisKurly": "네이버 쇼핑(컬리) 검색 기준",
     "simulationNotice": "연동 표시 기준 시뮬레이션 (실결제 아님)",
+    "status": {
+      "draft": "초안",
+      "awaitingUser": "확인 필요",
+      "confirmed": "확정",
+      "cancelled": "취소됨",
+      "expired": "만료됨",
+      "failed": "실패"
+    },
+    "autoConfirmAt": "{time}에 자동으로 확정돼요",
+    "approveCta": "승인하기",
+    "approving": "승인하는 중…",
+    "editItemsCta": "품목 편집 (준비 중)",
+    "skipCta": "이번 주 건너뛰기",
+    "autoConfirmedBadge": "자동으로 확정됐어요",
+    "recalculatedNotice": "재료가 조금 바뀌었어요",
+    "alreadyConfirmed": "이미 확정됐어요",
+    "deliveryEta": "{date} 도착 예정",
+    "cancelCta": "주문 취소",
+    "recalculateCta": "다시 계산하기",
+    "recalculating": "다시 계산하는 중…",
+    "terminal": {
+      "cancelled": {
+        "title": "이번 주문은 취소됐어요",
+        "body": "다음 주문 제안은 {date}에 확인할 수 있어요"
+      },
+      "expired": {
+        "title": "승인 시간이 지났어요",
+        "body": "다음 주문 제안은 {date}에 확인할 수 있어요"
+      },
+      "failed": {
+        "title": "장바구니를 준비하지 못했어요",
+        "body": "최신 식단과 냉장고 재고로 다시 계산할 수 있어요"
+      }
+    },
     "confirmCta": "장바구니 확정",
     "confirming": "확정하는 중…",
     "confirmedBadge": "시뮬레이션 확정",
@@ -597,6 +799,10 @@
       "NOTHING_TO_ORDER": "살 재료가 없어 확정할 수 없어요.",
       "MEALPLAN_NOT_FOUND": "먼저 식단을 만들어 주세요.",
       "ORDER_NOT_FOUND": "확정한 주문이 아직 없어요.",
+      "ORDER_INVALID_STATE": "현재 주문 상태에서는 이 작업을 할 수 없어요.",
+      "ORDER_ALREADY_CONFIRMED": "이미 확정된 주문이 있어요.",
+      "ORDER_CANCEL_WINDOW_CLOSED": "주문 취소 가능 기간이 지났어요.",
+      "CYCLE_ALREADY_CONFIRMED": "이미 확정된 사이클은 건너뛸 수 없어요.",
       "RATE_LIMITED": "요청이 많아 잠시 쉬어가는 중이에요. 잠시 후 다시 시도해 주세요.",
       "STORE_NOT_SUPPORTED": "이 지역에서 지원하지 않는 스토어예요.",
       "VALIDATION_ERROR": "요청이 올바르지 않아요. 다시 시도해 주세요.",
