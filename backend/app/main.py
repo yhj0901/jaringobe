@@ -13,23 +13,32 @@ from app.core.config import get_settings
 from app.core.db import engine
 from app.core.errors import ApiError, api_error_handler, error_body, validation_error_handler
 from app.core.ratelimit import auth_ip_limiter
+from app.domains.cycle.scheduler import run_cycle_loop
 from app.domains.notification.scheduler import run_scheduler_loop
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """앱 수명 주기 — 식사 리마인더 스케줄러 태스크 기동/정지 (architecture.md 3-7)."""
+    """앱 수명 주기 — 리마인더·주간 사이클 asyncio 태스크 기동/정지."""
     settings = get_settings()
     scheduler_task: asyncio.Task | None = None
+    cycle_task: asyncio.Task | None = None
     if settings.reminder_scheduler_enabled:
         scheduler_task = asyncio.create_task(
             run_scheduler_loop(settings.reminder_scheduler_interval_seconds)
         )
-    yield
-    if scheduler_task is not None:
-        scheduler_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await scheduler_task
+    if settings.cycle_scheduler_enabled:
+        cycle_task = asyncio.create_task(
+            run_cycle_loop(settings.cycle_scheduler_interval_seconds)
+        )
+    try:
+        yield
+    finally:
+        for task in (scheduler_task, cycle_task):
+            if task is not None:
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
 
 
 app = FastAPI(

@@ -10,7 +10,7 @@ import calendar
 import logging
 import uuid
 from collections import Counter
-from datetime import timedelta
+from datetime import date, timedelta
 from time import monotonic
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -23,9 +23,11 @@ from app.core.db import SessionLocal
 from app.core.errors import ApiError
 from app.core.security import utcnow
 from app.domains.auth.models import User
+from app.domains.budget import service as budget_service
 from app.domains.budget.models import BudgetPlan
 from app.domains.budget.schemas import MoneyOut
 from app.domains.mealplan.generator import generate_meals
+from app.domains.mealplan.fridge_hint import build_fridge_hint
 from app.domains.mealplan.models import Meal, MealIngredient, MealPlan
 from app.domains.mealplan.pricing import DBPriceProvider
 from app.domains.fridge import service as fridge_service
@@ -121,6 +123,7 @@ async def _generate_within_budget(
     from app.domains.mealplan.llm import get_llm
 
     household_desc = await _household_desc(db, budget.user_id)
+    fridge_hint = await build_fridge_hint(db, budget.user_id, region)
 
     currency = budget.currency
     direction = MEAL_DIRECTION_HINT.get(budget.meal_direction, "balanced")
@@ -141,7 +144,7 @@ async def _generate_within_budget(
         hint = " ".join(x for x in (budget_hint, allergy_hint) if x)
         drafts = await generate_meals(
             region, budget.household_size, direction, days, meals_per_day,
-            allergies, preferences, hint, household_desc,
+            allergies, preferences, hint, household_desc, fridge_hint,
         )
         violations = _check_allergies(drafts, allergies)
         if violations and attempt < MAX_BUDGET_RETRIES and llm_enabled and _time_left():
@@ -287,12 +290,16 @@ async def _ensure_not_generating(db: AsyncSession, user_id: uuid.UUID) -> None:
 
 
 async def start_meal_plan_generation(
-    db: AsyncSession, user: User, req: MealPlanCreateRequest
+    db: AsyncSession,
+    user: User,
+    req: MealPlanCreateRequest,
+    *,
+    period_start: date | None = None,
 ) -> uuid.UUID:
     """202 접수 — processing 플랜 행만 생성. 실제 생성은 run_meal_plan_generation(백그라운드)."""
     budget = await _get_budget(db, user)
     await _ensure_not_generating(db, user.id)
-    start = utcnow().date()
+    start = period_start or utcnow().date()
     plan = MealPlan(
         user_id=user.id, budget_plan_id=budget.id, status="processing",
         total_cost=Decimal("0"), currency=budget.currency, region=user.country,
@@ -568,21 +575,16 @@ async def build_shopping_cart(
     return MealPlanCartResponse(meal_plan_id=plan.id, needed=shortfall.items, cart=cart)
 
 
-def _prorate(as_of, monthly: Decimal) -> tuple[int, int, Decimal, str]:
-    """월예산을 '오늘 포함 남은 일수' 비율로 안분. (예: 7/10 → 22/31)."""
-    dim = calendar.monthrange(as_of.year, as_of.month)[1]
-    remaining = dim - as_of.day + 1
-    prorated = (monthly * Decimal(remaining) / Decimal(dim)).quantize(_CENT, rounding=ROUND_HALF_UP)
-    return remaining, dim, prorated, f"{remaining}/{dim}"
-
-
 async def build_monthly_plan(
     db: AsyncSession, user: User, req: MonthlyPlanRequest
 ) -> MonthlyPlanResponse:
     """월 예산 → 그 달(남은 일수) 식단 + 첫 주기 주문(컬리). 예산은 남은 일자 비율만큼."""
     budget = await _get_budget(db, user)
     as_of = req.as_of or utcnow().date()
-    remaining, _dim, prorated, ratio = _prorate(as_of, budget.amount)
+    dim = calendar.monthrange(as_of.year, as_of.month)[1]
+    remaining = dim - as_of.day + 1
+    prorated = budget_service.prorate_remaining_month(as_of, budget.amount)
+    ratio = f"{remaining}/{dim}"
     region = user.country
     cur = budget.currency
 

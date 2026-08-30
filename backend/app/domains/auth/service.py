@@ -99,12 +99,17 @@ async def get_or_create_user(
 async def issue_session(db: AsyncSession, user_id: uuid.UUID) -> tuple[str, str]:
     """신규 토큰 세트 발급 (세션 고정 없음 — CWE-384). 반환: (access JWT, refresh 원문)."""
     settings = get_settings()
+    now = utcnow()
+    user = await db.get(User, user_id)
+    if user is None:
+        raise ApiError(401, "AUTH_REQUIRED", "User not found")
+    user.last_seen_at = now
     raw_refresh = generate_refresh_token()
     db.add(
         RefreshToken(
             user_id=user_id,
             token_hash=hash_refresh_token(raw_refresh),
-            expires_at=utcnow() + timedelta(days=settings.refresh_token_expire_days),
+            expires_at=now + timedelta(days=settings.refresh_token_expire_days),
         )
     )
     await db.commit()
@@ -133,6 +138,10 @@ async def rotate_refresh_token(db: AsyncSession, raw_refresh: str) -> tuple[str,
 
     settings = get_settings()
     token.revoked_at = now
+    user = await db.get(User, token.user_id)
+    if user is None:
+        raise ApiError(401, "AUTH_REQUIRED", "User not found")
+    user.last_seen_at = now
     new_raw = generate_refresh_token()
     db.add(
         RefreshToken(
@@ -189,12 +198,17 @@ async def update_region(db: AsyncSession, user: User, country: str) -> UserMeRes
 async def issue_app_login_code(db: AsyncSession, user_id: uuid.UUID) -> str:
     """원타임 코드 발급 — DB 에는 SHA-256 해시만 저장, 60초 만료. 반환: 코드 원문."""
     settings = get_settings()
+    now = utcnow()
+    user = await db.get(User, user_id)
+    if user is None:
+        raise ApiError(401, "AUTH_REQUIRED", "User not found")
+    user.last_seen_at = now
     raw = generate_app_login_code()
     db.add(
         AppLoginCode(
             user_id=user_id,
             code_hash=hash_app_login_code(raw),
-            expires_at=utcnow() + timedelta(seconds=settings.app_login_code_expire_seconds),
+            expires_at=now + timedelta(seconds=settings.app_login_code_expire_seconds),
         )
     )
     await db.commit()

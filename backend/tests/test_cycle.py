@@ -1,0 +1,260 @@
+"""cycle 상태·설정·스킵 API와 일정/예산 순수 계산 테스트."""
+
+from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
+from uuid import UUID
+
+import pytest
+from sqlalchemy import func, select
+
+from app.core.security import utcnow
+from app.domains.auth.models import User
+from app.domains.budget import service as budget_service
+from app.domains.cycle.models import UserCycleSettings
+from app.domains.cycle.policy import load_policy
+from app.domains.cycle.service import _initial_next_run, cycle_window
+from app.domains.order.models import Order
+from tests.conftest import login
+
+KR_BUDGET = {
+    "householdSize": 2,
+    "budget": {"amount": "310000", "currency": "KRW"},
+    "mealDirection": "health",
+    "source": "onboarding",
+}
+
+
+@pytest.fixture(autouse=True)
+def _reset_cycle_limiter():
+    from app.core.ratelimit import cycle_action_user_limiter
+
+    cycle_action_user_limiter.reset()
+    yield
+    cycle_action_user_limiter.reset()
+
+
+async def _login_budget(client, respx_mock) -> tuple[dict, dict]:
+    await login(client, respx_mock)
+    created = await client.post("/api/v1/budget/plans", json=KR_BUDGET)
+    assert created.status_code == 201, created.text
+    me = (await client.get("/api/v1/users/me")).json()
+    return me, created.json()
+
+
+async def _draft(db, user_id, cycle_start: date) -> Order:
+    now = utcnow()
+    order = Order(
+        user_id=UUID(str(user_id)),
+        meal_plan_id=None,
+        store="kurly",
+        status="draft",
+        frequency="weekly",
+        cycle_start=cycle_start,
+        next_suggested_at=now + timedelta(days=7),
+        estimated_total=Decimal("12000"),
+        currency="KRW",
+        simulation=True,
+        confirmed_at=None,
+        auto_confirm_at=now + timedelta(hours=24),
+        auto_confirmed=False,
+        delivery_state="pending",
+    )
+    db.add(order)
+    await db.commit()
+    return order
+
+
+async def test_get_cycle_lazy_defaults_without_budget(client, db, respx_mock):
+    await login(client, respx_mock)
+    response = await client.get("/api/v1/cycle")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["enabled"] is True
+    assert body["frequency"] == "weekly"
+    assert body["anchorWeekday"] == 0
+    assert body["timezone"] == "Asia/Seoul"
+    assert body["autoConfirm"] is True
+    assert body["weeklyLimit"] is None
+    assert body["simulation"] is True
+    assert body["stage"] == "idle"
+    assert await db.scalar(select(func.count()).select_from(UserCycleSettings)) == 1
+
+
+async def test_onboarding_completion_creates_settings_and_last_seen(client, db, respx_mock):
+    await login(client, respx_mock)
+    user = (await db.scalars(select(User))).one()
+    assert user.last_seen_at is not None
+    created = await client.post("/api/v1/budget/plans", json=KR_BUDGET)
+    assert created.status_code == 201, created.text
+    setting = (await db.scalars(select(UserCycleSettings))).one()
+    assert setting.user_id == user.id
+    assert setting.next_run_at is not None
+
+
+async def test_settings_partial_update_validation_and_rate_limit(client, respx_mock):
+    await _login_budget(client, respx_mock)
+    updated = await client.put(
+        "/api/v1/cycle/settings",
+        json={
+            "frequency": "biweekly",
+            "anchorWeekday": 3,
+            "timezone": "UTC",
+            "autoConfirm": False,
+        },
+    )
+    assert updated.status_code == 200, updated.text
+    body = updated.json()
+    assert body["frequency"] == "biweekly"
+    assert body["anchorWeekday"] == 3
+    assert body["timezone"] == "UTC"
+    assert body["autoConfirm"] is False
+
+    invalid = await client.put(
+        "/api/v1/cycle/settings", json={"timezone": "Mars/Olympus"}
+    )
+    assert invalid.status_code == 422
+    extra = await client.put(
+        "/api/v1/cycle/settings", json={"unexpected": True}
+    )
+    assert extra.status_code == 422
+
+    # 위 상태 변경 1회와 검증 실패는 리미터 hit에 포함되므로 새로 초기화한다.
+    from app.core.ratelimit import cycle_action_user_limiter
+
+    cycle_action_user_limiter.reset()
+    for _ in range(5):
+        assert (
+            await client.put("/api/v1/cycle/settings", json={"enabled": True})
+        ).status_code == 200
+    limited = await client.put(
+        "/api/v1/cycle/settings", json={"enabled": True}
+    )
+    assert limited.status_code == 429
+    assert limited.json()["detail"]["code"] == "RATE_LIMITED"
+
+
+async def test_auto_confirm_toggle_updates_open_draft(client, db, respx_mock):
+    me, _budget = await _login_budget(client, respx_mock)
+    state = (await client.get("/api/v1/cycle")).json()
+    order = await _draft(db, me["id"], date.fromisoformat(state["cycleStart"]))
+
+    off = await client.put(
+        "/api/v1/cycle/settings", json={"autoConfirm": False}
+    )
+    assert off.status_code == 200, off.text
+    await db.refresh(order)
+    assert order.auto_confirm_at is None
+
+    on = await client.put(
+        "/api/v1/cycle/settings", json={"autoConfirm": True}
+    )
+    assert on.status_code == 200, on.text
+    await db.refresh(order)
+    assert order.auto_confirm_at is not None
+
+    paused = await client.put(
+        "/api/v1/cycle/settings", json={"enabled": False}
+    )
+    assert paused.json()["stage"] == "paused"
+    await db.refresh(order)
+    assert order.auto_confirm_at is None
+
+    resumed = await client.put(
+        "/api/v1/cycle/settings", json={"enabled": True}
+    )
+    assert resumed.status_code == 200
+    await db.refresh(order)
+    assert order.auto_confirm_at is not None
+
+
+async def test_skip_is_idempotent_and_cancels_open_draft(client, db, respx_mock):
+    me, _budget = await _login_budget(client, respx_mock)
+    state = (await client.get("/api/v1/cycle")).json()
+    cycle_start = date.fromisoformat(state["cycleStart"])
+    order = await _draft(db, me["id"], cycle_start)
+
+    first = await client.post("/api/v1/cycle/skip")
+    assert first.status_code == 200, first.text
+    assert first.json()["stage"] == "skipped_user"
+    assert first.json()["skippedCycleStart"] == cycle_start.isoformat()
+    await db.refresh(order)
+    assert order.status == "cancelled"
+    assert order.auto_confirm_at is None
+
+    second = await client.post("/api/v1/cycle/skip")
+    assert second.status_code == 200
+    assert second.json()["skippedCycleStart"] == cycle_start.isoformat()
+
+
+async def test_skip_rejects_confirmed_cycle(client, db, respx_mock):
+    me, _budget = await _login_budget(client, respx_mock)
+    state = (await client.get("/api/v1/cycle")).json()
+    order = await _draft(db, me["id"], date.fromisoformat(state["cycleStart"]))
+    order.status = "confirmed"
+    order.confirmed_at = utcnow()
+    order.auto_confirm_at = None
+    await db.commit()
+
+    response = await client.post("/api/v1/cycle/skip")
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "CYCLE_ALREADY_CONFIRMED"
+
+
+def test_biweekly_window_uses_three_and_four_day_intervals():
+    sunday = datetime(2026, 8, 30, 0, tzinfo=UTC)
+    first = cycle_window("biweekly", 0, "UTC", sunday)
+    assert first.cycle_start == date(2026, 8, 30)
+    assert first.cycle_days == 3
+    thursday = cycle_window(
+        "biweekly", 0, "UTC", datetime(2026, 9, 3, 0, tzinfo=UTC)
+    )
+    assert thursday.cycle_start == date(2026, 9, 6)
+    assert thursday.cycle_days == 3
+    wednesday = cycle_window(
+        "biweekly", 0, "UTC", datetime(2026, 9, 2, 0, tzinfo=UTC)
+    )
+    assert wednesday.cycle_start == date(2026, 9, 2)
+    assert wednesday.cycle_days == 4
+
+
+def test_initial_schedule_skips_a_generation_time_that_already_passed():
+    import uuid
+    from dataclasses import replace
+
+    now = datetime(2026, 8, 30, 12, tzinfo=UTC)
+    policy = replace(load_policy(), jitter_minutes=0, stage_local_hour=9)
+    next_run = _initial_next_run(
+        uuid.UUID("00000000-0000-0000-0000-000000000001"),
+        "weekly",
+        0,
+        "UTC",
+        policy,
+        now,
+    )
+    assert next_run == datetime(2026, 9, 1, 9, tzinfo=UTC)
+
+
+def test_remaining_month_proration_is_decimal_and_unchanged():
+    assert budget_service.prorate_remaining_month(
+        date(2026, 2, 20), Decimal("310000")
+    ) == Decimal("99642.86")
+
+
+def test_policy_parse_failures_fall_back_without_stopping(monkeypatch, caplog):
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    monkeypatch.setattr(settings, "cycle_profile_weekly", "not-json")
+    monkeypatch.setattr(settings, "cycle_delivery_lead_days", "[]")
+    monkeypatch.setattr(settings, "cycle_expiring_days", '{"US":-1}')
+    monkeypatch.setattr(settings, "cycle_unmatched_threshold", "2")
+    monkeypatch.setattr(settings, "cycle_stage_local_hour", 99)
+    monkeypatch.setattr(settings, "cycle_draft_retry_delays_minutes", "0,bad")
+    policy = load_policy()
+    assert policy.weekly.generate_lead_days == 5
+    assert policy.delivery_days("unknown") == 1
+    assert policy.expiring_window("US") == 5
+    assert policy.unmatched_threshold == Decimal("0.30")
+    assert policy.stage_local_hour == 9
+    assert policy.draft_retry_delays_minutes == (1, 5, 15)
+    assert "기본값 사용" in caplog.text

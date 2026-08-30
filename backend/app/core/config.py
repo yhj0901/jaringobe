@@ -50,6 +50,33 @@ class Settings(BaseSettings):
     reminder_scheduler_enabled: bool = True
     reminder_scheduler_interval_seconds: float = 30.0
 
+    # 주간 사이클 스케줄러·운영 정책 (architecture.md v1.8 3-9)
+    cycle_scheduler_enabled: bool = True
+    cycle_scheduler_interval_seconds: float = 60.0
+    cycle_profile_weekly: str = (
+        '{"generateLeadDays":5,"draftLeadDays":2,"graceHours":24}'
+    )
+    cycle_profile_biweekly: str = (
+        '{"generateLeadDays":2,"draftLeadDays":1,"graceHours":12}'
+    )
+    cycle_stage_local_hour: int = 9
+    cycle_jitter_minutes: int = 30
+    cycle_active_completion_min: int = 1
+    cycle_active_seen_days: int = 14
+    cycle_daily_generation_limit: int = 200
+    cycle_unmatched_threshold: str = "0.30"
+    cycle_delivery_lead_days: str = (
+        '{"kurly":1,"coupang":1,"ssg":1,"naver":2,'
+        '"walmart":2,"instacart":1}'
+    )
+    cycle_delivery_lead_days_default: int = 1
+    cycle_expiring_days: str = '{"KR":3,"US":5}'
+    cycle_fridge_prompt_max_expiring_lines: int = 15
+    cycle_fridge_prompt_max_lines: int = 25
+    cycle_draft_retry_delays_minutes: str = "1,5,15"
+    cycle_cancel_window_days: int = 7
+    cycle_delivery_unknown_attempts: int = 3
+
     # 쿠키 Secure 플래그 — 로컬 http 개발에서는 false, 배포(https) 시 true
     cookie_secure: bool = False
 

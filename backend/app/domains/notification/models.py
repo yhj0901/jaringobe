@@ -38,6 +38,9 @@ SETTING_TYPES = (
     "meal_reminder_dinner",
     "mealplan_done",
     "weekly_nudge",
+    "order_approval",
+    "fridge_inbound",
+    "cycle_paused",
 )
 
 
@@ -87,7 +90,8 @@ class NotificationSetting(Base):
     __table_args__ = (
         CheckConstraint(
             "type IN ('meal_reminder_breakfast', 'meal_reminder_lunch', "
-            "'meal_reminder_dinner', 'mealplan_done', 'weekly_nudge')",
+            "'meal_reminder_dinner', 'mealplan_done', 'weekly_nudge', "
+            "'order_approval', 'fridge_inbound', 'cycle_paused')",
             name="ck_notification_settings_type",
         ),
         UniqueConstraint("user_id", "type", name="uq_notification_settings_user_type"),
