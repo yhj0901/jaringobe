@@ -28,6 +28,9 @@ const SETTINGS: NotificationSetting[] = [
   { type: 'meal_reminder_lunch', enabled: false, localTime: '12:00', timezone: 'Asia/Seoul' },
   { type: 'meal_reminder_dinner', enabled: true, localTime: null, timezone: 'Asia/Seoul' },
   { type: 'mealplan_done', enabled: true, localTime: null, timezone: null },
+  { type: 'order_approval', enabled: true, localTime: null, timezone: null },
+  { type: 'fridge_inbound', enabled: true, localTime: null, timezone: null },
+  { type: 'cycle_paused', enabled: false, localTime: null, timezone: null },
   { type: 'weekly_nudge', enabled: false, localTime: null, timezone: null },
 ];
 
@@ -83,13 +86,16 @@ describe('NotificationSettingsController 상태 분기', () => {
 });
 
 describe('NotificationSettingsController — 토글·시각 저장 (FR-007, ui-design 12장)', () => {
-  it('식단 완성 토글 + 리마인더 3행(아침/점심/저녁)을 렌더한다 — weekly_nudge 미노출', () => {
+  it('식단 완성·사이클 3종 토글 + 리마인더 3행을 렌더한다 — weekly_nudge 미노출', () => {
     renderWithIntl(<NotificationSettingsController />);
     expect(screen.getByRole('switch', { name: '식단 완성 알림' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: '장바구니 승인 요청' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: '냉장고 등록 안내' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: '자동 사이클 일시정지' })).toHaveAttribute('aria-checked', 'false');
     expect(screen.getByRole('switch', { name: '아침 리마인더 알림' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('switch', { name: '점심 리마인더 알림' })).toHaveAttribute('aria-checked', 'false');
     expect(screen.getByRole('switch', { name: '저녁 리마인더 알림' })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getAllByRole('switch')).toHaveLength(4);
+    expect(screen.getAllByRole('switch')).toHaveLength(7);
   });
 
   it('토글 클릭 → 행 단위 즉시 update 호출', () => {
@@ -102,6 +108,9 @@ describe('NotificationSettingsController — 토글·시각 저장 (FR-007, ui-d
 
     fireEvent.click(screen.getByRole('switch', { name: '점심 리마인더 알림' }));
     expect(state.update).toHaveBeenCalledWith('meal_reminder_lunch', { enabled: true });
+
+    fireEvent.click(screen.getByRole('switch', { name: '자동 사이클 일시정지' }));
+    expect(state.update).toHaveBeenCalledWith('cycle_paused', { enabled: true });
   });
 
   it('시각 변경 → localTime 저장, localTime null 이면 기본값(18:30) 표시', () => {

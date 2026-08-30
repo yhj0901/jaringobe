@@ -29,6 +29,9 @@ const SETTINGS: NotificationSetting[] = [
   { type: 'meal_reminder_lunch', enabled: true, localTime: '12:00', timezone: 'Asia/Seoul' },
   { type: 'meal_reminder_dinner', enabled: true, localTime: '18:30', timezone: 'Asia/Seoul' },
   { type: 'mealplan_done', enabled: true, localTime: null, timezone: null },
+  { type: 'order_approval', enabled: true, localTime: null, timezone: null },
+  { type: 'fridge_inbound', enabled: true, localTime: null, timezone: null },
+  { type: 'cycle_paused', enabled: true, localTime: null, timezone: null },
   { type: 'weekly_nudge', enabled: false, localTime: null, timezone: null },
 ];
 

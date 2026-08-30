@@ -625,6 +625,18 @@
     }
   },
   "notification": {
+    "orderApproval": {
+      "title": "이번 주 장바구니가 준비됐어요",
+      "body": "확인해 주세요"
+    },
+    "fridgeInbound": {
+      "title": "받으셨나요? 냉장고에 담아둘게요",
+      "body": "실제와 다르면 수정해 주세요"
+    },
+    "cyclePaused": {
+      "title": "잠시 자동 식단을 멈췄어요",
+      "body": "언제든 다시 시작할 수 있어요"
+    },
     "settings": {
       "title": "알림 설정",
       "backLabel": "설정으로 돌아가기",
@@ -668,7 +680,12 @@
     "notifications": {
       "section": "알림",
       "title": "알림 설정",
-      "summary": "식단 완성 알림 · 식사 리마인더"
+      "summary": "식단 완성 알림 · 식사 리마인더",
+      "type": {
+        "orderApproval": "장바구니 승인 요청",
+        "fridgeInbound": "냉장고 등록 안내",
+        "cyclePaused": "자동 사이클 일시정지"
+      }
     },
     "account": {
       "section": "계정",

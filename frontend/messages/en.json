@@ -625,6 +625,18 @@
     }
   },
   "notification": {
+    "orderApproval": {
+      "title": "Your weekly cart is ready",
+      "body": "Take a look."
+    },
+    "fridgeInbound": {
+      "title": "Did it arrive? We'll stock your fridge",
+      "body": "Adjust it if anything's different."
+    },
+    "cyclePaused": {
+      "title": "We paused your auto meal plans",
+      "body": "You can resume anytime."
+    },
     "settings": {
       "title": "Notifications",
       "backLabel": "Back to settings",
@@ -668,7 +680,12 @@
     "notifications": {
       "section": "Notifications",
       "title": "Notification settings",
-      "summary": "Meal plan alerts · Meal reminders"
+      "summary": "Meal plan alerts · Meal reminders",
+      "type": {
+        "orderApproval": "Cart approval requests",
+        "fridgeInbound": "Fridge stock updates",
+        "cyclePaused": "Auto-cycle pauses"
+      }
     },
     "account": {
       "section": "Account",
