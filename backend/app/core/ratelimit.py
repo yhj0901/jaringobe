@@ -43,3 +43,5 @@ order_preview_user_limiter = InMemoryRateLimiter(limit=3, window_seconds=60)
 order_confirm_user_limiter = InMemoryRateLimiter(limit=5, window_seconds=60)
 # notification devices/settings — 유저 기준 10회/분 (api-spec 6-A-1·6-A-4)
 notification_user_limiter = InMemoryRateLimiter(limit=10, window_seconds=60)
+# cycle PUT/skip + order approve/cancel/delivery — 유저 기준 10회/분
+cycle_action_user_limiter = InMemoryRateLimiter(limit=5, window_seconds=60)

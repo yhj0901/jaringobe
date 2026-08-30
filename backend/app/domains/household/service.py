@@ -34,6 +34,9 @@ async def replace_household(
         has_plan = await db.scalar(select(BudgetPlan.id).where(BudgetPlan.user_id == user.id))
         if has_plan is not None:
             user.onboarding_completed_at = utcnow()
+            from app.domains.cycle.service import ensure_settings_for_onboarding
+
+            await ensure_settings_for_onboarding(db, user)
 
     await db.commit()
 

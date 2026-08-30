@@ -16,6 +16,9 @@ SettingType = Literal[
     "meal_reminder_dinner",
     "mealplan_done",
     "weekly_nudge",
+    "order_approval",
+    "fridge_inbound",
+    "cycle_paused",
 ]
 
 REMINDER_TYPES = ("meal_reminder_breakfast", "meal_reminder_lunch", "meal_reminder_dinner")
@@ -95,9 +98,13 @@ class NotificationSettingUpdateItem(CamelModel):
 
     @model_validator(mode="after")
     def validate_local_time_only_for_reminders(self) -> "NotificationSettingUpdateItem":
-        # localTime 은 리마인더 3종만 허용 — 그 외 type 에 오면 422 (api-spec 6-A-4)
-        if self.local_time is not None and self.type not in REMINDER_TYPES:
-            raise ValueError(f"localTime is not allowed for type '{self.type}'")
+        # localTime/timezone 은 리마인더 3종만 허용 — 이벤트 알림은 항상 null.
+        if self.type not in REMINDER_TYPES and (
+            self.local_time is not None or self.timezone is not None
+        ):
+            raise ValueError(
+                f"localTime/timezone is not allowed for type '{self.type}'"
+            )
         return self
 
     def parsed_local_time(self) -> time | None:
@@ -108,4 +115,4 @@ class NotificationSettingUpdateItem(CamelModel):
 
 
 class NotificationSettingsUpdateRequest(CamelModel):
-    settings: list[NotificationSettingUpdateItem] = Field(min_length=1, max_length=5)
+    settings: list[NotificationSettingUpdateItem] = Field(min_length=1, max_length=8)

@@ -211,3 +211,29 @@ async def notify_mealplan_result(
             )
     except Exception:  # noqa: BLE001 - 푸시는 보조 채널, 생성 결과에 영향 금지
         logger.exception("식단 생성 결과 푸시 발송 실패 user_id=%s plan_id=%s", user_id, plan_id)
+
+
+async def notify_cycle_event(
+    user_id: uuid.UUID,
+    type_: str,
+    template_key: str,
+    path: str,
+) -> None:
+    """사이클 이벤트 푸시. 보조 채널 실패가 오케스트레이션을 되돌리지 않는다."""
+    try:
+        async with SessionLocal() as db:
+            if not await is_type_enabled(db, user_id, type_):
+                return
+            await sender.send_to_user(
+                db,
+                user_id,
+                type_=type_,
+                template_key=template_key,
+                path=path,
+            )
+    except Exception:  # noqa: BLE001
+        logger.exception(
+            "사이클 이벤트 푸시 발송 실패 user_id=%s template=%s",
+            user_id,
+            template_key,
+        )

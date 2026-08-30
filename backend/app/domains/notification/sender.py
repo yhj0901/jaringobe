@@ -8,6 +8,7 @@
 """
 
 import logging
+import re
 import uuid
 
 import httpx
@@ -42,7 +43,21 @@ TEMPLATES: dict[str, dict[str, tuple[str, str]]] = {
         "ko": ("이번 주 식단이 아직 없어요", "예산에 맞는 식단을 만들어 볼까요?"),
         "en": ("No meal plan for this week yet", "Shall we create one within your budget?"),
     },
+    "push.orderApproval": {
+        "ko": ("이번 주 장바구니가 준비됐어요", "확인해 주세요"),
+        "en": ("Your weekly cart is ready", "Take a look."),
+    },
+    "push.fridgeInbound": {
+        "ko": ("받으셨나요? 냉장고에 담아둘게요", "실제와 다르면 수정해 주세요"),
+        "en": ("Did it arrive? We'll stock your fridge", "Adjust it if anything's different."),
+    },
+    "push.cyclePaused": {
+        "ko": ("잠시 자동 식단을 멈췄어요", "언제든 다시 시작할 수 있어요"),
+        "en": ("We paused your auto meal plans", "You can resume anytime."),
+    },
 }
+
+_SAFE_PATH = re.compile(r"^/mealplan/[^/?#]+$")
 
 # meal_type 로캘 라벨 (리마인더 본문용)
 MEAL_TYPE_LABELS: dict[str, dict[str, str]] = {
@@ -73,6 +88,8 @@ def build_message(
     device: DeviceToken, template_key: str, path: str, variables: dict[str, str] | None = None
 ) -> dict:
     """Expo 발송 페이로드 — data.path 는 내부 상대경로만 (CWE-601, api-spec 6-A-5)."""
+    if path not in ("/orders", "/fridge") and _SAFE_PATH.fullmatch(path) is None:
+        raise ValueError("notification path is not allowed")
     title, body = render_template(template_key, device.locale, variables)
     return {
         "to": device.token,

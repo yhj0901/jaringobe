@@ -111,6 +111,7 @@ def _prompt(
     region: str, household_size: int, meal_direction: str, days: int, meals_per_day: int,
     allergies: list[str], preferences: list[str], budget_hint: str,
     household_desc: str = "",
+    fridge_hint: str = "",
 ) -> str:
     lines = [
         f"Region: {region}",
@@ -127,6 +128,8 @@ def _prompt(
         lines.insert(2, f"Household members: {household_desc}")
     if budget_hint:
         lines.append(budget_hint)
+    if fridge_hint:
+        lines.append(fridge_hint)
     lines.append(
         'Return JSON: {"meals":[{"day":1,"meal_type":"breakfast","name":"...",'
         '"steps":"...","time_minutes":20,"difficulty":"easy|normal|hard",'
@@ -139,6 +142,7 @@ async def generate_meals(
     region: str, household_size: int, meal_direction: str, days: int, meals_per_day: int,
     allergies: list[str], preferences: list[str], budget_hint: str = "",
     household_desc: str = "",
+    fridge_hint: str = "",
 ) -> list[dict]:
     llm = get_llm()
     if not llm.enabled:
@@ -148,7 +152,7 @@ async def generate_meals(
         data = await llm.complete_json(
             _SYSTEM,
             _prompt(region, household_size, meal_direction, days, meals_per_day,
-                    allergies, preferences, budget_hint, household_desc),
+                    allergies, preferences, budget_hint, household_desc, fridge_hint),
         )
     except Exception:
         # api-spec v1.1 §3-2: LLM 실패(타임아웃 포함)는 5xx 가 아니라 규칙 기반 폴백 생성
