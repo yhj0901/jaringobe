@@ -154,7 +154,7 @@ class TestGetSettings:
         assert res.status_code == 401
 
     async def test_lazy_creates_defaults(self, client, db, respx_mock):
-        """최초 호출 시 5행 lazy 생성 — 기본 08:00/12:00/18:30, weekly_nudge 만 off."""
+        """최초 호출 시 8행 lazy 생성 — 신규 사이클 알림 3종은 기본 on."""
         await login(client, respx_mock)
         res = await client.get("/api/v1/notifications/settings")
         assert res.status_code == 200, res.text
@@ -165,6 +165,9 @@ class TestGetSettings:
             "meal_reminder_dinner",
             "mealplan_done",
             "weekly_nudge",
+            "order_approval",
+            "fridge_inbound",
+            "cycle_paused",
         }
         assert by_type["meal_reminder_breakfast"]["localTime"] == "08:00"
         assert by_type["meal_reminder_lunch"]["localTime"] == "12:00"
@@ -173,6 +176,10 @@ class TestGetSettings:
             "type": "mealplan_done", "enabled": True, "localTime": None, "timezone": None,
         }
         assert by_type["weekly_nudge"]["enabled"] is False
+        for type_ in ("order_approval", "fridge_inbound", "cycle_paused"):
+            assert by_type[type_] == {
+                "type": type_, "enabled": True, "localTime": None, "timezone": None,
+            }
         # 리마인더는 next_send_at(UTC) 세팅 (스케줄러 스캔 키)
         rows = (await db.scalars(select(NotificationSetting))).all()
         for row in rows:
@@ -196,7 +203,7 @@ class TestGetSettings:
         await login(client, respx_mock)
         await client.get("/api/v1/notifications/settings")
         await client.get("/api/v1/notifications/settings")
-        assert await db.scalar(select(func.count()).select_from(NotificationSetting)) == 5
+        assert await db.scalar(select(func.count()).select_from(NotificationSetting)) == 8
 
 
 # ---------- PUT /notifications/settings ----------
@@ -221,9 +228,9 @@ class TestUpdateSettings:
         assert res.status_code == 200, res.text
         by_type = {s["type"]: s for s in res.json()["settings"]}
         assert by_type["meal_reminder_dinner"]["localTime"] == "19:00"
-        # 다른 type 은 기본값 유지 + 전체 5행 재반환
+        # 다른 type 은 기본값 유지 + 전체 8행 재반환
         assert by_type["meal_reminder_breakfast"]["localTime"] == "08:00"
-        assert len(by_type) == 5
+        assert len(by_type) == 8
 
     async def test_update_recomputes_next_send_at(self, client, db, respx_mock):
         await login(client, respx_mock)
@@ -271,6 +278,7 @@ class TestUpdateSettings:
         [
             {"type": "mealplan_done", "localTime": "12:00"},  # 리마인더 외 localTime 금지
             {"type": "weekly_nudge", "localTime": "09:00"},
+            {"type": "cycle_paused", "timezone": "UTC"},
             {"type": "meal_reminder_lunch", "localTime": "25:00"},  # HH:MM 위반
             {"type": "meal_reminder_lunch", "localTime": "9시"},
             {"type": "unknown_type", "enabled": True},  # type 열거 위반

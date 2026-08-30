@@ -1,5 +1,7 @@
 """Expo 발송 서비스 테스트 — 템플릿 렌더/발송 이력/무효 토큰 정리 (Expo API 는 mock)."""
 
+import uuid
+
 import pytest
 from sqlalchemy import func, select
 
@@ -46,7 +48,15 @@ async def _me_id(client):
 
 class TestTemplates:
     @pytest.mark.parametrize(
-        "key", ["push.mealplanDone", "push.mealplanFailed", "push.weeklyNudge"]
+        "key",
+        [
+            "push.mealplanDone",
+            "push.mealplanFailed",
+            "push.weeklyNudge",
+            "push.orderApproval",
+            "push.fridgeInbound",
+            "push.cyclePaused",
+        ],
     )
     @pytest.mark.parametrize("locale", ["ko", "en"])
     def test_catalog_has_ko_en(self, key, locale):
@@ -74,6 +84,21 @@ class TestTemplates:
     def test_mask_token(self):
         assert sender.mask_token(TOKEN_A).endswith("…")
         assert TOKEN_A[20:] not in sender.mask_token(TOKEN_A)
+
+    def test_rejects_untrusted_deep_link(self):
+        device = DeviceToken(
+            user_id=uuid.uuid4(),
+            platform="ios",
+            token=TOKEN_A,
+            locale="ko",
+            timezone="Asia/Seoul",
+        )
+        with pytest.raises(ValueError):
+            sender.build_message(
+                device,
+                "push.orderApproval",
+                "https://evil.example/orders",
+            )
 
 
 # ---------- 발송 + 이력 ----------
