@@ -52,7 +52,7 @@ class Order(Base):
             "delivery_state IN ('pending','delivered','unknown')",
             name="ck_orders_delivery_state",
         ),
-        Index("ix_orders_user_created", "user_id", "created_at"),
+        Index("ix_orders_user_created", "user_id", text("created_at DESC")),
         Index(
             "uq_orders_confirmed_cycle",
             "user_id",
