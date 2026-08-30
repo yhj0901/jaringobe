@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-08-29T23:55:00+09:00",
+  "session_topic": "선순환 루프 완결 — 주간 자동 사이클 기획 (식단 자동생성 → 자동주문 → 냉장고 등록 → 식사완료 차감 → 동적 감산)",
+  "command": "/기획시작 루프 완결",
+  "agent": "agents/planning.md",
+  "status": "기획서 작성 완료. 미결 0건. GATE 1 승인 대기 (코디네이터 경유).",
+  "tasks": [
+    {"id": 1, "subject": "CLAUDE.md / agents/planning.md / 사업계획서 / 기존 기획 7건 정독", "status": "completed"},
+    {"id": 2, "subject": "현행 실사 — main(efc8376) 백엔드 6도메인·API 25경로, 프론트 features 9·라우트 5 코드 확인", "status": "completed"},
+    {"id": 3, "subject": "미머지 브랜치 실사 — feature/auto-order-p0(order 도메인·0009), feature/app-webview-push(notification·mobile·0008 충돌)", "status": "completed"},
+    {"id": 4, "subject": "루프 단계별 갭 분석 15항목 (a/b/c 판정 + 코드 근거)", "status": "completed"},
+    {"id": 5, "subject": "미결 6건 코디네이터 ask → 전건 사용자 승인 확정", "status": "completed"},
+    {"id": 6, "subject": "기획서 작성 — docs/기획/루프완결-주간사이클.md", "status": "completed"},
+    {"id": 7, "subject": "회원홈-식단연결.md FR-203 개정 이력 반영", "status": "completed"},
+    {"id": 8, "subject": "GATE 1 사용자 승인", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/기획/루프완결-주간사이클.md",
+    "docs/기획/회원홈-식단연결.md (FR-203 개정)"
+  ],
+  "key_findings": {
+    "갭_판정_요약": "(a)구현됨 4건 · (b)브랜치에만 6건 · (c)미구현 5건",
+    "이미_완결된_단계": "식사 완료 → 냉장고 자동 차감 (meals.completed_at + fridge_deducted JSONB 스냅샷 + 해제 시 복원). 0006/0007 리비전",
+    "미구현_핵심_5건": [
+      "주간 롤링 식단 자동 생성 (스케줄러 자체가 없음)",
+      "냉장고 잔여·임박 재료를 식단 생성 입력에 반영 — generator._prompt() 에 냉장고 항목 부재. 사업계획서 축2 '임박 재료 우선 배치' 미이행",
+      "배송예정 시점 냉장고 등록 — fridge_items.source 의 'delivery' 값이 정의만 되고 사용처가 없음",
+      "주기 설정 (주 1회/2회·요일·자동확정) — orders.frequency CHECK 가 ('weekly') 단일",
+      "예외 흐름 전반 + 중복 확정 멱등 (auto-order-p0 가 P1 로 이관해 둔 항목)"
+    ],
+    "결정적_발견": "루프 자동화가 전부 서버 사이드 스케줄러로 수행되므로 클라이언트 백그라운드 실행 요구가 없다 → 얇은 웹뷰 쉘 전략이 유리. app-webview-push 의 lifespan asyncio + partial index 스캔 패턴을 사이클 스케줄러가 그대로 재사용 가능해 신규 인프라(APScheduler/Celery/Redis) 도입 불필요",
+    "확정된_결정_6건": {
+      "Q1_자동화수준": "B→A 단계적 (초안+알림+1탭 승인+24h 그레이스 자동확정 → 전면 자동)",
+      "Q2_사이클정본": "주간 롤링. POST /mealplans/monthly 는 유지하되 제품 정본에서 제외, _prorate 를 주간 예산 한도 산출기로 승격",
+      "Q3_냉장고등록시점": "delivery_eta 기반 자동 등록 + 사용자 보정 (orders.delivery_eta 신설 필요 — 설계 인계)",
+      "Q4_실결제": "로드맵 단계로만. 마트 약관·자격증명 보관 리스크로 별도 기획+법무 검토 선행",
+      "Q5_브랜치정리": "auto-order-p0 먼저(0009 유지) → app-webview-push 0010 리넘버. 실작업은 인프라 에이전트",
+      "Q6_생성트리거": "조건부 자동(C). 활성 사용자 주 1회, 휴면은 버튼. FR-203 개정(폐기 아님)"
+    },
+    "GATE3_대상": "user_cycle_settings 신규 / orders 컬럼 6건 추가 + status·frequency CHECK 확장 + 부분 유니크 인덱스. 전부 additive 또는 CHECK 확장 — 파괴적 변경 없음. 주의점은 cycle_start 백필 → 중복검사 → 인덱스 생성 순서"
+  },
+  "recommended_actions": [
+    "GATE 1 사용자 승인 (코디네이터 경유)",
+    "승인 후 /설계시작 — 설계 인계사항 9건(기획서 13장) 우선 처리",
+    "브랜치 머지는 인프라 에이전트: auto-order-p0(0009) → app-webview-push(0010 리넘버) → 본 기획(0011~)"
+  ],
+  "pending_user_input": "GATE 1 기획 승인",
+  "notes": "옵시디언 미러링 미수행 — CLAUDE.md 지정 볼트 경로(/Users/yangheejun/Documents/Obsidian Vault/자린고비/docs/)가 이 머신에 존재하지 않음(현재 사용자 홈은 /Users/heejuneyang). 경로 확인 후 별도 수행 필요"
+}
