@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-29T23:45:00+09:00",
+  "session_topic": "백엔드 임시 공개 — 로컬 백엔드 + cloudflared 터널로 Vercel 프론트 복구 (옵션 B)",
+  "command": "(직접 요청) 릴리즈 전까지 임시 운용",
+  "agent": "orchestrator (+ 인프라 영역)",
+  "status": "터널 기동·검증 완료. Vercel 환경변수 BACKEND_URL 교체 + 재배포는 사용자 조치 대기",
+  "tasks": [
+    {"id": 1, "subject": "chore/backend-portable-runtime 커밋·푸시 (ef6735f)", "status": "completed"},
+    {"id": 2, "subject": "cloudflared 설치 + quick tunnel 기동", "status": "completed"},
+    {"id": 3, "subject": "백엔드 .env 를 Vercel 오리진으로 전환 (FRONTEND_ORIGIN/COOKIE_SECURE)", "status": "completed"},
+    {"id": 4, "subject": "터널 경유 검증 (health·401·Origin 403)", "status": "completed"},
+    {"id": 5, "subject": "Vercel env BACKEND_URL 교체 + 재배포", "status": "pending"},
+    {"id": 6, "subject": "카카오/구글 OAuth 키 재발급 + 콜백 URL 등록", "status": "pending"},
+    {"id": 7, "subject": "릴리즈 시점 정식 호스팅처 결정", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/status/2026-08-29_234500.json"
+  ],
+  "key_findings": {
+    "구성": "Vercel(https://jaringobe.cloud) → rewrites 프록시 → cloudflared quick tunnel → 로컬 docker compose backend(:8001) → postgres(:5433)",
+    "vercel_프로젝트": "prj_AMZznFJp2sZfpb46qJU7gRdrjeQM / team yhj0901s-projects, 도메인 jaringobe.cloud",
+    "터널_특성": "quick tunnel 은 재시작마다 URL 이 바뀌고 맥이 꺼지면 끊긴다. 안정화하려면 named tunnel + api.jaringobe.cloud DNS(Cloudflare) 로 승격 필요",
+    "제약": "OAuth 키(KAKAO_*/GOOGLE_*)가 비어 있어 소셜 로그인 불가 → 로그인 필요한 기능 전체가 막힌다. ANTHROPIC_API_KEY 도 비어 AI 식단은 mock",
+    "로컬_개발_영향": "COOKIE_SECURE=true 로 바꿔 http://localhost:3000 개발 시에는 쿠키가 저장되지 않는다. 로컬 개발로 돌아갈 땐 FRONTEND_ORIGIN=http://localhost:3000 + COOKIE_SECURE=false 로 되돌릴 것"
+  },
+  "recommended_actions": "① Vercel Settings→Environment Variables 에서 BACKEND_URL 을 터널 URL 로 교체 후 Redeploy ② 카카오·구글 콘솔에서 키 재발급 + 콜백 URL(https://jaringobe.cloud/api/v1/auth/{provider}/callback) 등록 ③ 상시화가 필요해지면 named tunnel 승격",
+  "pending_user_input": "Vercel env 교체 여부, OAuth 키 재발급 여부"
+}
