@@ -423,6 +423,22 @@ async def _open_order(
     ).scalar_one_or_none()
 
 
+async def has_saved_preview(
+    db: AsyncSession, user_id: uuid.UUID, cycle_start: date
+) -> bool:
+    """현재 사이클의 저장 초안이 있어 외부 조회 없이 preview를 반환할 수 있는지 확인한다."""
+    order_id = await db.scalar(
+        select(Order.id)
+        .where(
+            Order.user_id == user_id,
+            Order.cycle_start == cycle_start,
+            Order.status.in_(("draft", "awaiting_user")),
+        )
+        .limit(1)
+    )
+    return order_id is not None
+
+
 async def preview_order(
     db: AsyncSession,
     user: User,

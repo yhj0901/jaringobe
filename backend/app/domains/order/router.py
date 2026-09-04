@@ -36,12 +36,6 @@ def create_router(cycle_context_provider: CycleContextProvider) -> APIRouter:
     """cycle→order 단방향 의존을 지키며 `/orders/*`를 order가 소유한다."""
     router = APIRouter(prefix="/orders")
 
-    async def preview_rate_limit(
-        refresh: bool = Query(False), user: User = Depends(get_current_user)
-    ) -> None:
-        if refresh and not order_preview_user_limiter.allow(str(user.id)):
-            raise ApiError(429, "RATE_LIMITED", "Too many order preview requests")
-
     async def confirm_rate_limit(user: User = Depends(get_current_user)) -> None:
         if not order_confirm_user_limiter.allow(str(user.id)):
             raise ApiError(429, "RATE_LIMITED", "Too many order confirm requests")
@@ -53,7 +47,6 @@ def create_router(cycle_context_provider: CycleContextProvider) -> APIRouter:
     @router.get(
         "/preview",
         response_model=OrderPreviewResponse,
-        dependencies=[Depends(preview_rate_limit)],
     )
     async def preview_order(
         refresh: bool = Query(False),
@@ -61,6 +54,11 @@ def create_router(cycle_context_provider: CycleContextProvider) -> APIRouter:
         user: User = Depends(get_current_user),
     ) -> OrderPreviewResponse:
         context = await cycle_context_provider(db, user)
+        if (
+            refresh
+            or not await service.has_saved_preview(db, user.id, context.cycle_start)
+        ) and not order_preview_user_limiter.allow(str(user.id)):
+            raise ApiError(429, "RATE_LIMITED", "Too many order preview requests")
         return await service.preview_order(
             db, user, context.cycle_start, refresh=refresh
         )
