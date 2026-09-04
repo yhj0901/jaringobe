@@ -7,6 +7,7 @@ from decimal import Decimal
 
 from sqlalchemy import func, select
 
+from app.core.errors import ApiError
 from app.domains.auth.models import User
 from app.domains.budget.models import BudgetPlan
 from app.domains.cycle import service as cycle_service
@@ -121,6 +122,27 @@ async def test_due_settings_scan_locks_and_accepts_generation(db, monkeypatch):
     await asyncio.sleep(0)
     assert (processed, generated) == (1, 1)
     assert len(scheduled) == 1
+
+
+async def test_scheduler_quietly_waits_when_mealplan_is_generating(
+    db, monkeypatch, caplog
+):
+    _user, _budget, setting = await _active_cycle(db)
+
+    async def already_generating(*_args, **_kwargs):
+        raise ApiError(409, "MEALPLAN_GENERATING", "already in progress")
+
+    monkeypatch.setattr(
+        cycle_service.mealplan_service,
+        "start_meal_plan_generation",
+        already_generating,
+    )
+    assert await cycle_scheduler.process_due_settings(NOW, _policy()) == (1, 0)
+    await db.refresh(setting)
+    assert setting.last_generated_cycle_start is None
+    assert setting.last_stage is None
+    assert setting.next_run_at == NOW
+    assert "사이클 사용자 단계 처리 실패" not in caplog.text
 
 
 async def test_generation_failure_retries_same_plan_once_and_obeys_daily_quota(db):
