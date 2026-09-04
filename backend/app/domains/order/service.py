@@ -231,7 +231,7 @@ async def _build_preview(
         note = (
             "시세 조회 실패 — 가격 없는 needed 목록으로 생성"
             if force_unmatched
-            else "네이버 API 키 미설정 — 검색 결과 없음(.env NAVER_CLIENT_ID/SECRET 필요)"
+            else "PRICE_LOOKUP_UNAVAILABLE"
         )
         notes.append(note)
         cart = _unmatched_cart(needed, currency, [note])
