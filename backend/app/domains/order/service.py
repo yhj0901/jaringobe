@@ -467,6 +467,8 @@ async def create_draft(
     grace_hours: int,
     force_unmatched: bool = False,
 ) -> Order | None:
+    if await _existing_confirmed(db, user.id, cycle_start):
+        return None
     existing = await _open_order(db, user.id, cycle_start)
     if existing is not None:
         return existing

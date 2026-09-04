@@ -424,8 +424,23 @@ async def update_settings(
         settings.frequency, settings.anchor_weekday, settings.timezone, now
     )
     if should_recompute:
+        current_order_status = await db.scalar(
+            select(Order.status)
+            .where(
+                Order.user_id == user.id,
+                Order.cycle_start == window.cycle_start,
+            )
+            .order_by(Order.created_at.desc())
+            .limit(1)
+        )
+        cycle_already_drafted = settings.last_stage == "drafted" or (
+            current_order_status
+            in ("draft", "awaiting_user", "confirmed", "cancelled", "expired")
+        )
         settings.next_run_at = (
-            draft_at(window.cycle_start, settings, policy)
+            _next_generation_at(window.cycle_start, settings, policy)
+            if cycle_already_drafted
+            else draft_at(window.cycle_start, settings, policy)
             if settings.last_generated_cycle_start == window.cycle_start
             else _initial_next_run(
                 settings.user_id,

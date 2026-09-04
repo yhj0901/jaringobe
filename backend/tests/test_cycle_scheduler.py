@@ -288,6 +288,46 @@ async def test_generated_plan_becomes_saved_draft(db):
     assert setting.last_stage == "drafted"
 
 
+async def test_generated_stage_skips_draft_when_cycle_is_already_confirmed(db):
+    user, _budget, setting = await _active_cycle(db)
+    setting.last_stage = "generated"
+    setting.last_generated_cycle_start = CYCLE_START
+    setting.next_run_at = NOW
+    confirmed = Order(
+        user_id=user.id,
+        meal_plan_id=None,
+        store="kurly",
+        status="confirmed",
+        frequency="weekly",
+        cycle_start=CYCLE_START,
+        next_suggested_at=NOW + timedelta(days=7),
+        estimated_total=Decimal("10000"),
+        currency="KRW",
+        simulation=True,
+        confirmed_at=NOW,
+        auto_confirm_at=None,
+        auto_confirmed=False,
+        delivery_state="pending",
+    )
+    db.add(confirmed)
+    await db.commit()
+
+    result = await cycle_service.process_due_setting(
+        db,
+        user,
+        setting,
+        policy=_policy(),
+        now=NOW,
+        generation_allowed=True,
+    )
+
+    assert result is None
+    assert list(await db.scalars(select(Order.status))) == ["confirmed"]
+    await db.refresh(setting)
+    assert setting.last_stage == "drafted"
+    assert setting.next_run_at > NOW
+
+
 async def test_draft_failure_after_query_persists_backoff(db, monkeypatch):
     user, _budget, setting = await _active_cycle(db)
     setting.last_stage = "generated"

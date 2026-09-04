@@ -272,6 +272,32 @@ async def test_skip_rejects_confirmed_cycle(client, db, respx_mock):
     assert response.json()["detail"]["code"] == "CYCLE_ALREADY_CONFIRMED"
 
 
+async def test_timezone_change_after_confirmation_schedules_next_cycle(
+    client, db, respx_mock
+):
+    me, _budget = await _login_budget(client, respx_mock)
+    state = (await client.get("/api/v1/cycle")).json()
+    order = await _draft(db, me["id"], date.fromisoformat(state["cycleStart"]))
+    order.status = "confirmed"
+    order.confirmed_at = utcnow()
+    order.auto_confirm_at = None
+    settings = (await db.scalars(select(UserCycleSettings))).one()
+    settings.last_stage = "generated"
+    settings.last_generated_cycle_start = order.cycle_start
+    await db.commit()
+
+    response = await client.put(
+        "/api/v1/cycle/settings", json={"timezone": "Asia/Tokyo"}
+    )
+
+    assert response.status_code == 200, response.text
+    await db.refresh(settings)
+    assert settings.next_run_at is not None
+    assert settings.next_run_at > utcnow()
+    assert response.json()["stage"] == "confirmed"
+    assert await db.scalar(select(func.count()).select_from(Order)) == 1
+
+
 def test_biweekly_window_uses_three_and_four_day_intervals():
     sunday = datetime(2026, 8, 30, 0, tzinfo=UTC)
     first = cycle_window("biweekly", 0, "UTC", sunday)
