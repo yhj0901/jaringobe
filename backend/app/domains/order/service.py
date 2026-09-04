@@ -904,7 +904,7 @@ async def update_delivery(
         if order.inbound_at is not None:
             await fridge_service.delete_delivery_items(db, user.id, order.id)
         order.inbound_at = None
-        order.delivery_eta = (order.delivery_eta or utcnow()) + timedelta(days=1)
+        order.delivery_eta = utcnow() + timedelta(days=1)
         order.delivery_confirm_attempts += 1
         order.delivery_state = (
             "unknown"

@@ -1,6 +1,6 @@
 """order v1.8 상태 전이·배송 보정·inbound 멱등성 테스트."""
 
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
@@ -102,6 +102,24 @@ async def test_delivery_false_rolls_back_and_unknown_then_true_recovers(
     assert recovered.json()["deliveryState"] == "delivered"
     assert recovered.json()["inboundAt"].endswith("Z")
     assert await db.scalar(select(func.count()).select_from(FridgeItem)) == 2
+
+
+async def test_delivery_false_reschedules_from_response_time(
+    client, db, respx_mock, monkeypatch
+):
+    _me, created = await _confirmed_order(client, db, respx_mock)
+    order = await db.get(Order, UUID(created["id"]))
+    order.delivery_eta = datetime(2026, 8, 1, tzinfo=UTC)
+    await db.commit()
+    answered_at = datetime(2026, 9, 1, 12, tzinfo=UTC)
+    monkeypatch.setattr(order_service, "utcnow", lambda: answered_at)
+
+    response = await client.post(
+        f"/api/v1/orders/{order.id}/delivery", json={"received": False}
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["deliveryEta"] == "2026-09-02T12:00:00Z"
 
 
 async def test_cancel_removes_remaining_delivery_rows_but_keeps_audit_time(
