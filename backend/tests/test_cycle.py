@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from app.core.security import utcnow
 from app.domains.auth.models import User
 from app.domains.budget import service as budget_service
+from app.domains.budget.models import BudgetPlan
 from app.domains.cycle.models import UserCycleSettings
 from app.domains.cycle.policy import load_policy
 from app.domains.cycle.service import _initial_next_run, cycle_window
@@ -238,6 +239,62 @@ def test_remaining_month_proration_is_decimal_and_unchanged():
     assert budget_service.prorate_remaining_month(
         date(2026, 2, 20), Decimal("310000")
     ) == Decimal("99642.86")
+
+
+async def test_cycle_limit_accumulates_month_share_across_three_cycles(db):
+    """같은 달의 2·3번째 사이클도 앞선 확정액 때문에 한도가 0으로 붕괴하지 않는다."""
+    user = User(nickname="예산 누적 사용자", country="KR", currency="KRW")
+    db.add(user)
+    await db.flush()
+    db.add(
+        BudgetPlan(
+            user_id=user.id,
+            household_size=2,
+            amount=Decimal("310000"),
+            currency="KRW",
+            meal_direction="health",
+            source="onboarding",
+            locked=True,
+        )
+    )
+    await db.flush()
+
+    async def add_confirmed(cycle_start: date, confirmed_at: datetime) -> None:
+        db.add(
+            Order(
+                user_id=user.id,
+                meal_plan_id=None,
+                store="kurly",
+                status="confirmed",
+                frequency="weekly",
+                cycle_start=cycle_start,
+                next_suggested_at=confirmed_at + timedelta(days=7),
+                estimated_total=Decimal("70000"),
+                currency="KRW",
+                simulation=True,
+                confirmed_at=confirmed_at,
+                auto_confirmed=True,
+                delivery_state="pending",
+            )
+        )
+        await db.flush()
+
+    first = date(2026, 8, 1)
+    assert await budget_service.cycle_limit(db, user, first, 7, timezone_name="UTC") == Decimal(
+        "70000.00"
+    )
+    await add_confirmed(first, datetime(2026, 8, 5, tzinfo=UTC))
+
+    second = date(2026, 8, 8)
+    assert await budget_service.cycle_limit(db, user, second, 7, timezone_name="UTC") == Decimal(
+        "70000.00"
+    )
+    await add_confirmed(second, datetime(2026, 8, 12, tzinfo=UTC))
+
+    third = date(2026, 8, 15)
+    assert await budget_service.cycle_limit(db, user, third, 7, timezone_name="UTC") == Decimal(
+        "70000.00"
+    )
 
 
 def test_policy_parse_failures_fall_back_without_stopping(monkeypatch, caplog):
