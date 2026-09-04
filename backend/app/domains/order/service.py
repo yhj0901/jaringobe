@@ -443,32 +443,18 @@ async def preview_order(
     db: AsyncSession,
     user: User,
     cycle_start: date,
-    *,
-    refresh: bool = False,
 ) -> OrderPreviewResponse:
     existing = await _open_order(db, user.id, cycle_start)
-    if existing is not None and not refresh:
+    if existing is not None:
         return _preview_from_order(
             existing, user, await _store_connected(db, user, existing.store)
         )
-    preview = await _build_preview(
+    return await _build_preview(
         db,
         user,
         cycle_start,
-        plan_period_start=cycle_start if existing is not None else None,
+        plan_period_start=None,
     )
-    if existing is not None:
-        existing.meal_plan_id = preview.meal_plan_id
-        existing.estimated_total = preview.estimated_total.amount
-        existing.currency = preview.estimated_total.currency
-        existing.items = _snapshot_lines(preview)
-        if existing.status == "draft":
-            existing.blocked_reason = None
-        await db.commit()
-        return _preview_from_order(
-            existing, user, await _store_connected(db, user, existing.store)
-        )
-    return preview
 
 
 async def create_draft(
@@ -721,6 +707,31 @@ async def approve_order(
         local_hour=local_hour,
         exclude_names=exclude_names,
     )
+
+
+async def recalculate_order(
+    db: AsyncSession,
+    user: User,
+    order_id: uuid.UUID,
+) -> OrderResponse:
+    """열린 초안을 현재 사이클 식단·재고·시세로 다시 계산해 저장한다."""
+    order = await _owned_order(db, user, order_id, lock=True)
+    if order.status not in ("draft", "awaiting_user"):
+        raise ApiError(409, "ORDER_INVALID_STATE", "order cannot be recalculated")
+    preview = await _build_preview(
+        db,
+        user,
+        order.cycle_start,
+        plan_period_start=order.cycle_start,
+    )
+    order.meal_plan_id = preview.meal_plan_id
+    order.estimated_total = preview.estimated_total.amount
+    order.currency = preview.estimated_total.currency
+    order.items = _snapshot_lines(preview)
+    if order.status == "draft":
+        order.blocked_reason = None
+    await db.commit()
+    return order_response(await _reload_order(db, order.id))
 
 
 async def auto_confirm_order(

@@ -3,7 +3,7 @@
 import uuid
 from collections.abc import Awaitable, Callable
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -44,24 +44,24 @@ def create_router(cycle_context_provider: CycleContextProvider) -> APIRouter:
         if not cycle_action_user_limiter.allow(str(user.id)):
             raise ApiError(429, "RATE_LIMITED", "Too many order action requests")
 
+    async def recalculate_rate_limit(user: User = Depends(get_current_user)) -> None:
+        if not order_preview_user_limiter.allow(str(user.id)):
+            raise ApiError(429, "RATE_LIMITED", "Too many order recalculate requests")
+
     @router.get(
         "/preview",
         response_model=OrderPreviewResponse,
     )
     async def preview_order(
-        refresh: bool = Query(False),
         db: AsyncSession = Depends(get_db),
         user: User = Depends(get_current_user),
     ) -> OrderPreviewResponse:
         context = await cycle_context_provider(db, user)
-        if (
-            refresh
-            or not await service.has_saved_preview(db, user.id, context.cycle_start)
+        if not await service.has_saved_preview(
+            db, user.id, context.cycle_start
         ) and not order_preview_user_limiter.allow(str(user.id)):
             raise ApiError(429, "RATE_LIMITED", "Too many order preview requests")
-        return await service.preview_order(
-            db, user, context.cycle_start, refresh=refresh
-        )
+        return await service.preview_order(db, user, context.cycle_start)
 
     @router.get("/latest", response_model=OrderResponse)
     async def get_latest_order(
@@ -120,6 +120,18 @@ def create_router(cycle_context_provider: CycleContextProvider) -> APIRouter:
             lead_days=lead_days,
             local_hour=context.local_hour,
         )
+
+    @router.post(
+        "/{order_id}/recalculate",
+        response_model=OrderResponse,
+        dependencies=[Depends(recalculate_rate_limit)],
+    )
+    async def recalculate_order(
+        order_id: uuid.UUID,
+        db: AsyncSession = Depends(get_db),
+        user: User = Depends(get_current_user),
+    ) -> OrderResponse:
+        return await service.recalculate_order(db, user, order_id)
 
     @router.post(
         "/{order_id}/cancel",

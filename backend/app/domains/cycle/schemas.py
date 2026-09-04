@@ -54,6 +54,8 @@ class CycleSettingsUpdateRequest(CamelModel):
 class MealPlanSummary(CamelModel):
     id: uuid.UUID
     status: str
+    meal_count: int
+    completed_meal_count: int
 
 
 class DraftOrderSummary(CamelModel):
@@ -65,6 +67,21 @@ class DraftOrderSummary(CamelModel):
     delivery_eta: datetime | None = None
 
     @field_serializer("auto_confirm_at", "delivery_eta")
+    def _serialize_optional_datetime(self, value: datetime | None) -> str | None:
+        return serialize_utc(value) if value is not None else None
+
+
+class CurrentOrderSummary(CamelModel):
+    id: uuid.UUID
+    status: Literal[
+        "draft", "awaiting_user", "confirmed", "cancelled", "expired", "failed"
+    ]
+    delivery_state: Literal["pending", "delivered", "unknown"]
+    delivery_eta: datetime | None = None
+    inbound_at: datetime | None = None
+    auto_confirmed: bool
+
+    @field_serializer("delivery_eta", "inbound_at")
     def _serialize_optional_datetime(self, value: datetime | None) -> str | None:
         return serialize_utc(value) if value is not None else None
 
@@ -83,9 +100,9 @@ class CycleState(CamelModel):
     weekly_limit: MoneyOut | None = None
     meal_plan: MealPlanSummary | None = None
     draft_order: DraftOrderSummary | None = None
+    current_order: CurrentOrderSummary | None = None
     simulation: bool = True
 
     @field_serializer("next_run_at")
     def _serialize_next_run_at(self, value: datetime | None) -> str | None:
         return serialize_utc(value) if value is not None else None
-

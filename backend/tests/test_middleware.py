@@ -38,6 +38,14 @@ class TestOriginVerification:
         assert res.status_code == 403
         assert res.json()["detail"]["code"] == "FORBIDDEN_ORIGIN"
 
+    async def test_order_recalculate_with_mismatched_origin_403(self, client):
+        res = await client.post(
+            "/api/v1/orders/00000000-0000-0000-0000-000000000001/recalculate",
+            headers={"Origin": "https://evil.example"},
+        )
+        assert res.status_code == 403
+        assert res.json()["detail"]["code"] == "FORBIDDEN_ORIGIN"
+
 
 class TestRateLimit:
     async def test_auth_ip_limit_10_per_minute(self, client):

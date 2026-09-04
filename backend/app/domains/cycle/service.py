@@ -24,6 +24,7 @@ from app.domains.budget.schemas import MoneyOut
 from app.domains.cycle.models import UserCycleSettings
 from app.domains.cycle.policy import CyclePolicy, load_policy
 from app.domains.cycle.schemas import (
+    CurrentOrderSummary,
     CycleSettingsUpdateRequest,
     CycleState,
     DraftOrderSummary,
@@ -303,6 +304,15 @@ async def build_cycle_state(
     )
     plan = await _current_plan(db, user.id, window.cycle_start)
     order = await _current_order(db, user.id, window.cycle_start)
+    meal_counts = None
+    if plan is not None:
+        meal_counts = (
+            await db.execute(
+                select(func.count(Meal.id), func.count(Meal.completed_at)).where(
+                    Meal.meal_plan_id == plan.id
+                )
+            )
+        ).one()
     budget = await db.scalar(select(BudgetPlan).where(BudgetPlan.user_id == user.id))
     weekly_limit: MoneyOut | None = None
     if budget is not None:
@@ -340,8 +350,29 @@ async def build_cycle_state(
         next_run_at=settings.next_run_at,
         skipped_cycle_start=settings.skip_until,
         weekly_limit=weekly_limit,
-        meal_plan=(MealPlanSummary(id=plan.id, status=plan.status) if plan is not None else None),
+        meal_plan=(
+            MealPlanSummary(
+                id=plan.id,
+                status=plan.status,
+                meal_count=meal_counts[0],
+                completed_meal_count=meal_counts[1],
+            )
+            if plan is not None and meal_counts is not None
+            else None
+        ),
         draft_order=draft_order,
+        current_order=(
+            CurrentOrderSummary(
+                id=order.id,
+                status=order.status,  # type: ignore[arg-type]
+                delivery_state=order.delivery_state,  # type: ignore[arg-type]
+                delivery_eta=order.delivery_eta,
+                inbound_at=order.inbound_at,
+                auto_confirmed=order.auto_confirmed,
+            )
+            if order is not None
+            else None
+        ),
         simulation=True,
     )
 
