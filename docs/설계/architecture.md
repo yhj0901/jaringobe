@@ -292,20 +292,24 @@ def prorate_remaining_month(as_of: date, monthly: Decimal) -> Decimal:
     """기존 _prorate 와 수학적으로 동일 (monthly × 남은일수/그달일수). monthly 플랜 전용."""
     return prorate(monthly, month_days_from(as_of))
 
-async def cycle_limit(db, user, cycle_start: date, cycle_days: int) -> Decimal:
+async def cycle_limit(db, user, cycle_start: date, cycle_days: int,
+                      *, timezone_name: str = "Asia/Seoul") -> Decimal:   # v1.9: timezone_name 표기 보정
     """이번 사이클에 쓸 수 있는 금액 = 월 누적 안분액 − 같은 누적 기간의 기확정 합계 (음수는 0)."""
+    # 예산안 없음 → 409 BUDGET_PLAN_REQUIRED (GET /cycle 은 호출 전에 예산안 존재를 확인해 weeklyLimit=null 로 우회)
     accrual_end = min(cycle_start + cycle_days, cycle_start 소속 월의 익월 1일)
     share     = prorate(budget.amount, [cycle_start 소속 월의 1일, ..., accrual_end 직전])
     committed = Σ orders.estimated_total
                 WHERE user_id=? AND status='confirmed'
-                  AND confirmed_at ∈ [cycle_start 가 속한 달의 로컬 1일 00:00, accrual_end 00:00) → UTC 환산
-    return max(Decimal("0"), share - committed)
+                  AND confirmed_at ∈ [cycle_start 가 속한 달의 로컬 1일 00:00, accrual_end 00:00)
+                      → timezone_name 기준 로컬 → UTC 환산 (호출자가 user_cycle_settings.timezone 을 넘긴다)
+    return max(Decimal("0"), share - committed).quantize(_CENT, ROUND_HALF_UP)
 ```
 
 - 사이클별 단일 몫에서 월 누적 확정액을 빼면 2회차부터 한도가 0으로 붕괴하므로, **안분액과 확정액 모두 월초부터 이번 사이클 종료까지의 같은 누적 구간**을 사용한다. 앞선 사이클에서 남긴 금액은 다음 사이클로 이월되고, 각 사이클이 정상 예산을 썼다면 다음 한도는 새로 누적된 일수 몫이 된다.
 - `prorate_remaining_month` 는 기존 `_prorate` 와 **결과가 완전히 동일**하다(달이 하나뿐이므로 `monthly × remaining/dim`). `build_monthly_plan` 의 동작은 바뀌지 않는다.
 - 사이클이 달 경계를 넘으면 이번 계산은 `cycle_start` 소속 월의 말일까지로 자른다. 다음 달 초의 미사용 일수 몫은 다음 달 첫 사이클 누적액에 포함되므로 월별 예산·확정액의 기간이 섞이지 않는다.
 - 통화는 `budget_plans.currency` 를 그대로 따른다. `Decimal` + 통화코드 쌍, float 금지.
+- **v1.9 대조(2026-09-04)**: 위 수식과 `backend/app/domains/budget/service.py::cycle_limit` 구현이 **일치**함을 확인했다 — `month_start`/`next_month`(12월 롤오버 포함)/`accrual_end` 계산, `prorate` 범위 `[month_start, accrual_end)`, `confirmed_at` 범위의 로컬→UTC 환산, `status='confirmed'` 한정, `max(0, share − committed)` 및 소수 2자리 반올림까지 동일. 문서 쪽 차이는 시그니처의 `timezone_name` 키워드 인자 누락뿐이었고 본 버전에서 보정했다. 호출자 2곳(`GET /cycle` 의 `weeklyLimit`, 자동확정 게이트 ⑤) 모두 `user_cycle_settings.timezone` 을 넘긴다. 구현은 바꾸지 않았다.
 
 ### 3-9-5. 자동확정 5중 게이트 (스캔 ②)
 
@@ -481,8 +485,7 @@ RULES:
 ## 변경 이력
 - 2026-08-15: **v1.6** — 자동주문 P0 흐름(3-6) + order 도메인 폴더. 실결제 없이 preview→명시 확정→fridge inbound `source=order`. 설계 토론 5라운드 합의. 미결 0건
 - **주간 자동 사이클(v1.8) 이관 항목**: 멀티 인스턴스 스케줄러 분산 락·리더 선출(배포 형상 변경 시 설계 재소집), 실결제 자동확정(별도 명시 동의·1회 상한액·취소 유예·재시도 정책이 선행 조건), 품절 시 대체 재료 자동 제안(알레르기 재검증 필요 — P2), 스토어 배송 상태 웹훅(현 `delivery_eta` 추정은 폴백으로 존치), 정책 파라미터의 `policy_settings` 테이블 승격(관리자 인증 도입 후, env=기본값·DB=오버라이드 2계층)
-
-## 변경 이력
+- 2026-09-04: **v1.9** — 3-9-4 `cycle_limit` 수식 ↔ 구현 대조 완료(일치). 시그니처에 `timezone_name` 표기 보정, 예산안 부재 시 409 와 `GET /cycle` 우회 경로 주석 추가. 변경 이력 2개 절을 하나로 병합(내용 변경 없음)
 - 2026-08-30: **v1.8** — 주간 자동 사이클(3-9): 신규 `cycle` 도메인·단방향 의존, lifespan asyncio 스케줄러 3스캔(신규 인프라 없음·단일 인스턴스 경고), `_prorate`→budget 도메인 안분기, 자동확정 5중 게이트, 멱등 4중, 정책 파라미터=환경변수 확정, 냉장고→식단 되먹임 프롬프트 규약, 비용 상한, `users.last_seen_at` 활성 판정. 설계 토론 5라운드 합의
 - 2026-09-04: **v1.8 정정** — `cycle_limit`의 안분액과 확정액을 월초부터 이번 사이클 종료까지의 동일 누적 구간으로 맞춰 2회차 이후 한도 붕괴를 수정
 - 2026-07-09: 최초 작성 (설계 토론 5라운드 합의)

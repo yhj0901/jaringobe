@@ -261,8 +261,8 @@ frontend/src/features/order/   # 13장 기존 — 상태 분기만 확장 (복�
 | `generate_failed` | "다음 주 식단을 만들지 못했어요" | **직접 만들기** (`PlanCreateSheet`) |
 | `drafted` | "장바구니 승인 대기 · {autoConfirmAt 까지}" | **[승인하기]** (1탭, 주 CTA) · [보기] · [이번 주 건너뛰기] |
 | `awaiting_user` | 차단 사유 배너 (`blockedReason` → i18n) | 사유별 해소 CTA (아래) |
-| `confirmed` | "배송 대기 · {deliveryEta} 도착 예정" | 주문 스냅샷 보기 · [주문 취소] |
-| `delivered` | "이번 주 진행 중 · {완료}/{전체} 완료" | 식단 섹션(완료 체크) |
+| `confirmed` | "배송 대기 · {deliveryEta} 도착 예정" — **v1.9**: `{deliveryEta}` 는 `currentOrder.deliveryEta` 에서 읽는다. `draftOrder` 는 확정 이후 항상 null 이라 v1.8 구현(`CycleStatusCard`)의 `draftOrder?.deliveryEta` 참조는 빈 문자열이 된다(api-spec §9 진행 수치) | 주문 스냅샷 보기 · [주문 취소] |
+| `delivered` | "이번 주 진행 중 · {완료}/{전체} 완료" — **v1.9**: `{완료}` = `mealPlan.completedMealCount`, `{전체}` = `mealPlan.mealCount`. 필드 부재로 일반 문구("식사 완료 체크로 냉장고 재고를 맞춰 주세요")로 우회했던 것을 되돌린다. **품목 단위 배송 수치는 표시하지 않는다**(서버에 데이터 없음 — api-spec §9) | 식단 섹션(완료 체크) |
 | `nothing_to_order` | "이번 주는 냉장고로 충분해요" | 냉장고 보기 |
 | `skipped_user` | "이번 주는 쉬어가요" | — |
 | `skipped_dormant` | **휴면 복귀 카드** "이번 주 식단 만들까요?" — 그 사이클에 **1회만** | **[만들기]** · [닫기] |
@@ -291,10 +291,10 @@ frontend/src/features/order/   # 13장 기존 — 상태 분기만 확장 (복�
 | status | 화면 |
 |--------|------|
 | `draft` | 섹션 A 살 재료(needed) / 섹션 B 냉장고가 충당(covered) + 추정 합계 + **시뮬레이션 고지** + **자동확정 예정 시각 안내** + [승인하기] / [품목 편집](P1) / [이번 주 건너뛰기] |
-| `awaiting_user` | 상단 **차단 사유 배너**(위 매핑) + 해소 CTA. 나머지는 draft 와 동일 |
+| `awaiting_user` | 상단 **차단 사유 배너**(위 매핑) + 해소 CTA. 나머지는 draft 와 동일. **v1.9**: [다시 계산하기] 는 `POST /orders/{id}/recalculate`(api-spec 10-7) 를 호출하고 응답 `OrderResponse` 로 `latest` 를 교체한다 — 기존 `GET /orders/preview?refresh=true` 호출은 제거 |
 | `confirmed` | 스냅샷 + 배송 예정일 + `autoConfirmed` 면 "자동으로 확정됐어요" 배지 + [주문 취소](취소 기간 내) |
 | `cancelled` / `expired` | 사유 문구 + 다음 사이클 안내. 조작 CTA 없음 |
-| `failed` | 사유 + [다시 시도] |
+| `failed` | **v1.9 개정**: `cancelled`/`expired` 와 동일한 **터미널 카드**(다음 사이클 안내, 조작 CTA 없음). ~~사유 + [다시 시도]~~ / "다시 계산하기" CTA **제거** — 백엔드에 `failed` 생산 경로가 없고 재계산은 열린 초안에만 적용되어 실패 행을 되살리지 못한다(api-spec 10-8). 분기 자체는 유지(latest 계약 6값 방어) |
 
 - **승인 결과는 응답을 그대로 그린다.** 초안 캐시로 확정 화면을 만들지 않는다 — 서버 재계산 결과가 초안과 다를 수 있다(api-spec 10-1). 다를 경우 "재료가 조금 바뀌었어요" 안내를 1줄 표시한다.
 - 시뮬레이션 고지는 **색이 아니라 텍스트**로 표기한다(색 단독 구분 금지, 접근성). 승인/확정 CTA 근처에 항상 유지.
@@ -370,6 +370,7 @@ settings.notifications.type.{orderApproval|fridgeInbound|cyclePaused}
 ```
 
 - API 에러 `detail.code` → `cycle.error.{code}` / `orders.error.{code}`, 미정의는 `common.error.fallback`.
+- **(v1.9)** `orders.recalculateCta`/`orders.recalculating` 은 `awaiting_user` 재계산 버튼용으로 유지. `orders.terminal.failed.body` 는 "다시 계산" 을 언급하지 않고 다음 사이클 안내로 바꾼다(14-3). `cycle.stage.delivered.body` 는 `{completed}/{total}` 파라미터를 받는다(14-2).
 - 푸시 본문 템플릿의 **원본은 백엔드 `sender.TEMPLATES`**(api-spec 11-1)다. 위 `notification.*` 키는 **설정 화면의 타입 라벨·인앱 배너용**이며 푸시 본문을 프론트가 다시 만들지 않는다(이중 관리 금지).
 - 날짜·시각·금액은 기존 `MoneyText`/`Intl` 포맷 재사용 — 로캘·통화(KRW/USD) 표시는 프론트 담당.
 
@@ -382,6 +383,7 @@ settings.notifications.type.{orderApproval|fridgeInbound|cyclePaused}
 - **푸시는 보조 채널**: 알림이 오지 않아도 홈 카드와 `/orders` 에서 동일한 정보·조작이 가능해야 한다. 푸시 전용 흐름을 만들지 않는다.
 
 ## 변경 이력
+- 2026-09-04: **v1.9** — api-spec v1.9 대응(신규 화면 없음). 14-2 `confirmed`/`delivered` 카드의 데이터 출처를 `currentOrder.deliveryEta`·`mealPlan.completedMealCount/mealCount` 로 확정(일반 문구 우회 종료), 14-3 `awaiting_user` 재계산 → `POST /orders/{id}/recalculate`, `failed` 는 터미널 카드로 개정(CTA 제거), 14-6 i18n 파라미터 메모. 구현은 후속 태스크
 - 2026-08-30: **v1.8** — 주간 자동 사이클 14장: 홈 `CycleStatusCard`(stage 단일 분기 13종), `/orders` 상태 6종 확장(**latest 계약 확장 대응 필수**), `/fridge` 배송 확인 시트("받으셨나요?"), `/settings` 자동 주문 섹션, i18n `cycle.*` 신규 + `orders.*`/`fridge.delivery.*` 확장. 파생 상태 클라이언트 추론 금지 원칙. 신규 라우트 없음
 - 2026-07-10: v1.6 — 지역·통화 전환 행 + 글로벌 배지 + 국가별 스토어 세트 12장 증보 (글로벌-지역전환)
 - 2026-07-09: 최초 작성 (설계 토론 3라운드 UI 교차 검토 반영, 합의 완료)

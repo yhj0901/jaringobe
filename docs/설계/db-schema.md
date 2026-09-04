@@ -134,13 +134,13 @@ orders 1 ──── N order_items        (needed/covered 라인 스냅샷)
 | user_id | uuid | NOT NULL, FK→users CASCADE | |
 | meal_plan_id | uuid | NULL, FK→meal_plans **ON DELETE SET NULL** | 스냅샷 시점 식단. 식단 삭제해도 주문 이력 유지 |
 | store | varchar(10) | NOT NULL, CHECK in ('kurly','coupang','ssg','naver','walmart','instacart') | 확정 대상 연동 스토어 |
-| status | varchar(20) | NOT NULL, CHECK in ('confirmed') | P0 는 confirmed 만. 후속 paid/failed 는 CHECK 확장. **paid 값을 P0 에 두지 않음** |
+| status | varchar(20) | NOT NULL, CHECK in ('confirmed') | P0 는 confirmed 만. 후속 paid/failed 는 CHECK 확장. **paid 값을 P0 에 두지 않음** (0011 에서 6값으로 확장 — 2-10. `failed` 는 예약 상태, api-spec 10-8) |
 | frequency | varchar(20) | NOT NULL DEFAULT 'weekly', CHECK in ('weekly') | P1 에 biweekly 확장 |
-| next_suggested_at | timestamptz | NOT NULL | confirmed_at + 7 days (표시용, 잡 없음) |
+| next_suggested_at | timestamptz | NOT NULL | **행 생성 시각 + 7일(weekly) / 3일(biweekly)** — 초안 생성·명시 확정 시 서버가 부여. 표시용, 잡 없음. (v1.9 정정: v1.6 의 "confirmed_at + 7 days" 는 초안에 confirmed_at 이 없어 성립하지 않는다 — `order.service.create_draft`/`confirm_order` 기준) |
 | estimated_total | numeric(12,2) | NOT NULL | 시세 없으면 0 |
 | currency | char(3) | NOT NULL, CHECK in ('KRW','USD') | |
 | simulation | boolean | NOT NULL DEFAULT true | 실결제 도입 전까지 true 고정 |
-| confirmed_at | timestamptz | NOT NULL | |
+| confirmed_at | timestamptz | ~~NOT NULL~~ → **NULL** (리비전 **0011** `ALTER COLUMN confirmed_at DROP NOT NULL`) | 0009 시점엔 `confirmed` 단일 상태라 NOT NULL. 0011 이 초안(`draft`/`awaiting_user`)을 같은 테이블에 두면서 NULL 허용 — 확정 전 행은 NULL, 확정 시 `now()`. **v1.9 표기 정정**(v1.8 문서에 누락) |
 | created_at / updated_at | timestamptz | NOT NULL default now() | |
 
 - 인덱스: `ix_orders_user_created (user_id, created_at DESC)` — latest 커버
@@ -215,6 +215,7 @@ orders 1 ──── N order_items        (needed/covered 라인 스냅샷)
 |------|------|------|
 | `status` | **CHECK 확장** `('confirmed')` → `('draft','awaiting_user','confirmed','cancelled','expired','failed')` | 상태 머신 (CWE-841). 기존 값 `confirmed` 포함 → 기존 행 영향 없음 |
 | `frequency` | **CHECK 확장** `('weekly')` → `('weekly','biweekly')` | FR-814 |
+| `confirmed_at` | **NOT NULL → NULL** (`ALTER COLUMN confirmed_at DROP NOT NULL`) | 초안은 확정 시각이 없다(api-spec 10-4). 0011 `upgrade()` 에 구현돼 있으나 v1.8 문서에 누락 — **v1.9 표기 추가**. downgrade 는 NOT NULL 복원 전에 `status <> 'confirmed' OR confirmed_at IS NULL` 행(과 `order_items` CASCADE)을 **삭제**한다 — 파괴적 롤백(아래 리스크 표) |
 | `cycle_start` | **신규** `date NOT NULL` | 이 주문이 속한 사이클의 배송 기준일(사용자 로컬 date). **멱등 키** |
 | `delivery_eta` | **신규** `timestamptz NULL` | 배송 예정 시각 (인계사항 1). NULL = 아직 확정되지 않은 초안 |
 | `inbound_at` | **신규** `timestamptz NULL` | 냉장고 등록 완료 시각 — compare-and-set 대상 (1회 보장) |
@@ -238,7 +239,7 @@ orders 1 ──── N order_items        (needed/covered 라인 스냅샷)
 | `ix_orders_autoconfirm_due` | `(auto_confirm_at) WHERE status='draft' AND auto_confirm_at IS NOT NULL` | 스케줄러 스캔 ② |
 
 - 기존 `ix_orders_user_created` 유지.
-- **상태 전이 규칙(애플리케이션 강제, CWE-841)**: `draft → awaiting_user → confirmed → cancelled` / `draft|awaiting_user → expired` / `* → failed`. **`confirmed → draft` 역행 금지**, `inbound_at IS NOT NULL` 인 주문의 재확정 금지.
+- **상태 전이 규칙(애플리케이션 강제, CWE-841)**: `draft → awaiting_user → confirmed → cancelled` / `draft|awaiting_user → expired` / `* → failed`. **`confirmed → draft` 역행 금지**, `inbound_at IS NOT NULL` 인 주문의 재확정 금지. **(v1.9)** `failed` 는 **예약 상태** — v1.9 까지 생산 경로 없음, `failed → *` 전이 없음(터미널). 부분 유니크 인덱스 대상이 아니므로 같은 사이클의 새 초안·재확정을 막지 않는다(api-spec 10-8).
 
 ### 기존 행 백필 방침 (인계사항 1 — 순서가 중요)
 
@@ -333,10 +334,10 @@ ALTER TABLE notification_settings ADD CONSTRAINT ck_notification_settings_type C
 
 | 리비전 | down_revision | 내용 | 상태 |
 |--------|---------------|------|------|
-| `0011_cycle_core` | `0010` | `user_cycle_settings` 신규(+partial index) · `orders` 컬럼 9종 추가 · `status`/`frequency` CHECK 확장 · **백필** · 중복 검사 · 부분 유니크 인덱스 2종 · due 인덱스 2종 | **GATE 3 대상** — 인프라 작성·왕복 검증 |
+| `0011_cycle_core` | `0010` | `user_cycle_settings` 신규(+partial index) · `orders` 컬럼 9종 추가 · **`confirmed_at` DROP NOT NULL**(v1.9 표기 추가) · `status`/`frequency` CHECK 확장 · **백필** · 중복 검사 · 부분 유니크 인덱스 2종 · due 인덱스 2종 | **GATE 3 대상** — 인프라 작성·왕복 검증 |
 | `0012_cycle_links` | `0011` | `fridge_items.order_id`(+partial index) · `source='order'→'delivery'` UPDATE · `users.last_seen_at`(+백필) · `notification_settings` type CHECK 재정의 | **GATE 3 대상** |
 
-- **리비전 번호는 잠정값**이다. 두 선행 브랜치의 머지·리넘버가 끝난 뒤 인프라 에이전트가 최종 번호를 부여한다(CLAUDE.md 협업 규칙 3). 0009/0010 이 밀리면 본 설계는 0012/0013 이 된다.
+- ~~**리비전 번호는 잠정값**이다.~~ **(v1.9) 0011·0012 로 확정됐다** — `feature/loop-cycle-base` 체인 `0010 → 0011_cycle_core → 0012_cycle_links`. 아래 잠정 문구는 이력으로만 남긴다: 두 선행 브랜치의 머지·리넘버가 끝난 뒤 인프라 에이전트가 최종 번호를 부여한다(CLAUDE.md 협업 규칙 3). 0009/0010 이 밀리면 본 설계는 0012/0013 이 된다.
 - **0011 upgrade() 내부 실행 순서를 지킬 것**: 컬럼 추가 → 백필(★`inbound_at`) → `cycle_start` NOT NULL 승격 → 중복 검사 → 부분 유니크 인덱스 생성. 순서를 바꾸면 인덱스 생성이 실패하거나 냉장고 인플레가 발생한다.
 - 2개로 나눈 이유: 0011 은 사이클 자체 상태(순서 민감·롤백 시 통째로 되돌려야 함), 0012 는 타 도메인 연결(fridge/auth/notification)로 성격과 리스크가 다르다. 한 리비전에 섞으면 부분 실패 시 downgrade 가 지저분해진다.
 
@@ -346,6 +347,7 @@ ALTER TABLE notification_settings ADD CONSTRAINT ck_notification_settings_type C
 |------|--------|------|
 | `orders.status`·`frequency` CHECK 확장 | **낮음** — 기존 값이 새 집합에 포함 | 확장만, 축소 금지 |
 | `orders.cycle_start` NOT NULL | **중간** — 백필 필요 | `confirmed_at` 로컬 date 로 백필 후 승격 |
+| `orders.confirmed_at` DROP NOT NULL (v1.9 표기 추가) | **낮음(upgrade) / 높음(downgrade)** — upgrade 는 제약 완화만. downgrade 는 초안·대기·취소·만료·실패 주문과 그 `order_items` 를 삭제한 뒤 NOT NULL 을 복원 | 운영 롤백 전 `SELECT count(*) FROM orders WHERE status <> 'confirmed' OR confirmed_at IS NULL` 로 손실 행 수 확인. `confirmed` 이력은 보존된다 |
 | **`inbound_at` 백필 누락** | **높음** — 기존 확정 주문이 냉장고에 재등록되어 재고 2배 | 백필 필수. 검증 쿼리: `SELECT count(*) FROM orders WHERE status='confirmed' AND inbound_at IS NULL AND created_at < :migration_ts` = 0 |
 | 부분 유니크 인덱스 | **중간** — 백필 결과에 중복이 있으면 생성 실패 | 생성 전 중복 검사 쿼리 선행. 운영 DB 는 `CONCURRENTLY` 검토 |
 | `fridge_items.source` UPDATE | **낮음** — CHECK 없음, 행 수 적음 | 단일 UPDATE. downgrade 는 역방향 UPDATE |
@@ -354,7 +356,7 @@ ALTER TABLE notification_settings ADD CONSTRAINT ck_notification_settings_type C
 | partial index 스캔 성능 | **낮음** | `notification_settings` 에서 검증된 패턴 재사용 |
 | `user_cycle_settings` 신규 | **낮음** — additive, 백필 없음 | lazy 생성 (2-9) |
 
-**총평**: 파괴적 변경 없음(전부 additive / CHECK 확장 / 값 정정). 유일한 고위험 항목은 **`inbound_at` 백필 누락**이며, 이는 스키마가 아니라 데이터 정합 문제다.
+**총평**: upgrade 는 파괴적 변경 없음(전부 additive / CHECK 확장 / 제약 완화 / 값 정정). 유일한 고위험 항목은 **`inbound_at` 백필 누락**이며, 이는 스키마가 아니라 데이터 정합 문제다. **(v1.9)** 0011 **downgrade** 는 `confirmed_at` NOT NULL 복원을 위해 비확정 주문을 삭제하는 파괴적 롤백임을 명시한다.
 
 ### ERD 증분 (v1.8)
 
@@ -366,6 +368,7 @@ orders 1 ──── N fridge_items         (order_id, ON DELETE SET NULL — �
 - `fridge_items.order_id` 는 SET NULL — 주문 이력이 지워져도 냉장고 재고는 남는다(사용자가 실제로 가진 재료이므로)
 
 ## 변경 이력
+- 2026-09-04: **v1.9** — 구현 정합 표기 정정(DDL 변경 없음). 2-8 `orders.confirmed_at` **NOT NULL → NULL** (리비전 **0011** `DROP NOT NULL`, v1.8 문서 누락분) + `next_suggested_at` 산식 구현 기준 정정, 2-10 에 `confirmed_at` 변경 행·`failed` 예약 상태 명시, 3-B 0011 요약·리비전 번호 확정(0011·0012)·downgrade 파괴성 리스크 행 추가
 - 2026-08-15: **v1.6** — 2-8 `orders`+`order_items` (리비전 **0009_orders**, down_revision=**0008**). fridge source `order` 는 코드만. 설계 토론 5라운드 합의
 - 2026-08-30: **v1.8** — 주간 자동 사이클: 2-9 `user_cycle_settings` 신규, 2-10 `orders` 확장(컬럼 9종·CHECK 확장·부분 유니크 2종·**`inbound_at` 백필 필수**), 2-11 `fridge_items.order_id` + `source` `order`→`delivery` 통합, 2-12 `users.last_seen_at`, 2-13 `notification_settings` type CHECK **재정의 필요 확인**. 리비전 **0011·0012**(잠정, 브랜치 머지 후 인프라 확정). 설계 토론 5라운드 합의
 - 2026-07-10: v1.5 — 2-7 store_connections CHECK 에 walmart·instacart 편입(리비전 0008 계획, GATE 3·팀원 리뷰) + 2-1 users country/currency 허용값(KR/US·KRW/USD, DB CHECK 없음·API 검증) 명시
