@@ -15,6 +15,26 @@ vi.mock('@/features/mealplan/useMemberHome', () => ({
 vi.mock('@/features/guest/GuestHomeController', () => ({
   GuestHomeController: () => <div data-testid="guest-home" />,
 }));
+const autoOrderState: {
+  current: {
+    active: boolean;
+    stores: { id: string; name: string }[];
+    recommendedItems: string[];
+    moreCount: number;
+    loading: boolean;
+  };
+} = {
+  current: {
+    active: false,
+    stores: [],
+    recommendedItems: [],
+    moreCount: 0,
+    loading: false,
+  },
+};
+vi.mock('@/features/order/useMemberAutoOrder', () => ({
+  useMemberAutoOrder: () => autoOrderState.current,
+}));
 vi.mock('@/i18n/routing', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/i18n/routing')>();
   return {
@@ -100,6 +120,13 @@ function readyState(plan: MealPlanResponse = PLAN, overrides: Partial<MemberHome
 beforeEach(() => {
   vi.clearAllMocks();
   state.current = baseState();
+  autoOrderState.current = {
+    active: false,
+    stores: [],
+    recommendedItems: [],
+    moreCount: 0,
+    loading: false,
+  };
 });
 
 describe('MemberHomeController 상태 분기 (ui-design 7장)', () => {
@@ -171,11 +198,13 @@ describe('MemberHomeController 빈 상태 — 샘플 홈 + 배너 (FR-316/202/20
     expect(screen.getByRole('button', { name: '내 식단 만들기' })).toBeDisabled();
   });
 
-  it('빈 상태 탭바: fridge → /fridge 이동 (FR-208)', () => {
+  it('빈 상태 탭바: fridge → /fridge, cart → /orders (FR-208/v1.7)', () => {
     state.current = baseState({ status: 'empty', onboardingCompleted: false });
     renderWithIntl(<MemberHomeController />);
     fireEvent.click(screen.getByRole('button', { name: '냉장고' }));
     expect(routerMock.push).toHaveBeenCalledWith('/fridge');
+    fireEvent.click(screen.getByRole('button', { name: '장바구니' }));
+    expect(routerMock.push).toHaveBeenCalledWith('/orders');
   });
 
   it('실패 → 재시도 배너 (retryGenerate)', () => {
@@ -205,9 +234,11 @@ describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
     expect(screen.getByText('토스트')).toBeInTheDocument();
     expect(screen.getByText('식빵')).toBeInTheDocument();
     expect(screen.getByText('₩1,200')).toBeInTheDocument();
-    // 냉장고는 활성(→/fridge), 자동주문만 "준비 중" (게스트 샘플 노출 금지)
+    // 냉장고는 활성(→/fridge), 자동주문은 AutoOrderCard (잠금 해제, v1.7)
     expect(screen.getByText('사용하기')).toBeInTheDocument();
-    expect(screen.getAllByText('준비 중')).toHaveLength(1);
+    expect(screen.queryByText('준비 중')).not.toBeInTheDocument();
+    expect(screen.getByText('대기 중')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '스토어 연동하기' })).toBeInTheDocument();
     expect(screen.queryByText('이번 주 주문 추천')).not.toBeInTheDocument();
   });
 
@@ -267,7 +298,7 @@ describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it('탭바: fridge → /fridge 이동, cart → "준비 중" 안내 (FR-208)', () => {
+  it('탭바: fridge → /fridge 이동, cart → /orders 이동 (v1.7)', () => {
     state.current = readyState();
     renderWithIntl(<MemberHomeController />);
 
@@ -275,7 +306,31 @@ describe('MemberHomeController 식단 홈 (FR-205/206/208/209)', () => {
     expect(routerMock.push).toHaveBeenCalledWith('/fridge');
 
     fireEvent.click(screen.getByRole('button', { name: '장바구니' }));
-    expect(screen.getByText('아직 준비 중인 기능이에요. 곧 만나요!')).toBeInTheDocument();
+    expect(routerMock.push).toHaveBeenCalledWith('/orders');
+    expect(screen.queryByText('아직 준비 중인 기능이에요. 곧 만나요!')).not.toBeInTheDocument();
+  });
+
+  it('자동주문 비활성 CTA → /settings, 활성 CTA → /orders', () => {
+    state.current = readyState();
+    renderWithIntl(<MemberHomeController />);
+    fireEvent.click(screen.getByRole('button', { name: '스토어 연동하기' }));
+    expect(routerMock.push).toHaveBeenCalledWith('/settings');
+  });
+
+  it('스토어 연동 + 추천 칩 → "장바구니 보기" CTA가 /orders 로 이동', () => {
+    autoOrderState.current = {
+      active: true,
+      stores: [{ id: 'kurly', name: '마켓컬리' }],
+      recommendedItems: ['계란', '양파'],
+      moreCount: 0,
+      loading: false,
+    };
+    state.current = readyState();
+    renderWithIntl(<MemberHomeController />);
+    expect(screen.getByText('마켓컬리')).toBeInTheDocument();
+    expect(screen.getByText('계란')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '장바구니 보기' }));
+    expect(routerMock.push).toHaveBeenCalledWith('/orders');
   });
 
   it('탭바: 식단 → "프리미엄 구독" 안내 (구독 편입 예정)', () => {

@@ -13,8 +13,9 @@ import { OnboardingCtaBanner } from '@/features/mealplan/OnboardingCtaBanner';
 import { RegenerateConfirmSheet } from '@/features/mealplan/RegenerateConfirmSheet';
 import { RecipeSheet } from '@/features/mealplan/RecipeSheet';
 import { LOCKED_NOTICE_MS } from '@/features/mealplan/constants';
+import { useMemberAutoOrder } from '@/features/order/useMemberAutoOrder';
 import { useRouter, type AppLocale } from '@/i18n/routing';
-import type { MealItem } from '@/features/home/types';
+import type { HomeViewModel, MealItem } from '@/features/home/types';
 
 /**
  * 회원 홈 컨트롤러 (ui-design 7장·8장) — useMemberHome 분기별 화면 구성.
@@ -26,6 +27,7 @@ export function MemberHomeController() {
   const locale = useLocale() as AppLocale;
   const router = useRouter();
   const home = useMemberHome();
+  const autoOrder = useMemberAutoOrder();
 
   // FR-605: country != KR 시 홈 헤더 "글로벌" 배지 (조회 전 null 은 미노출)
   const isGlobalRegion = home.country !== null && home.country !== 'KR';
@@ -66,7 +68,7 @@ export function MemberHomeController() {
   };
 
   const handleLockedNav = (tab: 'meal' | 'fridge' | 'cart') => {
-    // meal 탭은 프리미엄 구독 편입 예정 → 구독 안내, fridge 는 냉장고 페이지 이동, cart 는 "준비 중" 안내
+    // meal 탭은 프리미엄 구독 편입 예정 → 구독 안내, fridge → /fridge, cart → /orders (v1.7)
     if (tab === 'meal') {
       displayNotice(t('locked.premiumNotice'));
       return;
@@ -75,8 +77,23 @@ export function MemberHomeController() {
       router.push('/fridge');
       return;
     }
-    showLockedNotice();
+    router.push('/orders');
   };
+
+  const goAutoOrder = () => {
+    router.push(autoOrder.active ? '/orders' : '/settings');
+  };
+
+  const withAutoOrder = (vm: HomeViewModel): HomeViewModel => ({
+    ...vm,
+    autoOrder: {
+      active: autoOrder.active,
+      stores: autoOrder.stores,
+      recommendedItems:
+        autoOrder.recommendedItems.length > 0 ? autoOrder.recommendedItems : undefined,
+      moreCount: autoOrder.moreCount > 0 ? autoOrder.moreCount : undefined,
+    },
+  });
 
   if (home.status === 'loading') {
     return (
@@ -211,7 +228,9 @@ export function MemberHomeController() {
   return (
     <>
       <HomeShell
-        viewModel={viewModel}
+        viewModel={withAutoOrder(viewModel)}
+        autoOrderBusy={autoOrder.loading}
+        onAutoOrderStart={goAutoOrder}
         topSlot={
           <>
             {viewModel.overBudget === true ? (

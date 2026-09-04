@@ -28,6 +28,10 @@
     "settings": {
       "title": "설정 — 자린고비",
       "description": "계정, 식생활 설정, 자동 주문 연동 스토어를 관리하세요."
+    },
+    "orders": {
+      "title": "장바구니 — 자린고비",
+      "description": "남은 식단 재료에서 냉장고 재고를 뺀 장보기 목록을 확인하고 시뮬레이션 확정하세요."
     }
   },
   "common": {
@@ -227,6 +231,16 @@
         "title": "예산에 맞춘 내 식단을 만들어 보세요",
         "cta": "내 식단 만들기"
       }
+    },
+    "autoOrder": {
+      "title": "식재료 자동주문",
+      "connectCta": "스토어 연동하기",
+      "viewCartCta": "장바구니 보기",
+      "disconnectedHint": "스토어를 연동하면 장보기 목록을 확정할 수 있어요.",
+      "recommendedLabel": "이번 주 주문 추천",
+      "moreCount": "+{count}",
+      "statusActive": "준비 완료",
+      "statusInactive": "대기 중"
     }
   },
   "mealplan": {
@@ -539,6 +553,54 @@
     "instacart": {
       "name": "인스타카트",
       "mono": "I"
+    }
+  },
+  "orders": {
+    "title": "장바구니",
+    "backLabel": "홈으로 돌아가기",
+    "loading": "장보기 목록을 준비하고 있어요…",
+    "needed": {
+      "title": "살 재료"
+    },
+    "covered": {
+      "title": "냉장고가 충당"
+    },
+    "emptyMealplan": {
+      "title": "먼저 식단을 만들어 주세요",
+      "description": "남은 끼니 재료를 기준으로 장보기 목록을 만들어요.",
+      "cta": "홈으로 가기"
+    },
+    "nothingToOrder": "살 재료가 없어요",
+    "noPrice": "시세 없음",
+    "estimateTotal": "추정 합계",
+    "estimateSource": "네이버 쇼핑(컬리) 검색 기준",
+    "priceBasisKurly": "네이버 쇼핑(컬리) 검색 기준",
+    "simulationNotice": "연동 표시 기준 시뮬레이션 (실결제 아님)",
+    "confirmCta": "장바구니 확정",
+    "confirming": "확정하는 중…",
+    "confirmedBadge": "시뮬레이션 확정",
+    "nextSuggested": "다음 주문 제안일 {date}",
+    "fridgeInbound": "냉장고에 담겼어요",
+    "reconfirmWarning": "이미 확정한 주문이 있으면 냉장고 재고가 늘어납니다",
+    "noStore": {
+      "title": "연동된 스토어가 없어요",
+      "description": "장바구니를 확정하려면 설정에서 스토어를 연동해 주세요.",
+      "cta": "설정에서 연동하기"
+    },
+    "retry": "다시 시도",
+    "dismiss": "닫기",
+    "loadFailed": "장보기 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
+    "qty": "{qty}{unit}",
+    "fromFridge": "냉장고 {qty}{unit}",
+    "error": {
+      "STORE_NOT_CONNECTED": "연동된 스토어가 없어요. 설정에서 스토어를 연동해 주세요.",
+      "NOTHING_TO_ORDER": "살 재료가 없어 확정할 수 없어요.",
+      "MEALPLAN_NOT_FOUND": "먼저 식단을 만들어 주세요.",
+      "ORDER_NOT_FOUND": "확정한 주문이 아직 없어요.",
+      "RATE_LIMITED": "요청이 많아 잠시 쉬어가는 중이에요. 잠시 후 다시 시도해 주세요.",
+      "STORE_NOT_SUPPORTED": "이 지역에서 지원하지 않는 스토어예요.",
+      "VALIDATION_ERROR": "요청이 올바르지 않아요. 다시 시도해 주세요.",
+      "AUTH_REQUIRED": "로그인이 필요해요."
     }
   }
 }

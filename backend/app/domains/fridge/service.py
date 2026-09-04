@@ -89,10 +89,11 @@ async def delete_item(db: AsyncSession, user_id: uuid.UUID, item_id: uuid.UUID) 
 
 
 async def _matches(db: AsyncSession, user_id: uuid.UUID, name: str, unit: str) -> list[FridgeItem]:
+    # 이름 매칭: strip + lower + 단위 일치 (자동주문 P0 와 정합). FIFO 순서(_by_expiry)는 유지.
     stmt = _by_expiry(
         select(FridgeItem).where(
             FridgeItem.user_id == user_id,
-            func.lower(FridgeItem.name) == name.lower(),
+            func.lower(func.trim(FridgeItem.name)) == name.strip().lower(),
             FridgeItem.unit == unit,
         )
     )

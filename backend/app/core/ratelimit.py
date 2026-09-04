@@ -37,3 +37,7 @@ budget_user_limiter = InMemoryRateLimiter(limit=5, window_seconds=60)
 mealplan_user_limiter = InMemoryRateLimiter(limit=5, window_seconds=60)
 # 마트 조회는 네이버 순차조회+LLM으로 비싸므로 더 타이트하게
 store_user_limiter = InMemoryRateLimiter(limit=3, window_seconds=60)
+# 자동주문 preview 는 네이버+LLM 과 동일 비용 — 3회/분 (CWE-770)
+order_preview_user_limiter = InMemoryRateLimiter(limit=3, window_seconds=60)
+# 확정은 결제 흉내가 아니라 시뮬레이션이지만 연타 inbound 방지 — 5회/분
+order_confirm_user_limiter = InMemoryRateLimiter(limit=5, window_seconds=60)

@@ -46,6 +46,19 @@ describe('HomeShell (FR-101)', () => {
     expect(screen.queryByText('체험 모드')).not.toBeInTheDocument();
   });
 
+  it('회원 모드: 냉장고 활성 카드 + 자동주문 AutoOrderCard (잠금 카드 아님)', () => {
+    const vm = {
+      ...getDefaultViewModel('ko'),
+      mode: 'member' as const,
+      autoOrder: { active: false, stores: [] },
+    };
+    renderWithIntl(<HomeShell viewModel={vm} />);
+    expect(screen.getByText('사용하기')).toBeInTheDocument();
+    expect(screen.queryByText('준비 중')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '스토어 연동하기' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '시작하기' })).not.toBeInTheDocument();
+  });
+
   it('hideTrialBadge: 게스트 샘플 셸에서 체험 배지만 숨기고 예시 라벨은 유지한다 (ui-design 8장)', () => {
     renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} hideTrialBadge />);
     expect(screen.queryByText('체험 모드')).not.toBeInTheDocument();

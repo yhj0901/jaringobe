@@ -122,7 +122,8 @@ export function mapPlanToViewModel(
       wastePrevented: { amount: '0', currency: plan.currency },
     },
     weekPlan,
-    // 냉장고/자동주문은 회원에게 "준비 중" 잠금 카드로 대체 (FR-208) — 셸 데이터는 비움
+    // 냉장고 미리보기는 회원에게 LockedFeatureCard href=/fridge 로 대체 — 셸 데이터는 비움.
+    // 자동주문은 MemberHomeController 가 connections+preview 로 overlay (v1.7).
     fridgePreview: [],
     autoOrder: { active: false, stores: [] },
   };

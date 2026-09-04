@@ -75,6 +75,15 @@ backend/
 docker/ · docker-compose.yml # postgres 16 (인프라 에이전트)
 ```
 
+**(v1.6 증분 — 자동주문 P0)** 신규 도메인 폴더. 기존 스캐폴딩 트리는 유지하고 아래만 추가한다.
+
+```
+backend/app/domains/order/     # router.py · service.py · schemas.py · models.py
+frontend/src/features/order/    # 리뷰 페이지·API 클라이언트 (AutoOrderCard 복제 금지)
+frontend/src/app/[locale]/orders/page.tsx   # /orders 리뷰 (인증 필수)
+```
+
+- `AutoOrderCard` 는 `features/home/` 에 유지하고 member CTA/카피만 props·네임스페이스로 확장한다.
 - 백엔드 레이어링: `router(HTTP) → service(비즈니스) → models(SQLAlchemy)`. 라우터에 비즈니스 로직 금지
 - `/users/me` 는 리소스상 users 지만 계정 도메인이므로 **auth 도메인 라우터**에서 제공 (별도 users 도메인 생성 안 함)
 
@@ -119,6 +128,8 @@ GET / → RSC 가 홈 셸 + 기본 샘플 렌더 (SSG 가능)
       200 → MealPlanResponse → ViewModel 매핑 → HomeShell(mode=member)
 냉장고/자동주문 카드는 "준비 중" 잠금 (fridge/order 도메인 구현 시 해제)
 ```
+- **v1.6**: 자동주문 잠금은 **3-6** 에서 해제. 냉장고 카드는 기존 `/fridge` 활성 유지. 식단 탭 프리미엄 잠금은 유지.
+
 
 ### 3-5. 지역 전환 (v1.5 — 글로벌-지역전환, 수동)
 ```
@@ -129,6 +140,32 @@ GET / → RSC 가 홈 셸 + 기본 샘플 렌더 (SSG 가능)
 ```
 - store 연동 조회/변경은 `user.country` 기준 세트로 분기(KR 4 / US 2). 지역 전환 시 타 국가 연동 행은 **삭제 없이 응답 필터만** — 재전환 시 상태 복원
 - 담당 격리: users region 은 **auth 도메인 라우터**(GET /users/me 와 동일 위치), 국가별 스토어 세트는 우리 소유 `connection_*` 파일에서 분기. store 도메인 **DB CHECK 변경(0008)은 팀원 리뷰 필수**(연동·어댑터 본 파일 무접촉)
+
+### 3-6. 자동주문 P0 (v1.6 — 시뮬레이션 확정 + 동적 감산)
+```
+[회원 홈 /]
+  GET /users/me · GET /stores/connections
+  ├─ 스토어 0개 연동 → AutoOrderCard 비활성 톤 + CTA → /settings
+  └─ 1개 이상 연동 → AutoOrderCard 활성
+        GET /api/v1/orders/preview  (백그라운드, 연동 없어도 200)
+          needed 칩 + CTA "장바구니 보기" → /orders
+
+[/orders]
+  GET /orders/preview (리뷰 본문)
+  명시 탭 → POST /api/v1/orders { "store": "<country store>" }
+             서버가 preview 를 **재계산** (클라이언트 라인 불신, CWE-602)
+             status=confirmed · simulation=true · frequency=weekly
+             needed 수량만 fridge inbound source=order (covered 는 inbound 금지)
+  확정 후 GET /orders/latest 로 스냅샷·다음 제안일(+7일, 표시만) 재조회
+```
+
+- **실결제 없음**. 네이버 키 있는 KR 만 기존 `store.build_cart`(mall=`kurly`) 로 추정가. 키 없으면 `matched=false` + total 0. **US 는 네이버 호출 금지** — needed 만, 가짜 USD 금지 (`estimatedTotal.amount="0.00"`, currency=USD).
+- `orders.store` 는 사용자가 연동한 스토어(후속 실결제 대상)이지 네이버 mall 필터가 아니다. 쿠팡 연동 중이어도 추정 카피에 "네이버 쇼핑(컬리) 검색 기준"을 명시.
+- 프론트는 `POST /store/cart` 로 재료를 밀어 preview 를 우회하지 않는다. 확정 inbound 는 order 서비스가 내부 `fridge.add_items` 호출 (프론트 이중 POST 금지).
+- 기존 `POST /mealplans/{id}/cart` 는 완료 끼니를 빼지 않고 persist/inbound 도 없다 — **삭제하지 않고 UI 에서 쓰지 않음**. 제품 접점은 `/orders/*`.
+- 게스트: AutoOrderCard 기존 유지, 주문 API 호출·persist 금지.
+- 스케줄러(APScheduler/cron/Redis) P0 도입 금지. `next_suggested_at` 은 컬럼+표시만.
+- 신규 스토어 어댑터(쿠팡/월마트 검색 API) 를 만들지 않는다 — 기존 Naver `build_cart` 재사용만.
 
 ## 4. 환경 변수 (.env — 인프라 에이전트가 .env.example 관리)
 
@@ -144,8 +181,10 @@ GET / → RSC 가 홈 셸 + 기본 샘플 렌더 (SSG 가능)
 - **선행**: docker-compose(postgres) + Alembic 초기 리비전 — `/인프라시작` (GATE 3)
 - **후속 확장점**: 홈 셸의 데이터 주입 인터페이스(게스트 샘플 ↔ 회원 실데이터), budget_plans 확장(budget 본설계), 애플 어댑터(P1), store 어댑터(마트 연동 기획 시), rate limit 인메모리 → Redis 교체(멀티 인스턴스 배포 시)
 - **글로벌-지역전환(v1.5) 이관 항목**: IP·GPS 자동 지역 감지, 기존 데이터 통화 소급 변환, **US Walmart/Instacart 실 API 어댑터**(이번 범위는 국가별 목록·연동 상태·enum 확장까지 — 실연동은 store 본설계). 다국가 확장(현재 KR/US 2국)
+- **자동주문 P0(v1.6) 이관 항목**: **US 시세 어댑터**(Walmart/Instacart 파트너 키, P2), **실 체크아웃·자동결제**(P2), **스케줄러/주 2회 주기 UI**(P1). P0 는 시뮬레이션 확정만. 재확정 멱등 키는 P1. 쿠팡/SSG/네이버 전용 검색 어댑터는 만들지 않음
 
 ## 변경 이력
+- 2026-08-15: **v1.6** — 자동주문 P0 흐름(3-6) + order 도메인 폴더. 실결제 없이 preview→명시 확정→fridge inbound `source=order`. 설계 토론 5라운드 합의. 미결 0건
 - 2026-07-09: 최초 작성 (설계 토론 5라운드 합의)
 - 2026-07-09: v1.1 — 회원 홈 흐름(3-4) 추가
 - 2026-07-10: v1.5 — 지역 전환 흐름(3-5) + 후속 이관 항목(자동 감지·소급 변환·US 실 API) 명시

@@ -10,7 +10,8 @@
 | `/` | SSG 셸 + 클라이언트 게스트 로직 | 홈 — 게스트/회원 공용 셸. 회원 여부는 서버에서 쿠키로 판정해 데이터 소스 결정 |
 | `/login` | RSC | 로그인 페이지. `?error={code}`·`?notice={code}` 를 i18n 매핑해 배너 표시 |
 | `/onboarding` | RSC + 클라이언트 | 라우트 예약 (본 구현은 household 기획). 게스트 이전 성공 시 확인 화면 1장만 이번 범위 |
-| 미들웨어 | - | 로캘 프리픽스(next-intl) + 보호 라우트(현 범위: `/onboarding`) 미인증 시 `/login?next=` 리다이렉트 |
+| `/orders` | RSC + 클라이언트 | **v1.7 (자동주문 P0)** 장바구니 리뷰. 보호 라우트 — 미인증 시 `/login?next=/orders` |
+| 미들웨어 | - | 로캘 프리픽스(next-intl) + 보호 라우트(`/onboarding`, `/settings`, **`/orders`**) 미인증 시 `/login?next=` 리다이렉트 |
 
 - 로캘 라우팅: `/ko/...`, `/en/...` — 기본 `ko`, `Accept-Language` 기반 최초 감지
 
@@ -97,7 +98,7 @@ common.money 포맷은 MoneyText 가 Intl.NumberFormat 으로 처리 (키 아님
 
 ## 7. 회원 홈 (member 모드) — v1.1 증보
 
-**데이터 어댑터** (`features/mealplan/` 신규 — store/order 디렉토리 생성 금지):
+**데이터 어댑터** (`features/mealplan/` — v1.1 문구 'store/order 디렉토리 생성 금지'는 **v1.7에서 해제**, `features/order/` 는 13장):
 ```
 useMemberHome():
   GET /users/me → hasBudgetPlan=false → BudgetPlanGate (BudgetDraftFlow 재사용, POST /budget/plans source='onboarding')
@@ -106,8 +107,10 @@ useMemberHome():
 ```
 - `mapPlanToViewModel`: meals(planDate·mealType) → weekPlan, budgetSummary → budgetMood. **ViewModel 은 옵셔널 필드 확장만** (게스트 계약 불변): `selectedDate?`, `overBudget?`, `planId?`
 - 컴포넌트 신규: `EmptyPlanHero`, `PlanCreateSheet`(기간 스테퍼 + 알레르기/선호 칩 입력 — 30자/10개 클라이언트 검증), `GenerationLoading`(단계 문구 로테이션 + 스켈레톤, aria-busy), `OverBudgetBanner`(재생성 유도), `LockedFeatureCard`(냉장고/자동주문 "준비 중")
+- **v1.7**: 회원 자동주문 `LockedFeatureCard feature="order"` 는 **13장에서 해제** — `AutoOrderCard` 재사용(복제 금지). 식단 탭 프리미엄 잠금은 유지. 게스트 `guestHome.autoOrder` 문구 불변
 - `POST /mealplans` 호출은 클라이언트 타임아웃 90초, 버튼 비활성으로 연타 방지. 429 → 대기 안내, 그 외 실패 → 재시도 배너
 - 탭바: 회원도 fridge/cart 는 "준비 중" 안내(가입 게이트 아님), meal 탭은 식단 섹션 스크롤
+- **v1.7**: 회원 장바구니 탭은 잠금 토스트 대신 `/orders` 이동 (13장). fridge 탭은 기존 `/fridge` 유지
 
 **i18n 신규 키 체계**: `memberHome.empty.*`, `memberHome.create.*`(시트), `memberHome.loading.step1~3`, `memberHome.overBudget.*`, `memberHome.locked.*`, `mealplan.mealType.{breakfast|lunch|dinner}` — ko/en 동시
 
@@ -142,6 +145,7 @@ useMemberHome():
 
 ## 11. 하단 "마이" 탭 (v1.5)
 - 하단 탭바: 홈/냉장고/장바구니/**마이** (식단 탭은 추후 프리미엄 구독 편입 예정이라 제외 — 홈의 주간 식단 표시는 유지). 설정 진입을 상단 GB 아바타 → 하단 마이 탭으로 이동, 상단 GB 는 브랜드 마크(비버튼)로만 남겨 중복 제거 (HomeShell onMyTabClick)
+- **v1.7**: 회원 장바구니 탭 클릭 → `/orders` (잠금 토스트 제거). 게스트 장바구니 탭은 기존 가입 게이트 유지
 - 마이 탭: 회원 → /settings, 게스트 → 가입 게이트. 홈 탭은 홈 화면 유지(대체 아님). 가구 구성원/식단 방향·선호/월 예산 편집은 설정 페이지(9장)에 그대로
 
 ## 12. 지역·통화 전환 + 글로벌 배지 (v1.6 — 글로벌-지역전환)
@@ -152,7 +156,73 @@ useMemberHome():
 - **재사용**: `MoneyText`(currency 포맷)·`Badge`·store 토글 인프라·`useSettings`(user.currency). **신규**: 지역 토글 컴포넌트 + `putUserRegion(country)` API 클라이언트(`features/settings` 또는 `features/store` 인접)
 - i18n(ko/en 동시): `settings.region.{section, korea, global, switchConfirm.{title,description,confirm}, noRetroNotice}`, `common.globalBadge`(또는 `guestHome.globalBadge`), `store.{walmart|instacart}.{name,mono}`
 
+## 13. 자동주문 P0 — 회원 카드·리뷰 (v1.7 / 타 설계 문서 v1.6)
+
+> 기획: `docs/기획/자동주문-장바구니.md`. **AutoOrderCard 복제 금지** — `features/home/AutoOrderCard` 를 홈 셸에 유지하고 member CTA/카피만 props 또는 `memberHome.autoOrder` 네임스페이스로 확장. 게스트 `guestHome.autoOrder` 문구·동작 변경 없음.
+
+**데이터 흐름**
+```
+useMemberHome (또는 인접 훅) + features/order/:
+  GET /stores/connections → 연동 0개 / 1개+
+  GET /orders/preview     → needed 칩 (최대 N개, 초과 "+K"), 스켈레톤+aria-busy
+HomeShell member 분기:
+  LockedFeatureCard feature="order" 제거 → AutoOrderCard 재사용
+  미연동: 비활성 톤 + CTA "스토어 연동하기" → /settings
+  연동: 활성 + 추천 칩 + CTA "장바구니 보기" → /orders
+하단 장바구니 탭(member): /orders 이동 (잠금 토스트 아님)
+냉장고 LockedFeatureCard href="/fridge" 유지
+```
+
+**`/orders` 리뷰 페이지** (`app/[locale]/orders/page.tsx`, `features/order/`)
+- 인증 필수. 미인증 → `/login?next=/orders`
+- 식단 없음(404 MEALPLAN_NOT_FOUND) → 빈 상태 "먼저 식단을 만들어 주세요" + 홈 CTA
+- needed 없음(전부 냉장고 충당) → covered 목록 + 확정 버튼 **비활성** + "살 재료가 없어요"
+- needed 있음:
+  - 섹션 A: 살 재료 (needed) — 매칭 상품명/추정가 또는 "시세 없음". 시맨틱 리스트
+  - 섹션 B: 냉장고가 충당 (covered) — 수량 fromFridge
+  - 추정 합계 (없으면 ₩0 / $0) + 고지 **"연동 표시 기준 시뮬레이션 (실결제 아님)"** / EN 동등 (`not a real charge`)
+  - KR 추정 카피: 네이버 쇼핑(컬리) 검색 기준임을 명시 (연동 스토어가 쿠팡이어도 가짜 몰 가격 금지)
+  - 재확정 경고 1줄: "이미 확정한 주문이 있으면 재고가 늘어납니다" (멱등 P1)
+  - [장바구니 확정] **명시 탭만**. 홈 진입·preview 조회로 주문을 만들지 않음
+- 확정 성공: 스냅샷 + 다음 제안일(확정+7일, 표시만) + "냉장고에 담겼어요". 배지 **"시뮬레이션 확정"** — 승인번호·카드 마스킹·paid 스탬프 **금지**
+- 실패/429: 배너+재시도 (클라이언트 라인 재전송 없음 — body 는 `{store}` 만)
+- 미연동 store: 에러 배너 + 설정 CTA
+- 접근성: 고지 텍스트를 버튼 근처에 **일반 텍스트**로(색만으로 구분 금지). 확정 후 라이브 리전으로 다음 제안일 안내. 확정 버튼 연타 방지(비활성)
+
+**정직성**: 모든 확정 성공 화면에 시뮬레이션 고지 유지. 가짜 결제 완료 영수증 금지.
+
+**i18n** (`messages/ko.json` · `en.json` 동시). 신규 키만 추가 — 게스트 키 변경 금지:
+
+```
+memberHome.autoOrder.title
+memberHome.autoOrder.connectCta          // 스토어 연동하기
+memberHome.autoOrder.viewCartCta         // 장바구니 보기
+memberHome.autoOrder.disconnectedHint
+memberHome.autoOrder.recommendedLabel
+memberHome.autoOrder.moreCount           // +K
+orders.title
+orders.needed.title / orders.covered.title
+orders.emptyMealplan.title / orders.emptyMealplan.cta
+orders.nothingToOrder
+orders.noPrice
+orders.estimateTotal
+orders.estimateSource                    // 네이버 쇼핑(컬리) 검색 기준
+orders.simulationNotice                  // 연동 표시 기준 시뮬레이션 (실결제 아님)
+orders.confirmCta
+orders.confirmedBadge                    // 시뮬레이션 확정
+orders.nextSuggested
+orders.fridgeInbound                     // 냉장고에 담겼어요
+orders.reconfirmWarning                  // 재확정 시 재고 증가 안내
+orders.error.{STORE_NOT_CONNECTED|NOTHING_TO_ORDER|MEALPLAN_NOT_FOUND|ORDER_NOT_FOUND|RATE_LIMITED}
+```
+
+- API 에러 `detail.code` → `orders.error.{code}`, 미정의는 `common.error.fallback`
+- `guestHome.autoOrder.*` 키·카피 변경 없음. 게스트 카드 CTA 는 기존 로그인
+
+**재사용**: `AutoOrderCard`, `MoneyText`, `Badge`, `HomeShell`, store connections 조회. **신규**: `features/order/` (리뷰·확정 컨트롤러, API 클라이언트), `/orders` 페이지. store-adapter 문서·쿠팡/월마트 검색 UI 없음.
+
 ## 변경 이력
+- 2026-08-15: **v1.7** — 자동주문 P0: 회원 AutoOrderCard 해제, `/orders` 리뷰, 장바구니 탭→/orders, i18n `memberHome.autoOrder`+`orders.*`. 정직 시뮬레이션 카피. 게스트 불변. (타 설계 문서는 동일 범위를 **v1.6** 으로 표기 — 본 문서는 지역전환이 이미 v1.6을 사용)
 - 2026-07-10: v1.6 — 지역·통화 전환 행 + 글로벌 배지 + 국가별 스토어 세트 12장 증보 (글로벌-지역전환)
 - 2026-07-09: 최초 작성 (설계 토론 3라운드 UI 교차 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — 회원 홈(member 모드) 7장 증보 (회원홈-식단연결 기획)

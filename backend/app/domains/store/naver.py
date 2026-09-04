@@ -39,7 +39,12 @@ async def search_candidates(query: str, max_pages: int, mall: str) -> list[dict]
     out: list[dict] = []
     async with httpx.AsyncClient(timeout=15.0) as client:
         for page in range(max_pages):  # 순차 (병렬 금지)
-            params = {"query": query, "display": 100, "start": 1 + page * 100, "sort": "sim"}
+            params: dict[str, str | int] = {
+                "query": query,
+                "display": 100,
+                "start": 1 + page * 100,
+                "sort": "sim",
+            }
             try:
                 resp = await client.get(NAVER_SHOP_URL, params=params, headers=headers)
             except httpx.HTTPError:

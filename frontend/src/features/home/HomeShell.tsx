@@ -34,6 +34,8 @@ interface HomeShellProps {
   onMyTabClick?: () => void;
   /** [member 옵셔널 확장] country != KR 시 "글로벌" 배지 노출 (FR-605, ui-design 12장) */
   globalBadge?: boolean;
+  /** [member 옵셔널 확장] 자동주문 preview 로딩 (aria-busy) */
+  autoOrderBusy?: boolean;
 }
 
 /** 하단 탭바 아이콘 — 디자인 마크업의 인라인 SVG 재사용 */
@@ -132,8 +134,10 @@ export function HomeShell({
   onToggleMealComplete,
   pendingMealIds,
   globalBadge = false,
+  autoOrderBusy = false,
 }: HomeShellProps) {
   const t = useTranslations('guestHome');
+  const tMemberOrder = useTranslations('memberHome.autoOrder');
   const isGuest = viewModel.mode !== 'member';
 
   return (
@@ -185,9 +189,26 @@ export function HomeShell({
             </>
           ) : (
             <>
-              {/* 냉장고는 /fridge 수동 관리 페이지로 연결(활성), 자동주문은 "준비 중" (FR-208) */}
+              {/* 냉장고는 /fridge 수동 관리 페이지로 연결(활성), 자동주문은 AutoOrderCard 재사용 (v1.7) */}
               <LockedFeatureCard feature="fridge" href="/fridge" />
-              <LockedFeatureCard feature="order" />
+              <AutoOrderCard
+                autoOrder={viewModel.autoOrder}
+                onStart={onAutoOrderStart}
+                ctaLabel={tMemberOrder('viewCartCta')}
+                inactiveCtaLabel={tMemberOrder('connectCta')}
+                description={
+                  viewModel.autoOrder.active
+                    ? undefined
+                    : tMemberOrder('disconnectedHint')
+                }
+                recommendedLabel={tMemberOrder('recommendedLabel')}
+                moreCountLabel={
+                  viewModel.autoOrder.moreCount
+                    ? tMemberOrder('moreCount', { count: viewModel.autoOrder.moreCount })
+                    : undefined
+                }
+                busy={autoOrderBusy}
+              />
             </>
           )}
         </div>

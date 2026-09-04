@@ -261,9 +261,176 @@ Access 재발급 + refresh 회전.
 `store` 는 **`user.country` 의 허용 세트**에 속해야 함(그 외 404 `STORE_NOT_SUPPORTED`). body `{ "connected": true|false }` → 200 (upsert).
 > 1단계: 연동 상태 관리만(자격증명 미수집). 실계정 연동·자동 결제(US Walmart/Instacart 공식 API 포함)는 store 본설계에서 확장.
 
+### 6-3. `POST /api/v1/store/cart` — 인증 필요 (기존 구현, v1.6 문서 편입)
+
+경로 **단수** `/store/cart` (`/stores/connections` 복수와 구분). 재료 목록 → 네이버 쇼핑 검색 → LLM 선택. **자동주문 P0 는 프론트가 이 API 로 preview 를 우회하지 않는다** — order 서비스가 내부 `build_cart` 를 호출한다 (FR-714).
+
+```json
+// 요청 StoreCartRequest
+{
+  "items": [ { "name": "계란", "quantity": 10, "unit": "ea" } ],
+  "mall": "kurly",
+  "maxPages": 5
+}
+```
+
+| 필드 | 타입 | 제약 | 기본 |
+|------|------|------|------|
+| `items` | `NeededItem[]` | 1~40 | (필수) |
+| `items[].name` | string | 필수 | |
+| `items[].quantity` | number\|null | **구현 기준 float** (기존 store 계약 유지) | null |
+| `items[].unit` | string\|null | | null |
+| `mall` | `kurly \| all` | | `kurly` |
+| `maxPages` | int | 1~10 | `5` |
+
+```json
+// 200 StoreCartResponse
+{
+  "items": [
+    { "ingredient": "계란", "matched": true, "title": "신선한 계란 10구",
+      "price": { "amount": "5980.00", "currency": "KRW" },
+      "mallName": "마켓컬리", "link": "https://...", "candidateCount": 12 }
+  ],
+  "total": { "amount": "5980.00", "currency": "KRW" },
+  "matchedCount": 1,
+  "notes": []
+}
+```
+
+| HTTP | 내용 |
+|------|------|
+| `200` | `StoreCartResponse` |
+| `401 AUTH_REQUIRED` | 인증 쿠키 없음/만료 |
+| `422 VALIDATION_ERROR` | items 길이·mall 열거·maxPages 범위 위반 |
+| `429 RATE_LIMITED` | 유저 기준 **3회/분** (`store_user_limiter`, CWE-770) |
+
+- 네이버 키 없으면 items 전부 `matched=false`, total 0, notes 에 사유 (5xx 아님)
+- 상품 `title` 은 네이버 HTML 태그 스트립. P0 KR 추정가는 이 어댑터를 **mall=`kurly` 고정**으로 재사용. 쿠팡/월마트 검색 API 를 만들지 않음
+
+
 ---
 
-## 7. 엔드포인트 요약
+## 7. order 도메인 (v1.6 — 자동주문 P0)
+
+> 기획: `docs/기획/자동주문-장바구니.md`. camelCase, 금액 Money(문자열+통화), 시각 ISO-8601 UTC.
+> P0 는 **시뮬레이션 확정**만. `status=confirmed` (`paid` 도입 금지). 실 체크아웃·웹훅·취소/환불·게스트 주문·`GET /orders/{id}` 목록은 만들지 않음.
+
+공통: 경로에 user_id 없음 — 인증 유저 본인 행만 (CWE-639). `GET /orders/latest` 는 `created_at DESC LIMIT 1`.
+
+### 7-1. `GET /api/v1/orders/preview` — 인증 필요 (v1.6 신규)
+
+서버가 최신 식단의 **미완료** 끼니 재료 합 − 냉장고 재고로 needed/covered 를 계산한다. 스토어 연동 여부와 무관하게 200. 매칭: `name.strip().lower()` + **단위 일치**. 냉장고에만 있는 재고는 목록 미등재.
+
+- KR + `NAVER_CLIENT_ID/SECRET` 있으면 내부 `store.service.build_cart`(mall=`kurly`) 호출
+- 키 없거나 US 이면 `cart.items` 를 needed 기준 `matched=false`, `total.amount="0.00"`, notes 에 사유. **US 네이버 호출 금지·가짜 USD 금지**
+- `toBuy==0` 인 라인은 `needed` 가 아니라 `covered` 로만 둔다
+
+```json
+// 200 OrderPreviewResponse
+{
+  "mealPlanId": "uuid",
+  "storeConnected": true,
+  "country": "KR",
+  "needed": [
+    { "name": "계란", "unit": "ea", "needed": "12", "fromFridge": "2", "toBuy": "10" }
+  ],
+  "covered": [
+    { "name": "양파", "unit": "ea", "needed": "3", "fromFridge": "3", "toBuy": "0" }
+  ],
+  "cart": {
+    "items": [
+      { "ingredient": "계란", "matched": true, "title": "신선한 계란 10구",
+        "price": { "amount": "5980.00", "currency": "KRW" },
+        "mallName": "마켓컬리", "link": "https://...", "candidateCount": 12 }
+    ],
+    "total": { "amount": "5980.00", "currency": "KRW" },
+    "matchedCount": 1,
+    "notes": []
+  },
+  "estimatedTotal": { "amount": "5980.00", "currency": "KRW" },
+  "notes": []
+}
+```
+
+| HTTP | 내용 |
+|------|------|
+| `200` | `OrderPreviewResponse` |
+| `401 AUTH_REQUIRED` | 공통 |
+| `404 MEALPLAN_NOT_FOUND` | 최신 식단 없음 |
+| `429 RATE_LIMITED` | **3회/분** — 기존 store 리미터와 동일 스펙 재사용 (네이버+LLM 비용 방어, CWE-770) |
+
+- 성능: 네이버 순차조회+LLM 이 붙을 수 있음 — 기존 store 한도(수 초~수십 초) 허용. 프론트 스켈레톤+aria-busy
+- `cart.items[].link` 는 **https 만** 허용 (그 외 null, CWE-79)
+- `storeConnected` 는 현재 country 세트 중 `status=connected` 가 1개 이상이면 true (preview 자체는 연동 없이 동작)
+
+### 7-2. `POST /api/v1/orders` — 인증 필요 (v1.6 신규)
+
+현재 preview 를 **서버가 재계산**해 mock 확정 주문을 저장한다. 클라이언트 라인·가격·matched 를 **받지 않음** (CWE-602). 프론트 preview 캐시로 확정 금지.
+
+```json
+// 요청 OrderCreateRequest — 라인 목록 필드 없음 (보내면 422 VALIDATION_ERROR)
+{ "store": "kurly" }
+```
+
+- `store`: `user.country` 허용 세트 enum (KR: `kurly|coupang|ssg|naver`, US: `walmart|instacart`). 세트 밖 → 404 `STORE_NOT_SUPPORTED` (기존 연동 API 와 동일)
+- **`extra='forbid'`** — `items` 등 추가 필드 시 422 `VALIDATION_ERROR`
+- `status`/`frequency`/`lineType`/`simulation` 은 서버가 부여 (클라이언트 설정 불가). P0: `status=confirmed`, `frequency=weekly`, `simulation=true`
+- 확정 전제: body.store 가 `store_connections.status=connected`. 미연동 → 422 `STORE_NOT_CONNECTED`
+- 재계산 후 needed 가 비면 422 `NOTHING_TO_ORDER` (covered 만 있는 preview 는 GET 으로 표시 가능, POST 는 거절)
+- 트랜잭션: 주문+라인 스냅샷 저장 후 **needed 수량만** `fridge.add_items(..., source="order")`. covered inbound 금지. `expires_at=null`. 프론트는 `POST /fridge/items` 를 이중 호출하지 않음
+
+```json
+// 201 OrderResponse (스냅샷)
+{
+  "id": "uuid",
+  "store": "kurly",
+  "status": "confirmed",
+  "frequency": "weekly",
+  "nextSuggestedAt": "2026-08-22T08:15:00Z",
+  "estimatedTotal": { "amount": "5980.00", "currency": "KRW" },
+  "confirmedAt": "2026-08-15T08:15:00Z",
+  "simulation": true,
+  "items": [
+    { "name": "계란", "quantity": "10", "unit": "ea", "lineType": "needed",
+      "matched": true, "title": "신선한 계란 10구",
+      "unitPrice": { "amount": "5980.00", "currency": "KRW" } },
+    { "name": "양파", "quantity": "3", "unit": "ea", "lineType": "covered",
+      "matched": false, "title": null, "unitPrice": null }
+  ]
+}
+```
+
+- `nextSuggestedAt` = `confirmedAt` + 7일 (표시용, 스케줄러 잡 없음)
+- `items[].quantity`: needed 면 toBuy, covered 면 fromFridge (문자열 Decimal)
+- US/키없음: `estimatedTotal.amount="0.00"`, currency 는 유저 통화, 라인 `unitPrice=null`, `matched=false`
+- 재확정 시 냉장고 인플레는 P0 에서 막지 않음 (멱등 키 P1). UI 경고 카피만
+
+| HTTP | code | 상황 |
+|------|------|------|
+| `201` | — | `OrderResponse` |
+| `401` | `AUTH_REQUIRED` | 공통 |
+| `404` | `MEALPLAN_NOT_FOUND` | 재계산 시 최신 식단 없음 |
+| `404` | `STORE_NOT_SUPPORTED` | body.store 가 현재 country 세트 밖 |
+| `422` | `STORE_NOT_CONNECTED` | 해당 store 미연동 (또는 connected 0개) |
+| `422` | `NOTHING_TO_ORDER` | 재계산 후 needed 없음 |
+| `422` | `VALIDATION_ERROR` | store enum 위반, 또는 클라이언트가 items 등 extra 필드를 보냄 |
+| `429` | `RATE_LIMITED` | 유저 기준 **5회/분** |
+
+### 7-3. `GET /api/v1/orders/latest` — 인증 필요 (v1.6 신규)
+
+해당 유저 최신 주문 1건 (`created_at DESC LIMIT 1`). 본인 스코프. 리미터 없음 (읽기).
+
+| HTTP | 내용 |
+|------|------|
+| `200` | `OrderResponse` (7-2 와 동일 구조) |
+| `401 AUTH_REQUIRED` | 공통 |
+| `404 ORDER_NOT_FOUND` | 확정 이력 없음 |
+
+**명시적으로 만들지 않는 API**: 결제 승인, 웹훅, 주문 취소/환불, 게스트 주문, `/orders/{id}` 목록 페이지네이션.
+
+---
+
+## 8. 엔드포인트 요약
 
 | # | 메서드·경로 | 인증 | 유형 |
 |---|-------------|------|------|
@@ -284,8 +451,13 @@ Access 재발급 + refresh 회전.
 | 15 | `PUT /api/v1/stores/connections/{store}` | 필요 | JSON (v1.3 / v1.5 국가별) |
 | 16 | `PUT /api/v1/mealplans/{planId}/meals/{mealId}/completion` | 필요 | JSON (v1.4 신규) |
 | 17 | `PUT /api/v1/users/me/region` | 필요 | JSON (v1.5 신규) |
+| 18 | `POST /api/v1/store/cart` | 필요 | JSON (기존 구현, v1.6 문서 편입 — 경로 단수) |
+| 19 | `GET /api/v1/orders/preview` | 필요 | JSON (v1.6 신규) |
+| 20 | `POST /api/v1/orders` | 필요 | JSON (v1.6 신규) |
+| 21 | `GET /api/v1/orders/latest` | 필요 | JSON (v1.6 신규) |
 
 ## 변경 이력
+- 2026-08-15: **v1.6** — 기존 `POST /store/cart` 문서 편입 + order 도메인 3종(`GET /orders/preview`, `POST /orders`, `GET /orders/latest`). POST body 는 `{store}` 만(서버 재계산). 설계 토론 5라운드 합의
 - 2026-07-10: **v1.5** — 지역 전환 API(`PUT /users/me/region`, currency 서버 매핑·소급 변환 없음) + store 연동 국가별 세트 분기(KR 4 / US 2, walmart·instacart 편입). UI 대변인 동의
 - 2026-07-10: **v1.4** — 식사 완료 API + MealOut 확장(steps/completedAt/timeMinutes/difficulty). UI 대변인 동의
 - 2026-07-10: **v1.3** — store 연동 상태 2종 (설정 페이지, 자격증명 미수집 1단계). UI 대변인 동의
