@@ -117,23 +117,55 @@ describe('useNotificationSettings 행 단위 저장 — 낙관적 갱신·롤백
     expect(result.current.updateError).toBe(false);
   });
 
-  it('같은 행 저장 중 재호출은 무시된다 (연타 방지)', async () => {
+  it('같은 행 저장 중 마지막 변경을 대기시켰다가 재전송한다', async () => {
     const { result } = await renderReady();
-    let resolvePut: (value: ApiResult<{ settings: NotificationSetting[] }>) => void = () => undefined;
-    putMock.mockImplementation(() => new Promise((resolve) => (resolvePut = resolve)));
+    const resolvers: ((value: ApiResult<{ settings: NotificationSetting[] }>) => void)[] = [];
+    putMock.mockImplementation(
+      () => new Promise((resolve) => resolvers.push(resolve)),
+    );
 
     let first: Promise<void> = Promise.resolve();
     act(() => {
-      first = result.current.update('meal_reminder_lunch', { enabled: false });
+      first = result.current.update('meal_reminder_lunch', { localTime: '12:30' });
     });
     await waitFor(() => expect(result.current.savingTypes.has('meal_reminder_lunch')).toBe(true));
-    await act(() => result.current.update('meal_reminder_lunch', { enabled: true }));
+    await act(() => result.current.update('meal_reminder_lunch', { localTime: '13:00' }));
+    expect(
+      result.current.settings.find((s) => s.type === 'meal_reminder_lunch')?.localTime,
+    ).toBe('13:00');
     expect(putMock).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      resolvePut(ok({ settings: SETTINGS }));
+      resolvers[0]!(
+        ok({
+          settings: SETTINGS.map((setting) =>
+            setting.type === 'meal_reminder_lunch'
+              ? { ...setting, localTime: '12:30' }
+              : setting,
+          ),
+        }),
+      );
+    });
+    await waitFor(() => expect(putMock).toHaveBeenCalledTimes(2));
+    expect(putMock).toHaveBeenNthCalledWith(2, [
+      { type: 'meal_reminder_lunch', localTime: '13:00' },
+    ]);
+
+    await act(async () => {
+      resolvers[1]!(
+        ok({
+          settings: SETTINGS.map((setting) =>
+            setting.type === 'meal_reminder_lunch'
+              ? { ...setting, localTime: '13:00' }
+              : setting,
+          ),
+        }),
+      );
       await first;
     });
+    expect(
+      result.current.settings.find((s) => s.type === 'meal_reminder_lunch')?.localTime,
+    ).toBe('13:00');
     expect(result.current.savingTypes.size).toBe(0);
   });
 });
