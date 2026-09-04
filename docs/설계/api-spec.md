@@ -357,7 +357,7 @@ Access 재발급 + refresh 회전.
 | `200` | `OrderPreviewResponse` |
 | `401 AUTH_REQUIRED` | 공통 |
 | `404 MEALPLAN_NOT_FOUND` | 최신 식단 없음 |
-| `429 RATE_LIMITED` | **3회/분** — 기존 store 리미터와 동일 스펙 재사용 (네이버+LLM 비용 방어, CWE-770) |
+| `429 RATE_LIMITED` | **3회/분** — 기존 store 리미터와 동일 스펙 재사용 (네이버+LLM 비용 방어, CWE-770). **(v1.9 명시)** 저장 초안 스냅샷을 그대로 돌려주는 호출(외부 조회 없음)에는 적용하지 않는다 — 10-5 |
 
 - 성능: 네이버 순차조회+LLM 이 붙을 수 있음 — 기존 store 한도(수 초~수십 초) 허용. 프론트 스켈레톤+aria-busy
 - `cart.items[].link` 는 **https 만** 허용 (그 외 null, CWE-79)
@@ -481,7 +481,7 @@ Access 재발급 + refresh 회전.
   "nextRunAt": "2026-09-04T00:00:00Z",
   "skippedCycleStart": null,
   "weeklyLimit": { "amount": "112903.23", "currency": "KRW" },
-  "mealPlan":   { "id": "uuid", "status": "ready" },
+  "mealPlan":   { "id": "uuid", "status": "ready", "mealCount": 21, "completedMealCount": 0 },
   "draftOrder": {
     "id": "uuid",
     "status": "draft",
@@ -489,6 +489,14 @@ Access 재발급 + refresh 회전.
     "autoConfirmAt": "2026-09-05T00:00:00Z",
     "blockedReason": null,
     "deliveryEta": null
+  },
+  "currentOrder": {
+    "id": "uuid",
+    "status": "draft",
+    "deliveryState": "pending",
+    "deliveryEta": null,
+    "inboundAt": null,
+    "autoConfirmed": false
   },
   "simulation": true
 }
@@ -505,8 +513,9 @@ Access 재발급 + refresh 회전.
 | `nextRunAt` | datetime\|null | 다음 스케줄러 트리거 시각(UTC). 표시는 프론트가 로컬 변환 |
 | `skippedCycleStart` | date\|null | 건너뛰기 처리된 사이클 (= `skip_until`) |
 | `weeklyLimit` | Money | 이번 사이클 예산 한도 (architecture 3-9-4 안분기 결과, 음수는 0) |
-| `mealPlan` | object\|null | 이번 사이클의 최신 식단 요약. 없으면 null |
-| `draftOrder` | object\|null | `draft`/`awaiting_user` 주문 요약. 없으면 null |
+| `mealPlan` | object\|null | 이번 사이클의 최신 식단 요약. 없으면 null. **(v1.9)** `mealCount`·`completedMealCount` 추가 — 아래 "진행 수치" 참조 |
+| `draftOrder` | object\|null | `draft`/`awaiting_user` 주문 요약. 없으면 null. **확정 이후(`confirmed`/`delivered`)에는 항상 null** — 배송 정보는 `currentOrder` 에서 읽는다 (v1.9 명시) |
+| `currentOrder` | object\|null | **(v1.9 신규)** 이번 사이클(`cycleStart`)의 최신 주문 요약 — **상태 무관**. 주문 행이 없으면 null. 아래 "진행 수치" 참조 |
 | `simulation` | boolean | **항상 `true`** — 실결제 아님을 계약 레벨에서 고정 (US-814) |
 
 `stage` 열거 (프론트는 이 값 → `cycle.stage.*` i18n 키로 매핑):
@@ -529,6 +538,28 @@ Access 재발급 + refresh 회전.
 
 `draftOrder.blockedReason` 열거: `BUDGET_EXCEEDED` · `UNMATCHED_RATIO` · `STORE_DISCONNECTED` · `AUTO_CONFIRM_OFF` · `US_NO_PRICE` · `MEALPLAN_OVER_BUDGET` (프론트가 `cycle.blocked.*` 로 매핑)
 
+#### 진행 수치 (v1.9 신규) — `currentOrder` · `mealPlan.mealCount` / `mealPlan.completedMealCount`
+
+배경: ui-design 14-2 의 `confirmed` 카드("{deliveryEta} 도착 예정")와 `delivered` 카드("{완료}/{전체} 완료")가 요구하는 값이 v1.8 `CycleState` 에 없었다. `draftOrder` 는 `draft`/`awaiting_user` 에서만 채워지므로 확정 이후에는 배송 정보를 읽을 곳이 없고, 끼니 완료 수치도 없어 프론트가 일반 진행 문구로 우회했다(2026-09-04 구현 워커 합의). 아래는 **백엔드가 이미 가진 데이터**로만 채운다.
+
+**`currentOrder`** — `cycle.service.build_cycle_state` 가 이미 조회하는 "이번 사이클 최신 주문 1행"(`_current_order`, `created_at DESC LIMIT 1`, 상태 무관)을 그대로 노출한다. **추가 쿼리 0건.**
+
+| 필드 | 타입 | 출처 |
+|------|------|------|
+| `id` | uuid | `orders.id` |
+| `status` | `draft \| awaiting_user \| confirmed \| cancelled \| expired \| failed` | `orders.status` |
+| `deliveryState` | `pending \| delivered \| unknown` | `orders.delivery_state` — 배송 진행의 서버 정본(3값) |
+| `deliveryEta` | datetime\|null | `orders.delivery_eta` (UTC). 초안은 null |
+| `inboundAt` | datetime\|null | `orders.inbound_at` — 냉장고 등록 완료 시각. null = 미등록 |
+| `autoConfirmed` | boolean | `orders.auto_confirmed` |
+
+- 라인·금액은 넣지 않는다 — 스냅샷은 `GET /orders/latest` 가 담당하며 `_current_order` 는 `items` 를 로드하지 않는다(넣으면 추가 쿼리가 생긴다).
+- `stage` 파생 규칙은 바뀌지 않는다. `currentOrder` 는 표시용 보조값이며 프론트가 이것으로 단계를 추론하지 않는다(ui-design 14-7). `draftOrder` 는 하위호환을 위해 그대로 둔다(같은 행을 두 번 내리는 중복은 의도된 것 — 기존 프론트 훅을 깨지 않기 위함).
+
+**`mealPlan.mealCount` / `mealPlan.completedMealCount`** — 이번 사이클 식단의 전체 끼니 수와 `completed_at IS NOT NULL` 끼니 수. `delivered` 카드의 "{완료}/{전체} 완료" 가 이 값이다. 집계 1건(`SELECT count(*), count(completed_at) FROM meals WHERE meal_plan_id = :id`) 이 추가되며 `ix_meals_plan_date` 의 선두 컬럼으로 커버된다. `mealPlan` 이 null 이면 집계하지 않는다. 9-1 의 성능 목표(p95 < 300ms) 안에서 감당 가능한 비용이다.
+
+**넣지 않는 것 — 품목 단위 배송 진척("배송 완료 품목 수 / 전체 품목 수")**: 백엔드에 그 데이터가 **없다**. 배송 확인은 **주문 단위** compare-and-set(`orders.inbound_at`, 10-3)이고 `order_items` 에는 라인별 배송·등록 상태 컬럼이 없다. 냉장고 등록도 needed 라인 전체를 한 트랜잭션에 넣는다(architecture 3-9-9). 따라서 "N/M 품목 배송 완료" 는 항상 0/M 또는 M/M 이 되어 수치로서 의미가 없고, 만들려면 `order_items` 라인별 상태 컬럼 + 부분 배송 UX + 스토어 배송 웹훅(v1.8 이관 항목)이 선행돼야 한다. 그 전까지 배송 진행은 `currentOrder.deliveryState`(3값)로, 이번 주 소비 진행은 `mealPlan` 집계로 표시한다.
+
 ### 9-1. `GET /api/v1/cycle` — 인증 필요 (v1.8 신규)
 
 내 사이클 상태. 설정 행이 없으면 기본값으로 생성 후 반환. 리미터 없음(읽기).
@@ -539,7 +570,7 @@ Access 재발급 + refresh 회전.
 | `401 AUTH_REQUIRED` | 공통 |
 
 - 예산안이 없는 사용자(`BUDGET_PLAN_REQUIRED` 대상)는 **409 를 내지 않는다** — `weeklyLimit: null` 로 반환하고 홈이 예산 설정 CTA 를 띄운다. 홈 진입 API 가 409 를 내면 화면이 멈춘다.
-- 성능 목표 p95 < 300ms. 내부 조회는 설정 1행 + 최신 식단 1행 + 열린 주문 1행 + 확정 합계 1건.
+- 성능 목표 p95 < 300ms. 내부 조회는 설정 1행 + 최신 식단 1행 + 이번 사이클 최신 주문 1행(상태 무관 — v1.9 `currentOrder` 는 이 행을 재사용, 추가 조회 없음) + 확정 합계 1건 + **(v1.9)** 끼니 집계 1건(`meals` count/completed, `ix_meals_plan_date` 선두 컬럼).
 
 ### 9-2. `PUT /api/v1/cycle/settings` — 인증 필요 (v1.8 신규)
 
@@ -684,7 +715,7 @@ Access 재발급 + refresh 회전.
 
 | 구분 | v1.6 | v1.8 |
 |------|------|------|
-| `status` | `confirmed` 만 | `draft` · `awaiting_user` · `confirmed` · `cancelled` · `expired` · `failed` |
+| `status` | `confirmed` 만 | `draft` · `awaiting_user` · `confirmed` · `cancelled` · `expired` · `failed` (`failed` 는 **예약 상태 — v1.9 까지 생산 경로 없음**, 10-8) |
 | `confirmedAt` | 항상 non-null | 초안 단계에서 **null** |
 | 필드 | 9종 | +8종 (위 확장 필드) |
 
@@ -705,12 +736,48 @@ Access 재발급 + refresh 회전.
 | `cycleStart` | date | 현재 사이클 |
 
 - **동작 변경**: 현재 사이클에 `draft`/`awaiting_user` 주문이 있으면 **재계산하지 않고 그 스냅샷을 반환**한다. 사용자가 화면을 열 때마다 네이버+LLM 을 호출하던 비용이 사라지고, 승인 화면이 흔들리지 않는다.
-- 강제 재계산: `?refresh=true` — 초안을 최신 계산으로 **갱신 저장**한다. 기존 store 리미터 **3회/분** 유지.
-- `refresh` 없이 저장된 초안이 없으면 기존 v1.6 동작(즉석 계산, 저장 안 함) 그대로.
+- ~~강제 재계산: `?refresh=true` — 초안을 최신 계산으로 **갱신 저장**한다.~~ **v1.9 에서 계약 제거.** GET 이 저장 초안을 갱신하는 부작용 경로였고, Origin 검증이 `POST/PUT/PATCH/DELETE` 에만 걸려 CSRF 이중 방어를 우회했다(security-design 5-7). 재계산은 **`POST /orders/{id}/recalculate`(10-7)** 로 옮긴다. 목표 상태: 서버는 `refresh` 를 선언하지 않으며 보내도 무시된다(일반 GET 과 동일 동작). 구현 반영 전까지의 현행 동작은 10-7 "이행" 항목 참조.
+- 저장된 초안이 없으면 기존 v1.6 동작(즉석 계산, 저장 안 함) 그대로.
+- **리미터 (v1.9 명시 — 2026-09-04 리뷰 P0-2 수정 구현 기준)**: 저장 초안 스냅샷을 돌려주는 호출은 외부 조회가 없으므로 리미터를 **적용하지 않는다**. 즉석 계산(저장 초안 없음)만 **3회/분**(`order_preview_user_limiter`). §7-1 의 "3회/분" 은 이 경우에 한정된다.
 
 ### 10-6. `POST /api/v1/orders` — 변경 없음 (명시적 확정, v1.6 유지)
 
 사용자가 사이클과 무관하게 직접 확정하는 경로로 유지한다. 단 서버가 `cycle_start` 를 현재 사이클로 채우므로 **부분 유니크 인덱스의 적용을 받는다**. 이 사이클에 이미 확정 주문이 있으면 `409 ORDER_ALREADY_CONFIRMED`(신규). 확정 즉시 inbound 하던 동작은 **제거**되고 `delivery_eta` 시점으로 옮겨진다.
+
+### 10-7. `POST /api/v1/orders/{id}/recalculate` — 인증 필요 (v1.9 신규)
+
+열린 초안(`draft`/`awaiting_user`)을 **이 사이클 식단(`period_start = cycle_start`)·냉장고 재고·시세로 다시 계산해 갱신 저장**한다. v1.8 의 `GET /orders/preview?refresh=true` 가 하던 일을 **메서드만 바꿔** 옮긴 것이며 계산 로직은 동일하다(`order.service.preview_order(refresh=True)` 의 초안 갱신 분기). body 없음 — 라인·가격·`matched` 를 받지 않는다(CWE-602).
+
+| HTTP | code | 상황 |
+|------|------|------|
+| `200` | — | `OrderResponse` (갱신된 초안 스냅샷. `status`·`autoConfirmAt` 은 유지) |
+| `401` | `AUTH_REQUIRED` | 공통 |
+| `403` | `FORBIDDEN` | 타인 주문 |
+| `403` | `FORBIDDEN_ORIGIN` | Origin 불일치 (POST 이므로 미들웨어 자동 적용 — 이 경로를 만든 이유) |
+| `404` | `ORDER_NOT_FOUND` | |
+| `404` | `MEALPLAN_NOT_FOUND` | 이 사이클의 식단이 없음 |
+| `409` | `ORDER_INVALID_STATE` | `draft`/`awaiting_user` 가 아님 (`confirmed`·`cancelled`·`expired`·`failed` 는 재계산 대상이 아니다) |
+| `429` | `RATE_LIMITED` | **3회/분** — `order_preview_user_limiter` 재사용 (네이버+LLM 비용, CWE-770) |
+
+- 부작용(현 `refresh=true` 구현과 동일): `meal_plan_id`·`estimated_total`·`currency`·`items` 를 재계산값으로 교체. `status='draft'` 이면 `blocked_reason=NULL` 로 초기화. `awaiting_user` 는 상태·`blocked_reason`·`auto_confirm_at`(=NULL) 을 **그대로 둔다** — 차단 해소 판정은 자동확정 게이트(architecture 3-9-5)나 승인(10-1)이 하며, 재계산이 게이트를 대신 통과시키지 않는다.
+- 응답을 `OrderResponse` 로 둔 이유: `/orders` 화면은 `GET /orders/latest` 의 `OrderResponse` 로 초안을 그리므로(ui-design 14-3) 재계산 결과를 같은 형으로 받아 `latest` 를 교체하면 된다. `OrderPreviewResponse` 로 돌려주면 프론트가 두 형을 합성해야 한다.
+- 경로를 `POST /orders/preview/refresh` 가 아니라 `/{id}/recalculate` 로 둔 이유: 갱신 대상은 **저장된 초안 행**이며, 기존 3종 조작(`approve`/`cancel`/`delivery`)과 같은 `/{id}/{동사}` 규약·소유자 검증(403) 경로를 재사용한다. 저장 초안이 없을 때의 "즉석 계산"은 부작용이 없으므로 GET(10-5)에 남긴다.
+- **이행**: 백엔드·프론트가 같은 저장소에 있고 미출시이므로 병행 기간을 두지 않는다. 후속 구현 태스크에서 ① 라우터에 10-7 추가 ② `GET /orders/preview` 의 `refresh` 파라미터 제거 ③ 프론트 `fetchOrderPreview(refresh)` 호출을 `recalculateOrder(id)` 로 교체(`OrdersController.handleRefresh`) 를 **한 PR** 로 반영한다. 반영 전까지 현행 `?refresh=true` 는 security-design 5-7 의 "잠정 수용 조건" 아래 동작한다.
+
+### 10-8. `failed` 상태 — 예약 상태와 복구 경로 결정 (v1.9)
+
+**결정: 전용 복구 엔드포인트를 만들지 않는다. 현행 우회(`GET /orders/preview?refresh=true` = "다시 계산하기")도 정식 계약으로 승격하지 않는다. `failed` 는 v1.9 까지 "생산 경로 없는 예약 상태" 로 명시한다.**
+
+근거 (2026-09-04 코드 대조):
+1. **백엔드에 `failed` 를 만드는 경로가 없다.** `orders.status` CHECK(리비전 0011)와 `order.service._ALLOWED_TRANSITIONS`(`* → failed`, `failed → ∅`)에만 등장한다. 초안 생성 실패는 주문 행을 만들지 않고 `user_cycle_settings.last_stage='generate_failed'` 로 남으며(architecture 3-9-3), 확정 중 예외는 롤백되어 상태가 바뀌지 않는다. 즉 사용자는 v1.9 에서 `failed` 주문을 볼 수 없다.
+2. **현행 우회는 아무것도 복구하지 않는다.** `preview_order(refresh=True)` 는 `draft`/`awaiting_user` 행만 갱신한다. `failed` 행이 최신 주문이면 즉석 계산 결과만 돌려주고 행은 그대로 남아 `/orders` 는 계속 실패 카드를 보인다. 동작하지 않는 우회를 계약으로 굳히면 문서가 거짓이 된다.
+3. **복구 의미는 생산자에 달려 있다.** `failed` 의 실제 생산자는 실결제(기획 Q4, 범위 밖)의 결제 실패다. 그때의 복구가 "결제 재시도"인지 "초안으로 되돌려 재승인"인지는 결제 설계가 정한다. 지금 `POST /orders/{id}/retry` 를 확정하면 존재하지 않는 실패에 대한 추측 계약이 된다.
+
+계약상 확정하는 것:
+- `failed` 는 **터미널 상태**다. 재계산(10-7)·승인(10-1)·취소(10-2)·배송 보정(10-3) 모두 `409 ORDER_INVALID_STATE`.
+- `failed` 는 부분 유니크 인덱스(`uq_orders_confirmed_cycle`·`uq_orders_open_cycle`) 대상이 아니므로 **같은 사이클의 새 초안·재확정을 막지 않는다**. 시스템 차원의 복구 경로는 `POST /orders`(10-6, 명시 확정)와 다음 사이클 정상 진행이며, 별도 엔드포인트가 필요 없다.
+- 프론트는 `failed` 를 `cancelled`/`expired` 와 같은 **터미널 카드**(다음 사이클 안내, 조작 CTA 없음)로 그린다(ui-design 14-3 v1.9). "다시 계산하기" CTA 는 제거한다. 분기 자체는 유지한다(10-4 계약의 6값 방어).
+- 실결제 설계에서 `failed` 생산 경로가 생기면 그 설계가 복구 엔드포인트(예: `POST /orders/{id}/retry`)와 `failed → *` 전이를 함께 확정하고 본 절을 개정한다.
 
 ---
 
@@ -780,6 +847,7 @@ Access 재발급 + refresh 회전.
 | `POST /api/v1/orders/{id}/approve` | 필요 | JSON (v1.8 신규) |
 | `POST /api/v1/orders/{id}/cancel` | 필요 | JSON (v1.8 신규) |
 | `POST /api/v1/orders/{id}/delivery` | 필요 | JSON (v1.8 신규) |
+| `POST /api/v1/orders/{id}/recalculate` | 필요 | JSON (**v1.9 신규** — `preview?refresh=true` 대체, 10-7) |
 | `POST /api/v1/mealplans/monthly` | 필요 | JSON (기존 구현, v1.8 문서 편입 — **내부/실험용**) |
 
 **확장(기존 경로)**
@@ -787,12 +855,14 @@ Access 재발급 + refresh 회전.
 | 메서드·경로 | 변경 | 하위호환 |
 |-------------|------|----------|
 | `GET /api/v1/orders/latest` | status 6종 확장 + 필드 8종 추가 + `confirmedAt` nullable | ⚠ **깨짐** — 10-4 |
-| `GET /api/v1/orders/preview` | 초안 스냅샷 반환 + 필드 5종 추가 + `?refresh` | ✅ 추가만 |
+| `GET /api/v1/orders/preview` | 초안 스냅샷 반환 + 필드 5종 추가 + ~~`?refresh`~~ (**v1.9 제거** → 10-7) | ✅ 추가만 (v1.9: `refresh` 제거는 프론트 호출 교체와 한 PR) |
+| `GET/PUT/POST /api/v1/cycle*` | `CycleState` 에 `currentOrder` + `mealPlan.mealCount/completedMealCount` 추가 (**v1.9**, §9 진행 수치) | ✅ 추가만 |
 | `POST /api/v1/orders` | `cycle_start` 부여 → 멱등 제약 적용, 확정 즉시 inbound 제거 | ⚠ 신규 409 |
 | `GET/PUT /api/v1/notifications/settings` | type 3종 추가 | ✅ 추가만 |
 | `POST /api/v1/mealplans` | 변경 없음 (v1.5 202 승계) | ✅ |
 
 ## 변경 이력
+- 2026-09-04: **v1.9** — 구현 정합 증분(신규 기능 없음). ① `CycleState` 에 `currentOrder`(추가 쿼리 0) + `mealPlan.mealCount/completedMealCount`(집계 1건) 추가, 품목 단위 배송 수치는 **서버 데이터 부재로 미제공** 사유 명시(§9 진행 수치) ② `failed` 주문 전용 복구 경로 **신설하지 않음** — 생산 경로 없는 예약 상태로 확정, 현행 `refresh` 우회도 승격하지 않음(10-8) ③ `GET /orders/preview?refresh=true` **계약 제거** → `POST /orders/{id}/recalculate` 신설(10-7, 3회/분, 에러 코드 재사용) — GET 부작용·Origin 검증 우회 해소(security-design 5-7) ④ preview 리미터 실제 동작(저장 스냅샷 미적용) 명시(7-1·10-5). 코드 변경 없음 — 구현은 후속 태스크
 - 2026-08-15: **v1.6** — 기존 `POST /store/cart` 문서 편입 + order 도메인 3종(`GET /orders/preview`, `POST /orders`, `GET /orders/latest`). POST body 는 `{store}` 만(서버 재계산). 설계 토론 5라운드 합의
 - 2026-08-30: **v1.8** — 주간 자동 사이클: cycle 도메인 3종(`GET /cycle`·`PUT /cycle/settings`·`POST /cycle/skip`) + order 3종(`approve`·`cancel`·`delivery`) 신규, `GET /orders/latest` **계약 확장(하위호환 깨짐 — 10-4 사유 기재)**, `GET /orders/preview` 초안 스냅샷(추가만), notification type 3종, `POST /mealplans/monthly` **내부/실험용** 표기. 신규 에러 4종. UI 대변인 동의 완료
 - 2026-07-10: **v1.5** — 지역 전환 API(`PUT /users/me/region`, currency 서버 매핑·소급 변환 없음) + store 연동 국가별 세트 분기(KR 4 / US 2, walmart·instacart 편입). UI 대변인 동의
