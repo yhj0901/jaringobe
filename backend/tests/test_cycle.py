@@ -394,6 +394,51 @@ async def test_cycle_limit_accumulates_month_share_across_three_cycles(db):
     )
 
 
+async def test_cycle_limit_attributes_early_confirmation_to_order_cycle_month(db):
+    user = User(nickname="월 경계 사용자", country="KR", currency="KRW")
+    db.add(user)
+    await db.flush()
+    db.add(
+        BudgetPlan(
+            user_id=user.id,
+            household_size=2,
+            amount=Decimal("400000"),
+            currency="KRW",
+            meal_direction="health",
+            source="onboarding",
+            locked=True,
+        )
+    )
+    db.add(
+        Order(
+            user_id=user.id,
+            meal_plan_id=None,
+            store="kurly",
+            status="confirmed",
+            frequency="weekly",
+            cycle_start=date(2026, 10, 1),
+            next_suggested_at=datetime(2026, 10, 7, tzinfo=UTC),
+            estimated_total=Decimal("80500"),
+            currency="KRW",
+            simulation=True,
+            confirmed_at=datetime(2026, 9, 30, tzinfo=UTC),
+            auto_confirmed=True,
+            delivery_state="pending",
+        )
+    )
+    await db.flush()
+
+    limit = await budget_service.cycle_limit(
+        db,
+        user,
+        date(2026, 10, 8),
+        7,
+        timezone_name="Asia/Seoul",
+    )
+
+    assert limit == Decimal("100145.16")
+
+
 def test_policy_parse_failures_fall_back_without_stopping(monkeypatch, caplog):
     from app.core.config import get_settings
 

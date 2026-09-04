@@ -300,16 +300,18 @@ async def cycle_limit(db, user, cycle_start: date, cycle_days: int,
     share     = prorate(budget.amount, [cycle_start 소속 월의 1일, ..., accrual_end 직전])
     committed = Σ orders.estimated_total
                 WHERE user_id=? AND status='confirmed'
-                  AND confirmed_at ∈ [cycle_start 가 속한 달의 로컬 1일 00:00, accrual_end 00:00)
-                      → timezone_name 기준 로컬 → UTC 환산 (호출자가 user_cycle_settings.timezone 을 넘긴다)
+                  AND cycle_start ∈ [cycle_start 가 속한 달의 1일, accrual_end)
     return max(Decimal("0"), share - committed).quantize(_CENT, ROUND_HALF_UP)
 ```
 
 - 사이클별 단일 몫에서 월 누적 확정액을 빼면 2회차부터 한도가 0으로 붕괴하므로, **안분액과 확정액 모두 월초부터 이번 사이클 종료까지의 같은 누적 구간**을 사용한다. 앞선 사이클에서 남긴 금액은 다음 사이클로 이월되고, 각 사이클이 정상 예산을 썼다면 다음 한도는 새로 누적된 일수 몫이 된다.
+- 확정액의 월 귀속은 실제 확정 시각(`confirmed_at`)이 아니라 **주문의 배송 사이클(`orders.cycle_start`)**이다. 따라서 10월 1일 사이클을 D-1인 9월 30일에 확정해도 10월 한도에서 차감한다.
 - `prorate_remaining_month` 는 기존 `_prorate` 와 **결과가 완전히 동일**하다(달이 하나뿐이므로 `monthly × remaining/dim`). `build_monthly_plan` 의 동작은 바뀌지 않는다.
 - 사이클이 달 경계를 넘으면 이번 계산은 `cycle_start` 소속 월의 말일까지로 자른다. 다음 달 초의 미사용 일수 몫은 다음 달 첫 사이클 누적액에 포함되므로 월별 예산·확정액의 기간이 섞이지 않는다.
 - 통화는 `budget_plans.currency` 를 그대로 따른다. `Decimal` + 통화코드 쌍, float 금지.
 - **v1.9 대조(2026-09-04)**: 위 수식과 `backend/app/domains/budget/service.py::cycle_limit` 구현이 **일치**함을 확인했다 — `month_start`/`next_month`(12월 롤오버 포함)/`accrual_end` 계산, `prorate` 범위 `[month_start, accrual_end)`, `confirmed_at` 범위의 로컬→UTC 환산, `status='confirmed'` 한정, `max(0, share − committed)` 및 소수 2자리 반올림까지 동일. 문서 쪽 차이는 시그니처의 `timezone_name` 키워드 인자 누락뿐이었고 본 버전에서 보정했다. 호출자 2곳(`GET /cycle` 의 `weeklyLimit`, 자동확정 게이트 ⑤) 모두 `user_cycle_settings.timezone` 을 넘긴다. 구현은 바꾸지 않았다.
+
+- **v1.10 정정(2026-09-05)**: 위 v1.9 대조는 당시 구현 기록이다. 월초 사이클의 D-1 확정액 누락을 막기 위해 확정액 필터를 `confirmed_at` 로컬 시각 범위에서 `orders.cycle_start` 날짜 범위로 교체했다. `timezone_name` 인자는 호환성을 위해 유지한다.
 
 ### 3-9-5. 자동확정 5중 게이트 (스캔 ②)
 
@@ -485,6 +487,7 @@ RULES:
 - **자동주문 P0(v1.6) 이관 항목**: **US 시세 어댑터**(Walmart/Instacart 파트너 키, P2), **실 체크아웃·자동결제**(P2), **스케줄러/주 2회 주기 UI**(P1). P0 는 시뮬레이션 확정만. 재확정 멱등 키는 P1. 쿠팡/SSG/네이버 전용 검색 어댑터는 만들지 않음
 
 ## 변경 이력
+- 2026-09-05: **v1.10** — GATE 4 BUG-004 정정. 3-9-4 `cycle_limit` 확정액의 월 귀속을 `confirmed_at`에서 `orders.cycle_start`로 변경해 월초 사이클의 D-1 확정액이 해당 사이클 월 한도에서 차감되게 함
 - 2026-09-05: **v1.10** — GATE 4 BUG-001 정정. 3-9-5 자동확정의 미매칭·예산 게이트를 초안 스냅샷이 아닌 확정 직전 재계산 스냅샷 기준으로 이동. 잠금 한도 초과 시 확정·inbound 전에 `awaiting_user/BUDGET_EXCEEDED`로 차단
 - 2026-08-15: **v1.6** — 자동주문 P0 흐름(3-6) + order 도메인 폴더. 실결제 없이 preview→명시 확정→fridge inbound `source=order`. 설계 토론 5라운드 합의. 미결 0건
 - **주간 자동 사이클(v1.8) 이관 항목**: 멀티 인스턴스 스케줄러 분산 락·리더 선출(배포 형상 변경 시 설계 재소집), 실결제 자동확정(별도 명시 동의·1회 상한액·취소 유예·재시도 정책이 선행 조건), 품절 시 대체 재료 자동 제안(알레르기 재검증 필요 — P2), 스토어 배송 상태 웹훅(현 `delivery_eta` 추정은 폴백으로 존치), 정책 파라미터의 `policy_settings` 테이블 승격(관리자 인증 도입 후, env=기본값·DB=오버라이드 2계층)
