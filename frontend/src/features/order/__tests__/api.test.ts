@@ -6,6 +6,7 @@ import {
   createOrder,
   fetchLatestOrder,
   fetchOrderPreview,
+  recalculateOrder,
 } from '@/features/order/api';
 
 function mockFetch(status: number, jsonBody: unknown = {}) {
@@ -56,10 +57,13 @@ describe('order API 클라이언트 (api-spec 7장)', () => {
     if (!result.ok) expect(result.code).toBe('STORE_NOT_CONNECTED');
   });
 
-  it('preview refresh는 명시적으로 ?refresh=true를 붙인다', async () => {
+  it('recalculateOrder → POST /orders/{id}/recalculate', async () => {
     const fetchMock = mockFetch(200, {});
-    await fetchOrderPreview(true);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/v1/orders/preview?refresh=true');
+    await recalculateOrder('a/b');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/v1/orders/a%2Fb/recalculate');
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.method).toBe('POST');
+    expect(init.body).toBeUndefined();
   });
 
   it('approve/cancel/delivery 액션은 id를 인코딩하고 계약 body만 보낸다', async () => {

@@ -518,11 +518,11 @@
       },
       "confirmed": {
         "title": "Order confirmed",
-        "body": "Your confirmed order is waiting for delivery"
+        "body": "Delivery pending · expected {time}"
       },
       "delivered": {
         "title": "This week is in progress",
-        "body": "Mark meals complete to keep fridge inventory accurate"
+        "body": "{completed}/{total} meals completed"
       },
       "nothingToOrder": {
         "title": "Your fridge has enough this week",
@@ -846,7 +846,7 @@
       },
       "failed": {
         "title": "We couldn't prepare your cart",
-        "body": "Calculate again using your latest meal plan and fridge inventory"
+        "body": "Check your next suggested order on {date}"
       }
     },
     "confirmCta": "Confirm cart",

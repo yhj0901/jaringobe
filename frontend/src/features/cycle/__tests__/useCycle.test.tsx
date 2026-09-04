@@ -28,6 +28,7 @@ const CYCLE: CycleState = {
   weeklyLimit: { amount: '100000.00', currency: 'KRW' },
   mealPlan: null,
   draftOrder: null,
+  currentOrder: null,
   simulation: true,
 };
 

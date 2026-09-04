@@ -120,7 +120,7 @@ const CYCLE: CycleState = {
   nextRunAt: '2026-09-13T00:00:00Z',
   skippedCycleStart: null,
   weeklyLimit: null,
-  mealPlan: { id: 'plan-1', status: 'ready' },
+  mealPlan: { id: 'plan-1', status: 'ready', mealCount: 21, completedMealCount: 0 },
   draftOrder: {
     id: 'order-1',
     status: 'draft',
@@ -128,6 +128,14 @@ const CYCLE: CycleState = {
     autoConfirmAt: '2026-09-06T12:00:00Z',
     blockedReason: null,
     deliveryEta: null,
+  },
+  currentOrder: {
+    id: 'order-1',
+    status: 'draft',
+    deliveryState: 'pending',
+    deliveryEta: null,
+    inboundAt: null,
+    autoConfirmed: false,
   },
   simulation: true,
 };

@@ -18,7 +18,10 @@ function cycle(stage: CycleStage, reason: OrderBlockedReason | null = null): Cyc
     nextRunAt: '2026-09-04T00:00:00Z',
     skippedCycleStart: null,
     weeklyLimit: { amount: '100000.00', currency: 'KRW' },
-    mealPlan: stage === 'generated' ? { id: 'p1', status: 'ready' } : null,
+    mealPlan:
+      stage === 'generated' || stage === 'delivered'
+        ? { id: 'p1', status: 'ready', mealCount: 21, completedMealCount: 8 }
+        : null,
     draftOrder:
       stage === 'drafted' || stage === 'awaiting_user'
         ? {
@@ -28,6 +31,17 @@ function cycle(stage: CycleStage, reason: OrderBlockedReason | null = null): Cyc
             autoConfirmAt: '2026-09-05T00:00:00Z',
             blockedReason: reason,
             deliveryEta: null,
+          }
+        : null,
+    currentOrder:
+      stage === 'confirmed' || stage === 'delivered'
+        ? {
+            id: 'o1',
+            status: 'confirmed',
+            deliveryState: stage === 'delivered' ? 'delivered' : 'pending',
+            deliveryEta: '2026-09-07T00:00:00Z',
+            inboundAt: stage === 'delivered' ? '2026-09-07T00:00:00Z' : null,
+            autoConfirmed: true,
           }
         : null,
     simulation: true,
@@ -103,6 +117,7 @@ describe('CycleStatusCard stage 단일 분기', () => {
     fireEvent.click(screen.getByRole('button', { name: '주문 취소' }));
     expect(confirmed.onViewOrder).toHaveBeenCalledTimes(1);
     expect(confirmed.onCancelOrder).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/도착 예정/)).toBeInTheDocument();
     first.unmount();
 
     const fridge = actions();
@@ -117,6 +132,11 @@ describe('CycleStatusCard stage 단일 분기', () => {
     renderWithIntl(<CycleStatusCard cycle={cycle('paused')} {...settings} />);
     fireEvent.click(screen.getByRole('button', { name: '설정으로' }));
     expect(settings.onGoSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it('delivered는 끼니 완료 수치를 표시한다', () => {
+    renderWithIntl(<CycleStatusCard cycle={cycle('delivered')} {...actions()} />);
+    expect(screen.getByText('8/21개 끼니 완료')).toBeInTheDocument();
   });
 
   it('generated/generate_failed CTA와 generating aria-busy를 노출한다', () => {

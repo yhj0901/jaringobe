@@ -75,9 +75,13 @@ export function CycleStatusCard({
   const stageKey = STAGE_KEYS[cycle.stage];
   const displayTime =
     cycle.stage === 'confirmed'
-      ? formatLocalDateTime(cycle.draftOrder?.deliveryEta ?? null, locale)
+      ? formatLocalDateTime(cycle.currentOrder?.deliveryEta ?? null, locale)
       : formatLocalDateTime(cycle.nextRunAt, locale);
-  const body = t(`stage.${stageKey}.body`, { time: displayTime });
+  const body = t(`stage.${stageKey}.body`, {
+    time: displayTime,
+    completed: cycle.mealPlan?.completedMealCount ?? 0,
+    total: cycle.mealPlan?.mealCount ?? 0,
+  });
   const autoConfirmLabel =
     cycle.stage === 'drafted' && cycle.draftOrder?.autoConfirmAt
       ? t('stage.drafted.autoConfirmAt', {

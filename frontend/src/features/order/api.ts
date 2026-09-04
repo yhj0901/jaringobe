@@ -11,11 +11,9 @@ import type {
  * 프론트는 POST /store/cart 를 직접 호출하지 않는다 (preview 가 서버에서 build_cart).
  */
 
-/** GET /api/v1/orders/preview — 인증 필요. 연동 없어도 200. 404 MEALPLAN_NOT_FOUND */
-export function fetchOrderPreview(refresh = false): Promise<ApiResult<OrderPreviewResponse>> {
-  return apiFetch<OrderPreviewResponse>(
-    refresh ? '/api/v1/orders/preview?refresh=true' : '/api/v1/orders/preview',
-  );
+/** GET /api/v1/orders/preview — 인증 필요. 저장 초안은 변경하지 않는 순수 조회. */
+export function fetchOrderPreview(): Promise<ApiResult<OrderPreviewResponse>> {
+  return apiFetch<OrderPreviewResponse>('/api/v1/orders/preview');
 }
 
 /**
@@ -42,6 +40,13 @@ export function approveOrder(
   return apiFetch<OrderResponse>(`/api/v1/orders/${encodeURIComponent(id)}/approve`, {
     method: 'POST',
     body: JSON.stringify(body),
+  });
+}
+
+/** POST /api/v1/orders/{id}/recalculate — 열린 초안을 서버 데이터로 다시 계산한다. */
+export function recalculateOrder(id: string): Promise<ApiResult<OrderResponse>> {
+  return apiFetch<OrderResponse>(`/api/v1/orders/${encodeURIComponent(id)}/recalculate`, {
+    method: 'POST',
   });
 }
 

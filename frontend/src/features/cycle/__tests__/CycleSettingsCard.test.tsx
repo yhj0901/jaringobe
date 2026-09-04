@@ -19,6 +19,7 @@ const CYCLE: CycleState = {
   weeklyLimit: null,
   mealPlan: null,
   draftOrder: null,
+  currentOrder: null,
   simulation: true,
 };
 

@@ -1,5 +1,5 @@
 import type { Money } from '@/shared/api/types';
-import type { OrderBlockedReason } from '@/features/order/types';
+import type { CurrentOrderSummary, OrderBlockedReason } from '@/features/order/types';
 
 export type CycleFrequency = 'weekly' | 'biweekly';
 
@@ -21,6 +21,8 @@ export type CycleStage =
 export interface CycleMealPlanSummary {
   id: string;
   status: string;
+  mealCount: number;
+  completedMealCount: number;
 }
 
 export interface CycleDraftOrderSummary {
@@ -47,6 +49,7 @@ export interface CycleState {
   weeklyLimit: Money | null;
   mealPlan: CycleMealPlanSummary | null;
   draftOrder: CycleDraftOrderSummary | null;
+  currentOrder: CurrentOrderSummary | null;
   simulation: boolean;
 }
 

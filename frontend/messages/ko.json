@@ -518,11 +518,11 @@
       },
       "confirmed": {
         "title": "주문 확정",
-        "body": "주문이 확정되어 배송을 기다리고 있어요"
+        "body": "배송 대기 · {time} 도착 예정"
       },
       "delivered": {
         "title": "이번 주 진행 중",
-        "body": "식사 완료 체크로 냉장고 재고를 맞춰 주세요"
+        "body": "{completed}/{total}개 끼니 완료"
       },
       "nothingToOrder": {
         "title": "이번 주는 냉장고로 충분해요",
@@ -846,7 +846,7 @@
       },
       "failed": {
         "title": "장바구니를 준비하지 못했어요",
-        "body": "최신 식단과 냉장고 재고로 다시 계산할 수 있어요"
+        "body": "다음 주문 제안은 {date}에 확인할 수 있어요"
       }
     },
     "confirmCta": "장바구니 확정",
