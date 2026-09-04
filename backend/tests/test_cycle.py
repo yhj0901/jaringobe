@@ -14,6 +14,7 @@ from app.domains.budget.models import BudgetPlan
 from app.domains.cycle.models import UserCycleSettings
 from app.domains.cycle.policy import load_policy
 from app.domains.cycle.service import _initial_next_run, cycle_window
+from app.domains.mealplan.models import Meal, MealPlan
 from app.domains.order.models import Order
 from tests.conftest import login
 
@@ -78,7 +79,77 @@ async def test_get_cycle_lazy_defaults_without_budget(client, db, respx_mock):
     assert body["weeklyLimit"] is None
     assert body["simulation"] is True
     assert body["stage"] == "idle"
+    assert body["mealPlan"] is None
+    assert body["currentOrder"] is None
     assert await db.scalar(select(func.count()).select_from(UserCycleSettings)) == 1
+
+
+async def test_cycle_state_includes_current_order_and_meal_progress(
+    client, db, respx_mock
+):
+    me, budget = await _login_budget(client, respx_mock)
+    initial = (await client.get("/api/v1/cycle")).json()
+    cycle_start = date.fromisoformat(initial["cycleStart"])
+    plan = MealPlan(
+        user_id=UUID(me["id"]),
+        budget_plan_id=UUID(budget["id"]),
+        status="ready",
+        total_cost=Decimal("0"),
+        currency="KRW",
+        region="KR",
+        period_start=cycle_start,
+        period_end=cycle_start + timedelta(days=6),
+    )
+    db.add(plan)
+    await db.flush()
+    completed_at = utcnow()
+    db.add_all(
+        [
+            Meal(
+                meal_plan_id=plan.id,
+                plan_date=cycle_start + timedelta(days=index),
+                meal_type="breakfast",
+                recipe_name=f"meal-{index}",
+                completed_at=completed_at if index < 2 else None,
+            )
+            for index in range(3)
+        ]
+    )
+    order = await _draft(db, me["id"], cycle_start)
+    order.meal_plan_id = plan.id
+    order.status = "confirmed"
+    order.confirmed_at = completed_at
+    order.auto_confirm_at = None
+    order.auto_confirmed = True
+    order.delivery_eta = completed_at + timedelta(days=1)
+    order.inbound_at = completed_at
+    order.delivery_state = "delivered"
+    await db.commit()
+
+    response = await client.get("/api/v1/cycle")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["stage"] == "delivered"
+    assert body["mealPlan"] == {
+        "id": str(plan.id),
+        "status": "ready",
+        "mealCount": 3,
+        "completedMealCount": 2,
+    }
+    assert body["draftOrder"] is None
+    assert body["currentOrder"] == {
+        "id": str(order.id),
+        "status": "confirmed",
+        "deliveryState": "delivered",
+        "deliveryEta": (completed_at + timedelta(days=1))
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z"),
+        "inboundAt": completed_at.replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z"),
+        "autoConfirmed": True,
+    }
 
 
 async def test_onboarding_completion_creates_settings_and_last_seen(client, db, respx_mock):

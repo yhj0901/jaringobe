@@ -8,10 +8,11 @@ import { renderWithIntl } from '@/test/renderWithIntl';
 
 const routerMock = { push: vi.fn(), replace: vi.fn() };
 
-const previewMock = vi.fn<(refresh?: boolean) => Promise<ApiResult<OrderPreviewResponse>>>();
+const previewMock = vi.fn<() => Promise<ApiResult<OrderPreviewResponse>>>();
 const createMock = vi.fn<(body: { store: string }) => Promise<ApiResult<OrderResponse>>>();
 const latestMock = vi.fn<() => Promise<ApiResult<OrderResponse>>>();
 const approveMock = vi.fn<(id: string) => Promise<ApiResult<OrderResponse>>>();
+const recalculateMock = vi.fn<(id: string) => Promise<ApiResult<OrderResponse>>>();
 const cancelMock = vi.fn<(id: string) => Promise<ApiResult<OrderResponse>>>();
 const skipMock = vi.fn<() => Promise<ApiResult<unknown>>>();
 const storesMock = vi.fn<() => Promise<ApiResult<StoreConnectionsResponse>>>();
@@ -26,10 +27,11 @@ vi.mock('@/i18n/routing', async (importOriginal) => {
 });
 
 vi.mock('@/features/order/api', () => ({
-  fetchOrderPreview: (refresh?: boolean) => previewMock(refresh),
+  fetchOrderPreview: () => previewMock(),
   createOrder: (body: { store: string }) => createMock(body),
   fetchLatestOrder: () => latestMock(),
   approveOrder: (id: string) => approveMock(id),
+  recalculateOrder: (id: string) => recalculateMock(id),
   cancelOrder: (id: string) => cancelMock(id),
 }));
 
@@ -152,6 +154,7 @@ beforeEach(() => {
   previewMock.mockResolvedValue(ok(PREVIEW));
   createMock.mockResolvedValue(ok(ORDER, 201));
   approveMock.mockResolvedValue(ok(ORDER));
+  recalculateMock.mockResolvedValue(ok(DRAFT));
   cancelMock.mockResolvedValue(ok({ ...ORDER, status: 'cancelled' }));
   skipMock.mockResolvedValue(ok({}));
 });
@@ -297,6 +300,22 @@ describe('OrdersController 리뷰 (ui-design 13장)', () => {
     });
   });
 
+  it('latest 조회 실패 → 로드 에러를 표시한다', async () => {
+    latestMock.mockResolvedValue(fail(500, 'UNKNOWN'));
+    renderWithIntl(<OrdersController />);
+    await waitFor(() => {
+      expect(screen.getByText(/장보기 목록을 불러오지 못했어요/)).toBeInTheDocument();
+    });
+  });
+
+  it('preview 조회 실패여도 저장된 최신 초안은 표시한다', async () => {
+    previewMock.mockResolvedValue(fail(500, 'UNKNOWN'));
+    latestMock.mockResolvedValue(ok(DRAFT));
+    renderWithIntl(<OrdersController />);
+    await waitFor(() => expect(screen.getByText('초안')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: '승인하기' })).toBeEnabled();
+  });
+
   it('확정 429 → 에러 배너, 라인 재전송 없음', async () => {
     createMock.mockResolvedValue(fail(429, 'RATE_LIMITED'));
     renderWithIntl(<OrdersController />);
@@ -351,10 +370,36 @@ describe('OrdersController 리뷰 (ui-design 13장)', () => {
     latestMock.mockResolvedValue(
       ok({ ...DRAFT, status: 'awaiting_user', blockedReason: 'UNMATCHED_RATIO' }),
     );
+    recalculateMock.mockResolvedValue(
+      ok({
+        ...DRAFT,
+        status: 'awaiting_user',
+        blockedReason: 'UNMATCHED_RATIO',
+        items: [
+          { ...DRAFT.items[0]!, name: '시세없음', matched: false, title: null, unitPrice: null },
+          { ...DRAFT.items[0]!, name: '가격없음', title: '가격 없는 후보', unitPrice: null },
+        ],
+      }),
+    );
     renderWithIntl(<OrdersController />);
     await waitFor(() => expect(screen.getByText('못 찾은 재료가 많아요')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: '장바구니 확인' }));
-    await waitFor(() => expect(previewMock).toHaveBeenCalledWith(true));
+    await waitFor(() => expect(recalculateMock).toHaveBeenCalledWith('ord-1'));
+    expect(screen.getByText('시세없음')).toBeInTheDocument();
+    expect(screen.getByText('가격 없는 후보')).toBeInTheDocument();
+  });
+
+  it('awaiting_user 재계산 실패는 서버 에러 코드를 표시한다', async () => {
+    latestMock.mockResolvedValue(
+      ok({ ...DRAFT, status: 'awaiting_user', blockedReason: 'UNMATCHED_RATIO' }),
+    );
+    recalculateMock.mockResolvedValue(fail(429, 'RATE_LIMITED'));
+    renderWithIntl(<OrdersController />);
+    await waitFor(() => expect(screen.getByRole('button', { name: '장바구니 확인' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: '장바구니 확인' }));
+    await waitFor(() => {
+      expect(screen.getByText(/요청이 많아 잠시 쉬어가는 중/)).toBeInTheDocument();
+    });
   });
 
   it('draft 건너뛰기는 cycle skip 후 cancelled latest를 다시 그린다', async () => {
@@ -395,14 +440,12 @@ describe('OrdersController 리뷰 (ui-design 13장)', () => {
     await waitFor(() => expect(screen.getByText('이번 주문은 취소됐어요')).toBeInTheDocument());
   });
 
-  it('failed의 다시 계산은 refresh=true를 쓰고 429를 일반 재시도로 오해시키지 않는다', async () => {
+  it('failed는 되살리는 액션 없이 다음 사이클 안내만 표시한다', async () => {
     latestMock.mockResolvedValue(ok({ ...DRAFT, status: 'failed' }));
-    previewMock.mockResolvedValueOnce(ok(PREVIEW)).mockResolvedValueOnce(fail(429, 'RATE_LIMITED'));
     renderWithIntl(<OrdersController />);
-    await waitFor(() => expect(screen.getByRole('button', { name: '다시 계산하기' })).toBeEnabled());
-    fireEvent.click(screen.getByRole('button', { name: '다시 계산하기' }));
-    await waitFor(() => expect(previewMock).toHaveBeenCalledWith(true));
-    expect(screen.getByText(/요청이 많아 잠시 쉬어가는 중/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '다시 시도' })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('장바구니를 준비하지 못했어요')).toBeInTheDocument());
+    expect(screen.getByText(/다음 주문 제안/)).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(recalculateMock).not.toHaveBeenCalled();
   });
 });

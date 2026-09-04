@@ -11,6 +11,7 @@ import {
   createOrder,
   fetchLatestOrder,
   fetchOrderPreview,
+  recalculateOrder,
 } from '@/features/order/api';
 import { postCycleSkip } from '@/features/cycle/api';
 import { pickFirstConnectedStore } from '@/features/order/pickStore';
@@ -85,11 +86,11 @@ export function OrdersController() {
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const load = useCallback(async (refresh = false) => {
+  const load = useCallback(async () => {
     setStatus('loading');
     setErrorCode(null);
     const [previewRes, storesRes, latestRes] = await Promise.all([
-      fetchOrderPreview(refresh),
+      fetchOrderPreview(),
       fetchStoreConnections(),
       fetchLatestOrder(),
     ]);
@@ -126,7 +127,6 @@ export function OrdersController() {
 
     setPreview(null);
     if (nextLatest !== null) {
-      if (refresh) setErrorCode(previewRes.code);
       setStatus('ready');
       return;
     }
@@ -222,11 +222,16 @@ export function OrdersController() {
   };
 
   const handleRefresh = async () => {
-    if (busyAction !== null) return;
+    if (latest === null || busyAction !== null) return;
     setBusyAction('refresh');
     setErrorCode(null);
-    await load(true);
+    const result = await recalculateOrder(latest.id);
     setBusyAction(null);
+    if (result.ok) {
+      setLatest(result.data);
+      return;
+    }
+    setErrorCode(result.code);
   };
 
   if (status === 'loading' || status === 'unauthenticated') {
@@ -306,11 +311,10 @@ export function OrdersController() {
           />
         ) : null}
         {status === 'ready' &&
-        (currentLatest?.status === 'cancelled' || currentLatest?.status === 'expired') ? (
+        (currentLatest?.status === 'cancelled' ||
+          currentLatest?.status === 'expired' ||
+          currentLatest?.status === 'failed') ? (
           <TerminalOrderState order={currentLatest} locale={locale} />
-        ) : null}
-        {status === 'ready' && currentLatest?.status === 'failed' ? (
-          <FailedOrderState busy={busyAction !== null} onRefresh={() => void handleRefresh()} />
         ) : null}
         {status === 'ready' && currentLatest === null && preview !== null ? (
           <ReviewBody
@@ -644,7 +648,8 @@ function ConfirmedSnapshot({
 
 function TerminalOrderState({ order, locale }: { order: OrderResponse; locale: string }) {
   const t = useTranslations('orders');
-  const key = order.status === 'cancelled' ? 'cancelled' : 'expired';
+  const key =
+    order.status === 'cancelled' || order.status === 'failed' ? order.status : 'expired';
   return (
     <section className="rounded-[20px] bg-white p-5 shadow-card">
       <Badge tone="neutral">{t(`status.${key}`)}</Badge>
@@ -656,29 +661,6 @@ function TerminalOrderState({ order, locale }: { order: OrderResponse; locale: s
           date: formatLocalDateTime(order.nextSuggestedAt, locale),
         })}
       </p>
-    </section>
-  );
-}
-
-function FailedOrderState({ busy, onRefresh }: { busy: boolean; onRefresh: () => void }) {
-  const t = useTranslations('orders');
-  return (
-    <section className="rounded-[20px] bg-white p-5 shadow-card">
-      <Badge tone="neutral">{t('status.failed')}</Badge>
-      <h2 className="mt-3 text-[15px] font-extrabold text-navy-900">
-        {t('terminal.failed.title')}
-      </h2>
-      <p className="mt-2 text-[13px] leading-relaxed text-ink-500">
-        {t('terminal.failed.body')}
-      </p>
-      <button
-        type="button"
-        disabled={busy}
-        onClick={onRefresh}
-        className="mt-4 w-full rounded-[14px] bg-brand-600 px-4 py-3 text-sm font-extrabold text-white shadow-cta disabled:opacity-40"
-      >
-        {busy ? t('recalculating') : t('recalculateCta')}
-      </button>
     </section>
   );
 }

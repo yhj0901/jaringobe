@@ -21,13 +21,19 @@ from tests.test_orders import _seed_plan, _setup
 
 @pytest.fixture(autouse=True)
 def _reset_action_limiter():
-    from app.core.ratelimit import cycle_action_user_limiter, order_confirm_user_limiter
+    from app.core.ratelimit import (
+        cycle_action_user_limiter,
+        order_confirm_user_limiter,
+        order_preview_user_limiter,
+    )
 
     cycle_action_user_limiter.reset()
     order_confirm_user_limiter.reset()
+    order_preview_user_limiter.reset()
     yield
     cycle_action_user_limiter.reset()
     order_confirm_user_limiter.reset()
+    order_preview_user_limiter.reset()
 
 
 async def _confirmed_order(client, db, respx_mock) -> tuple[dict, dict]:
@@ -183,7 +189,7 @@ async def test_due_inbound_scheduler_retries_without_inventory_inflation(
     assert await db.scalar(select(func.count()).select_from(FridgeItem)) == 2
 
 
-async def test_approve_recalculates_server_lines_and_defers_inbound(
+async def test_preview_is_pure_and_recalculate_refreshes_before_approve(
     client, db, respx_mock
 ):
     me, budget_id = await _setup(client, respx_mock)
@@ -213,6 +219,7 @@ async def test_approve_recalculates_server_lines_and_defers_inbound(
         auto_confirm_at=now + timedelta(hours=24),
         auto_confirmed=False,
         delivery_state="pending",
+        blocked_reason="BUDGET_EXCEEDED",
     )
     draft.items = [
         OrderItem(
@@ -232,10 +239,42 @@ async def test_approve_recalculates_server_lines_and_defers_inbound(
     assert cached.json()["status"] == "draft"
     assert cached.json()["needed"][0]["name"] == "클라이언트 위조품"
 
-    refreshed = await client.get("/api/v1/orders/preview?refresh=true")
-    assert refreshed.status_code == 200, refreshed.text
-    assert refreshed.json()["orderId"] == str(draft.id)
-    assert refreshed.json()["needed"][0]["name"] == "계란"
+    query_ignored = await client.get("/api/v1/orders/preview?refresh=true")
+    assert query_ignored.status_code == 200, query_ignored.text
+    assert query_ignored.json()["orderId"] == str(draft.id)
+    assert query_ignored.json()["needed"][0]["name"] == "클라이언트 위조품"
+    unchanged = await db.scalar(
+        select(OrderItem.name).where(OrderItem.order_id == draft.id)
+    )
+    assert unchanged == "클라이언트 위조품"
+
+    recalculated = await client.post(f"/api/v1/orders/{draft.id}/recalculate")
+    assert recalculated.status_code == 200, recalculated.text
+    assert recalculated.json()["id"] == str(draft.id)
+    assert recalculated.json()["status"] == "draft"
+    assert recalculated.json()["blockedReason"] is None
+    assert recalculated.json()["items"][0]["name"] == "계란"
+
+    draft.status = "awaiting_user"
+    draft.blocked_reason = "UNMATCHED_RATIO"
+    draft.auto_confirm_at = None
+    await db.commit()
+    awaiting = await client.post(f"/api/v1/orders/{draft.id}/recalculate")
+    assert awaiting.status_code == 200, awaiting.text
+    assert awaiting.json()["status"] == "awaiting_user"
+    assert awaiting.json()["blockedReason"] == "UNMATCHED_RATIO"
+    assert awaiting.json()["autoConfirmAt"] is None
+
+    assert (
+        await client.post(f"/api/v1/orders/{draft.id}/recalculate")
+    ).status_code == 200
+    limited = await client.post(f"/api/v1/orders/{draft.id}/recalculate")
+    assert limited.status_code == 429
+    assert limited.json()["detail"]["code"] == "RATE_LIMITED"
+
+    from app.core.ratelimit import order_preview_user_limiter
+
+    order_preview_user_limiter.reset()
 
     approved = await client.post(
         f"/api/v1/orders/{draft.id}/approve", json={"excludeNames": []}
@@ -252,6 +291,12 @@ async def test_approve_recalculates_server_lines_and_defers_inbound(
         f"/api/v1/orders/{draft.id}/approve", json={"items": []}
     )
     assert invalid.status_code == 422
+
+    invalid_recalculate = await client.post(
+        f"/api/v1/orders/{draft.id}/recalculate"
+    )
+    assert invalid_recalculate.status_code == 409
+    assert invalid_recalculate.json()["detail"]["code"] == "ORDER_INVALID_STATE"
 
 
 async def test_approve_excluded_items_recalculates_estimated_total(

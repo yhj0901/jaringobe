@@ -102,6 +102,11 @@ export interface OrderResponse {
   blockedReason: OrderBlockedReason | null;
 }
 
+export type CurrentOrderSummary = Pick<
+  OrderResponse,
+  'id' | 'status' | 'deliveryState' | 'deliveryEta' | 'inboundAt' | 'autoConfirmed'
+>;
+
 export interface OrderApproveRequest {
   excludeNames?: string[];
 }
