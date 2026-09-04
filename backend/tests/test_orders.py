@@ -178,6 +178,10 @@ async def test_preview_splits_needed_covered_trim_case(client, db, respx_mock):
     assert body["estimatedTotal"]["amount"] == "0.00"
     assert body["estimatedTotal"]["currency"] == "KRW"
     assert all(item["matched"] is False for item in body["cart"]["items"])
+    assert body["notes"] == ["PRICE_LOOKUP_UNAVAILABLE"]
+    assert body["cart"]["notes"] == ["PRICE_LOOKUP_UNAVAILABLE"]
+    assert "NAVER_CLIENT" not in str(body)
+    assert ".env" not in str(body)
 
 
 async def test_preview_excludes_completed_meals(client, db, respx_mock):

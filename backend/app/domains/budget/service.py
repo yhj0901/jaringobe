@@ -2,9 +2,8 @@
 
 import calendar
 from collections.abc import Iterable
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -73,10 +72,6 @@ async def cycle_limit(
             for offset in range((accrual_end - month_start).days)
         ),
     )
-    tz = ZoneInfo(timezone_name)
-    start_utc = datetime.combine(month_start, time.min, tzinfo=tz).astimezone(UTC)
-    end_utc = datetime.combine(accrual_end, time.min, tzinfo=tz).astimezone(UTC)
-
     # 순환 import를 막기 위해 주문 모델은 함수 실행 시점에만 로드한다.
     from app.domains.order.models import Order
 
@@ -84,8 +79,8 @@ async def cycle_limit(
         select(func.coalesce(func.sum(Order.estimated_total), Decimal("0"))).where(
             Order.user_id == user.id,
             Order.status == "confirmed",
-            Order.confirmed_at >= start_utc,
-            Order.confirmed_at < end_utc,
+            Order.cycle_start >= month_start,
+            Order.cycle_start < accrual_end,
         )
     )
     return max(Decimal("0"), share - Decimal(committed or 0)).quantize(

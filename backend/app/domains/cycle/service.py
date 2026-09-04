@@ -424,8 +424,23 @@ async def update_settings(
         settings.frequency, settings.anchor_weekday, settings.timezone, now
     )
     if should_recompute:
+        current_order_status = await db.scalar(
+            select(Order.status)
+            .where(
+                Order.user_id == user.id,
+                Order.cycle_start == window.cycle_start,
+            )
+            .order_by(Order.created_at.desc())
+            .limit(1)
+        )
+        cycle_already_drafted = settings.last_stage == "drafted" or (
+            current_order_status
+            in ("draft", "awaiting_user", "confirmed", "cancelled", "expired")
+        )
         settings.next_run_at = (
-            draft_at(window.cycle_start, settings, policy)
+            _next_generation_at(window.cycle_start, settings, policy)
+            if cycle_already_drafted
+            else draft_at(window.cycle_start, settings, policy)
             if settings.last_generated_cycle_start == window.cycle_start
             else _initial_next_run(
                 settings.user_id,
@@ -673,6 +688,8 @@ async def _process_draft_stage(
     policy: CyclePolicy,
     now: datetime,
 ) -> None:
+    setting_id = settings.id
+    user_id = user.id
     try:
         order = await order_service.create_draft(
             db,
@@ -688,7 +705,7 @@ async def _process_draft_stage(
         settings = (
             await db.execute(
                 select(UserCycleSettings)
-                .where(UserCycleSettings.id == settings.id)
+                .where(UserCycleSettings.id == setting_id)
                 .with_for_update()
             )
         ).scalar_one()
@@ -701,7 +718,7 @@ async def _process_draft_stage(
         settings.last_stage = "generate_failed"
         settings.next_run_at = _next_generation_at(window.cycle_start, settings, policy)
         _log_transition(
-            user.id, "generate_failed", "draft_fallback_failed", window.cycle_start
+            user_id, "generate_failed", "draft_fallback_failed", window.cycle_start
         )
         await db.commit()
         return

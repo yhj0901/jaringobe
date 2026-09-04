@@ -8,7 +8,7 @@ import uuid
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import ConfigDict, Field, field_serializer, field_validator
+from pydantic import ConfigDict, Field, StrictBool, field_serializer, field_validator
 from pydantic.alias_generators import to_camel
 
 from app.core.schema import CamelModel, serialize_utc
@@ -125,4 +125,4 @@ class DeliveryUpdateRequest(CamelModel):
         extra="forbid",
     )
 
-    received: bool
+    received: StrictBool

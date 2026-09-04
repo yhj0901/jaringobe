@@ -272,6 +272,32 @@ async def test_skip_rejects_confirmed_cycle(client, db, respx_mock):
     assert response.json()["detail"]["code"] == "CYCLE_ALREADY_CONFIRMED"
 
 
+async def test_timezone_change_after_confirmation_schedules_next_cycle(
+    client, db, respx_mock
+):
+    me, _budget = await _login_budget(client, respx_mock)
+    state = (await client.get("/api/v1/cycle")).json()
+    order = await _draft(db, me["id"], date.fromisoformat(state["cycleStart"]))
+    order.status = "confirmed"
+    order.confirmed_at = utcnow()
+    order.auto_confirm_at = None
+    settings = (await db.scalars(select(UserCycleSettings))).one()
+    settings.last_stage = "generated"
+    settings.last_generated_cycle_start = order.cycle_start
+    await db.commit()
+
+    response = await client.put(
+        "/api/v1/cycle/settings", json={"timezone": "Asia/Tokyo"}
+    )
+
+    assert response.status_code == 200, response.text
+    await db.refresh(settings)
+    assert settings.next_run_at is not None
+    assert settings.next_run_at > utcnow()
+    assert response.json()["stage"] == "confirmed"
+    assert await db.scalar(select(func.count()).select_from(Order)) == 1
+
+
 def test_biweekly_window_uses_three_and_four_day_intervals():
     sunday = datetime(2026, 8, 30, 0, tzinfo=UTC)
     first = cycle_window("biweekly", 0, "UTC", sunday)
@@ -366,6 +392,51 @@ async def test_cycle_limit_accumulates_month_share_across_three_cycles(db):
     assert await budget_service.cycle_limit(db, user, third, 7, timezone_name="UTC") == Decimal(
         "70000.00"
     )
+
+
+async def test_cycle_limit_attributes_early_confirmation_to_order_cycle_month(db):
+    user = User(nickname="월 경계 사용자", country="KR", currency="KRW")
+    db.add(user)
+    await db.flush()
+    db.add(
+        BudgetPlan(
+            user_id=user.id,
+            household_size=2,
+            amount=Decimal("400000"),
+            currency="KRW",
+            meal_direction="health",
+            source="onboarding",
+            locked=True,
+        )
+    )
+    db.add(
+        Order(
+            user_id=user.id,
+            meal_plan_id=None,
+            store="kurly",
+            status="confirmed",
+            frequency="weekly",
+            cycle_start=date(2026, 10, 1),
+            next_suggested_at=datetime(2026, 10, 7, tzinfo=UTC),
+            estimated_total=Decimal("80500"),
+            currency="KRW",
+            simulation=True,
+            confirmed_at=datetime(2026, 9, 30, tzinfo=UTC),
+            auto_confirmed=True,
+            delivery_state="pending",
+        )
+    )
+    await db.flush()
+
+    limit = await budget_service.cycle_limit(
+        db,
+        user,
+        date(2026, 10, 8),
+        7,
+        timezone_name="Asia/Seoul",
+    )
+
+    assert limit == Decimal("100145.16")
 
 
 def test_policy_parse_failures_fall_back_without_stopping(monkeypatch, caplog):
