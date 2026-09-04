@@ -755,6 +755,7 @@ async def auto_confirm_order(
     local_hour: int,
 ) -> OrderResponse | None:
     """그레이스 자동확정 게이트. IntegrityError는 정상 idempotent skip."""
+    order_id = order.id
     if order.status != "draft" or order.auto_confirm_at is None:
         return None
     if await _existing_confirmed(
@@ -837,7 +838,7 @@ async def auto_confirm_order(
     except ApiError as exc:
         if exc.code == "ORDER_ALREADY_CONFIRMED":
             await db.rollback()
-            duplicate = await db.get(Order, order.id)
+            duplicate = await db.get(Order, order_id)
             if duplicate is not None and duplicate.status == "draft":
                 transition_order(duplicate, "expired")
                 duplicate.auto_confirm_at = None
