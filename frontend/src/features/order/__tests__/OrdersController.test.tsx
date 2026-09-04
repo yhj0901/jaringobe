@@ -239,6 +239,29 @@ describe('OrdersController 리뷰 (ui-design 13장)', () => {
     expect(screen.getByRole('button', { name: '주문 취소' })).toBeEnabled();
   });
 
+  it.each(['cancelled', 'expired'] as const)(
+    '이전 사이클의 %s 주문은 현재 preview 리뷰를 막지 않는다',
+    async (status) => {
+      latestMock.mockResolvedValue(
+        ok({
+          ...ORDER,
+          status,
+          cycleStart: '2026-08-10',
+          confirmedAt: status === 'expired' ? null : ORDER.confirmedAt,
+        }),
+      );
+      renderWithIntl(<OrdersController />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '장바구니 확정' })).toBeEnabled();
+      });
+      expect(screen.queryByText('이번 주문은 취소됐어요')).not.toBeInTheDocument();
+      expect(screen.queryByText('승인 시간이 지났어요')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: '장바구니 확정' }));
+      await waitFor(() => expect(createMock).toHaveBeenCalledWith({ store: 'kurly' }));
+    },
+  );
+
   it('en: simulation copy is not a real charge', async () => {
     previewMock.mockResolvedValue(ok(EMPTY_NEEDED));
     renderWithIntl(<OrdersController />, 'en');

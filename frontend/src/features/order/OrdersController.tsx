@@ -145,6 +145,13 @@ export function OrdersController() {
     if (preview === null) return pickFirstConnectedStore('KR', connections);
     return pickFirstConnectedStore(preview.country, connections);
   }, [preview, connections]);
+  const currentLatest = useMemo(
+    () =>
+      latest !== null && (preview === null || latest.cycleStart === preview.cycleStart)
+        ? latest
+        : null,
+    [latest, preview],
+  );
 
   const errorMessage = (code: string): string => {
     if ((ORDER_ERROR_CODES as readonly string[]).includes(code)) return t(`error.${code}`);
@@ -270,18 +277,18 @@ export function OrdersController() {
           </p>
         ) : null}
 
-        {status === 'ready' && latest?.status === 'draft' ? (
+        {status === 'ready' && currentLatest?.status === 'draft' ? (
           <DraftOrderBody
-            order={latest}
+            order={currentLatest}
             locale={locale}
             busy={busyAction !== null}
             onApprove={() => void handleApprove()}
             onSkip={() => void handleSkip()}
           />
         ) : null}
-        {status === 'ready' && latest?.status === 'awaiting_user' ? (
+        {status === 'ready' && currentLatest?.status === 'awaiting_user' ? (
           <DraftOrderBody
-            order={latest}
+            order={currentLatest}
             locale={locale}
             busy={busyAction !== null}
             onApprove={() => void handleApprove()}
@@ -290,22 +297,22 @@ export function OrdersController() {
             onSettings={() => router.push('/settings')}
           />
         ) : null}
-        {status === 'ready' && latest?.status === 'confirmed' ? (
+        {status === 'ready' && currentLatest?.status === 'confirmed' ? (
           <ConfirmedSnapshot
-            order={latest}
+            order={currentLatest}
             locale={locale}
             busy={busyAction !== null}
             onCancel={() => void handleCancel()}
           />
         ) : null}
         {status === 'ready' &&
-        (latest?.status === 'cancelled' || latest?.status === 'expired') ? (
-          <TerminalOrderState order={latest} locale={locale} />
+        (currentLatest?.status === 'cancelled' || currentLatest?.status === 'expired') ? (
+          <TerminalOrderState order={currentLatest} locale={locale} />
         ) : null}
-        {status === 'ready' && latest?.status === 'failed' ? (
+        {status === 'ready' && currentLatest?.status === 'failed' ? (
           <FailedOrderState busy={busyAction !== null} onRefresh={() => void handleRefresh()} />
         ) : null}
-        {status === 'ready' && latest === null && preview !== null ? (
+        {status === 'ready' && currentLatest === null && preview !== null ? (
           <ReviewBody
             preview={preview}
             locale={locale}
