@@ -79,7 +79,6 @@ async def test_delivery_false_rolls_back_and_unknown_then_true_recovers(
         f"/api/v1/orders/{order_id}/delivery", json={"received": True}
     )
     assert arrived.status_code == 200
-    first_eta = arrived.json()["deliveryEta"]
     assert await db.scalar(select(func.count()).select_from(FridgeItem)) == 2
 
     not_arrived = await client.post(
@@ -90,7 +89,7 @@ async def test_delivery_false_rolls_back_and_unknown_then_true_recovers(
     assert body["inboundAt"] is None
     assert body["deliveryState"] == "pending"
     assert body["deliveryConfirmAttempts"] == 1
-    assert body["deliveryEta"] > first_eta
+    assert datetime.fromisoformat(body["deliveryEta"].replace("Z", "+00:00")) > utcnow()
     assert await db.scalar(select(func.count()).select_from(FridgeItem)) == 0
 
     for expected in (2, 3):
