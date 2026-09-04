@@ -32,8 +32,11 @@ def code(r):
         return None
 
 
+QA_DB = os.environ.get("QA_DB", "jaringobe_qa")  # 재판정(2026-09-05): 하드코딩 DB 명 → 환경변수. 다른 DB 를 쓰면 H-13/H-41 이 빈 결과로 오판됐다
+
+
 def psql(sql):
-    return subprocess.run(["docker", "exec", "jaringobe-db", "psql", "-U", "jaringobe", "-d", "jaringobe_qa", "-Atc", sql],
+    return subprocess.run(["docker", "exec", "jaringobe-db", "psql", "-U", "jaringobe", "-d", QA_DB, "-Atc", sql],
                           capture_output=True, text=True).stdout.strip()
 
 

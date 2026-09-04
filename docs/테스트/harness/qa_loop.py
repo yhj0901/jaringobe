@@ -1094,7 +1094,11 @@ async def s8_state_machine_and_edges():
         st = await cycle_service.build_cycle_state(db, u, s, now=Clock.now)
         check("S8-03 [결함 탐지] 확정 주문이 있는 사이클에 D-2 스케줄러가 새 초안을 만들지 않는가",
               statuses == ["confirmed"], f"orders={statuses} stage={st.stage}")
-        check("S8-04 [결함 탐지] 확정된 사이클의 GET /cycle stage 가 confirmed 인가(drafted 로 덮이지 않는가)", st.stage == "confirmed", st.stage)
+        # 재판정(2026-09-05) 기대값 수정: 수동 확정 9/9 → eta 9/10 00:00Z 이므로 D-2 tick(9/11) 의 스캔 ③이 정상 inbound 를 수행해
+        # stage 는 delivered 가 맞다. 결함은 'drafted 로 덮임' 이며 confirmed 고정 기대는 하네스 오류였다. (순수 재현은 qa_rejudge.py R-05)
+        expected_stage = "delivered" if orders and orders[0].inbound_at is not None else "confirmed"
+        check("S8-04 [결함 탐지] 확정된 사이클의 GET /cycle stage 가 confirmed/delivered 인가(drafted 로 덮이지 않는가)",
+              st.stage == expected_stage and st.stage != "drafted", f"stage={st.stage} expected={expected_stage}")
         if len(orders) > 1:
             draft = next(o for o in orders if o.status == "draft")
             Clock.set(datetime(2026, 9, 12, 0, 10, tzinfo=UTC))
