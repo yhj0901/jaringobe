@@ -128,6 +128,17 @@ async def test_delivery_false_reschedules_from_response_time(
     assert response.json()["deliveryEta"] == "2026-09-02T12:00:00Z"
 
 
+async def test_delivery_received_rejects_coerced_string(client, db, respx_mock):
+    _me, created = await _confirmed_order(client, db, respx_mock)
+
+    response = await client.post(
+        f"/api/v1/orders/{created['id']}/delivery", json={"received": "yes"}
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "VALIDATION_ERROR"
+
+
 async def test_cancel_removes_remaining_delivery_rows_but_keeps_audit_time(
     client, db, respx_mock
 ):
