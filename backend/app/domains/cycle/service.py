@@ -673,6 +673,8 @@ async def _process_draft_stage(
     policy: CyclePolicy,
     now: datetime,
 ) -> None:
+    setting_id = settings.id
+    user_id = user.id
     try:
         order = await order_service.create_draft(
             db,
@@ -688,7 +690,7 @@ async def _process_draft_stage(
         settings = (
             await db.execute(
                 select(UserCycleSettings)
-                .where(UserCycleSettings.id == settings.id)
+                .where(UserCycleSettings.id == setting_id)
                 .with_for_update()
             )
         ).scalar_one()
@@ -701,7 +703,7 @@ async def _process_draft_stage(
         settings.last_stage = "generate_failed"
         settings.next_run_at = _next_generation_at(window.cycle_start, settings, policy)
         _log_transition(
-            user.id, "generate_failed", "draft_fallback_failed", window.cycle_start
+            user_id, "generate_failed", "draft_fallback_failed", window.cycle_start
         )
         await db.commit()
         return

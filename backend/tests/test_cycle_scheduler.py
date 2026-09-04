@@ -288,6 +288,33 @@ async def test_generated_plan_becomes_saved_draft(db):
     assert setting.last_stage == "drafted"
 
 
+async def test_draft_failure_after_query_persists_backoff(db, monkeypatch):
+    user, _budget, setting = await _active_cycle(db)
+    setting.last_stage = "generated"
+    setting.last_generated_cycle_start = CYCLE_START
+    setting.next_run_at = NOW
+    await db.commit()
+
+    async def fail_preview(*_args, **_kwargs):
+        raise RuntimeError("price lookup failed")
+
+    monkeypatch.setattr(cycle_service.order_service, "_build_preview", fail_preview)
+    result = await cycle_service.process_due_setting(
+        db,
+        user,
+        setting,
+        policy=_policy(),
+        now=NOW,
+        generation_allowed=True,
+    )
+
+    assert result is None
+    await db.refresh(setting)
+    assert setting.stage_attempts == 1
+    assert setting.last_stage == "generated"
+    assert setting.next_run_at == NOW + timedelta(minutes=1)
+
+
 async def test_fourth_draft_failure_persists_terminal_stage(db, monkeypatch):
     user, _budget, setting = await _active_cycle(db)
     setting.last_stage = "generated"
@@ -296,10 +323,10 @@ async def test_fourth_draft_failure_persists_terminal_stage(db, monkeypatch):
     setting.next_run_at = NOW
     await db.commit()
 
-    async def fail_draft(*_args, **_kwargs):
+    async def fail_preview(*_args, **_kwargs):
         raise RuntimeError("fallback draft failed")
 
-    monkeypatch.setattr(cycle_service.order_service, "create_draft", fail_draft)
+    monkeypatch.setattr(cycle_service.order_service, "_build_preview", fail_preview)
     result = await cycle_service.process_due_setting(
         db,
         user,
