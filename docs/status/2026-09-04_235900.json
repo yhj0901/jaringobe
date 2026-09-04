@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-09-04T23:59:00+09:00",
+  "session_topic": "QA — 주간 자동 사이클(루프 완결) GATE 4 판정",
+  "command": "/QA시작 루프완결-주간사이클 (Orca 디스패치 task_5911d9409143)",
+  "agent": "agents/qa.md",
+  "status": "루프 1바퀴 실증 완료(시간 이동 하네스 91 PASS) · 결함 High 2건 발견 → GATE 4 불통과 · 문서 4종 갱신 중",
+  "tasks": [
+    {"id": 1, "subject": "기준 문서·코드 정독 (기획/설계 v1.8~1.9/테스트 관례)", "status": "completed"},
+    {"id": 2, "subject": "QA 전용 DB(jaringobe_qa, jaringobe_qa_unit) 생성 + 0011/0012 백필 검증", "status": "completed"},
+    {"id": 3, "subject": "기존 자동 테스트 기준선 (백엔드 369/93%, 프론트 509/94.61%, tsc)", "status": "completed"},
+    {"id": 4, "subject": "루프 시나리오 하네스(가상 시계) — 설정→생성→초안→자동확정→등록→차감→되먹임→감산→4주 한도", "status": "completed"},
+    {"id": 5, "subject": "HTTP 보안·계약 테스트(:8011) — 인증/IDOR/Origin/GET 부작용/리미터/상태 머신", "status": "completed"},
+    {"id": 6, "subject": "실 스케줄러 루프(lifespan, 5초 주기) 실시간 처리 확인", "status": "completed"},
+    {"id": 7, "subject": "docs/테스트 4문서 갱신 + 커밋(푸시 금지)", "status": "in_progress"}
+  ],
+  "artifacts": [
+    "docs/테스트/테스트계획.md", "docs/테스트/시나리오테스트.md", "docs/테스트/보안테스트.md", "docs/테스트/버그리포트.md"
+  ],
+  "key_findings": {
+    "loop": "루프는 mock LLM·시세 대역 기준으로 한 바퀴 돈다. 끊기는 지점 없음. 단 D-2 초안 실패 시 백오프·폴백 경로가 MissingGreenlet 로 죽어 있고, 자동확정 예산 게이트가 초안 금액 기준이라 재계산 후 한도를 넘겨 확정될 수 있다.",
+    "high": ["BUG-001 자동확정 예산 락 게이트 초안 금액 기준 → 재계산 초과 확정", "BUG-002 초안 생성 실패 핸들러 MissingGreenlet → 백오프/폴백 미동작, 60초마다 네이버 재호출"],
+    "medium": ["BUG-003 확정 사이클에 스케줄러 초안 재생성(수동 선확정·타임존 변경)", "BUG-004 월 경계 confirmed_at 귀속으로 다음 달 한도 과대"],
+    "blocked": ["실 소셜 로그인 왕복", "실 LLM 되먹임 반영(프롬프트 전달까지만 검증)", "실 네이버 시세", "Expo 실발송", "스테이징 E2E"]
+  },
+  "recommended_actions": "High 2건 [API] 수정 후 회귀(S3-07·S6-01~04 재실행) → GATE 4 재판정. 설계 3-9-5 게이트 순서(재계산 후 한도 검증) 정정.",
+  "pending_user_input": "없음 — 코디네이터 판정 대기"
+}
