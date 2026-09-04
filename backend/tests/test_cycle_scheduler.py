@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from app.core.errors import ApiError
 from app.domains.auth.models import User
 from app.domains.budget.models import BudgetPlan
+from app.domains.budget.schemas import MoneyOut
 from app.domains.cycle import service as cycle_service
 from app.domains.cycle.models import UserCycleSettings
 from app.domains.cycle.policy import load_policy
@@ -17,7 +18,9 @@ from app.domains.cycle import scheduler as cycle_scheduler
 from app.domains.cycle.scheduler import process_due_auto_confirms
 from app.domains.mealplan.models import Meal, MealIngredient, MealPlan
 from app.domains.order.models import Order, OrderItem
+from app.domains.order.schemas import OrderPreviewResponse, ShortfallPreviewLine
 from app.domains.store.connection_models import StoreConnection
+from app.domains.store.schemas import CartProduct, StoreCartResponse
 
 NOW = datetime(2026, 8, 25, 0, 0, tzinfo=UTC)
 CYCLE_START = date(2026, 8, 30)
@@ -365,6 +368,102 @@ async def test_auto_confirm_due_us_order_moves_to_awaiting_user(db):
     assert order.blocked_reason == "US_NO_PRICE"
     assert order.auto_confirm_at is None
     assert order.reminded_at == NOW
+
+
+async def test_auto_confirm_rechecks_budget_with_recalculated_total(db, monkeypatch):
+    """초안은 한도 이하였지만 확정 재계산가가 오른 경우 예산 락으로 차단한다."""
+    user, budget, setting = await _active_cycle(db)
+    budget.locked = True
+    current = MealPlan(
+        user_id=user.id,
+        budget_plan_id=budget.id,
+        status="ready",
+        total_cost=Decimal("0"),
+        currency="KRW",
+        region="KR",
+        period_start=CYCLE_START,
+        period_end=CYCLE_START + timedelta(days=6),
+    )
+    db.add_all(
+        [
+            current,
+            StoreConnection(
+                user_id=user.id,
+                store="kurly",
+                status="connected",
+                connected_at=NOW,
+            ),
+        ]
+    )
+    await db.flush()
+    order = Order(
+        user_id=user.id,
+        meal_plan_id=current.id,
+        store="kurly",
+        status="draft",
+        frequency="weekly",
+        cycle_start=CYCLE_START,
+        next_suggested_at=NOW + timedelta(days=7),
+        estimated_total=Decimal("10000"),
+        currency="KRW",
+        simulation=True,
+        confirmed_at=None,
+        auto_confirm_at=NOW - timedelta(minutes=1),
+        auto_confirmed=False,
+        delivery_state="pending",
+    )
+    order.items = [
+        OrderItem(
+            name="계란",
+            quantity=Decimal("4"),
+            unit="ea",
+            line_type="needed",
+            matched=True,
+            unit_price=Decimal("10000"),
+            currency="KRW",
+        )
+    ]
+    db.add(order)
+    setting.next_run_at = NOW + timedelta(days=1)
+    await db.commit()
+
+    recalculated = OrderPreviewResponse(
+        meal_plan_id=current.id,
+        store_connected=True,
+        country="KR",
+        needed=[
+            ShortfallPreviewLine(
+                name="계란", unit="ea", needed="4", from_fridge="0", to_buy="4"
+            )
+        ],
+        covered=[],
+        cart=StoreCartResponse(
+            items=[
+                CartProduct(
+                    ingredient="계란",
+                    matched=True,
+                    price=MoneyOut(amount=Decimal("400000"), currency="KRW"),
+                )
+            ],
+            total=MoneyOut(amount=Decimal("400000"), currency="KRW"),
+            matched_count=1,
+        ),
+        estimated_total=MoneyOut(amount=Decimal("400000"), currency="KRW"),
+        cycle_start=CYCLE_START,
+    )
+
+    async def increased_price(*_args, **_kwargs):
+        return recalculated
+
+    monkeypatch.setattr(cycle_service.order_service, "_build_preview", increased_price)
+    assert await process_due_auto_confirms(NOW, _policy()) == 1
+    await db.refresh(order)
+    assert order.status == "awaiting_user"
+    assert order.blocked_reason == "BUDGET_EXCEEDED"
+    assert order.estimated_total == Decimal("400000")
+    assert order.confirmed_at is None
+    assert order.delivery_eta is None
+    assert order.auto_confirmed is False
 
 
 async def test_auto_confirm_due_passes_all_gates(db):

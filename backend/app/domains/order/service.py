@@ -519,6 +519,17 @@ def compute_delivery_eta(
     return max(candidate, confirmed_at.astimezone(UTC) + timedelta(hours=1))
 
 
+def _snapshot_total(lines: list[OrderItem]) -> Decimal:
+    return sum(
+        (
+            line.unit_price
+            for line in lines
+            if line.line_type == "needed" and line.unit_price is not None
+        ),
+        _Z,
+    )
+
+
 async def _existing_confirmed(
     db: AsyncSession,
     user_id: uuid.UUID,
@@ -553,6 +564,7 @@ async def _confirm_existing(
     lead_days: int,
     local_hour: int,
     exclude_names: list[str] | None = None,
+    preview: OrderPreviewResponse | None = None,
 ) -> OrderResponse:
     if order.status not in ("draft", "awaiting_user") or order.inbound_at is not None:
         raise ApiError(409, "ORDER_INVALID_STATE", "order cannot be confirmed")
@@ -563,26 +575,20 @@ async def _confirm_existing(
             409, "ORDER_ALREADY_CONFIRMED", "cycle already has a confirmed order"
         )
     await _require_connected(db, user, order.store)
-    preview = await _build_preview(
-        db,
-        user,
-        order.cycle_start,
-        plan_period_start=order.cycle_start,
-    )
+    if preview is None:
+        preview = await _build_preview(
+            db,
+            user,
+            order.cycle_start,
+            plan_period_start=order.cycle_start,
+        )
     lines = _snapshot_lines(preview, exclude_names)
     if not any(line.line_type == "needed" for line in lines):
         raise ApiError(422, "NOTHING_TO_ORDER", "No items to buy after fridge shortfall")
     now = utcnow()
     transition_order(order, "confirmed")
     order.meal_plan_id = preview.meal_plan_id
-    order.estimated_total = sum(
-        (
-            line.unit_price
-            for line in lines
-            if line.line_type == "needed" and line.unit_price is not None
-        ),
-        _Z,
-    )
+    order.estimated_total = _snapshot_total(lines)
     order.currency = preview.estimated_total.currency
     order.items = lines
     order.confirmed_at = now
@@ -764,8 +770,19 @@ async def auto_confirm_order(
         blocked_reason = "US_NO_PRICE"
     elif not await _store_connected(db, user, order.store):
         blocked_reason = "STORE_DISCONNECTED"
-    else:
-        needed = [line for line in order.items if line.line_type == "needed"]
+    preview: OrderPreviewResponse | None = None
+    recalculated_lines: list[OrderItem] | None = None
+    recalculated_total: Decimal | None = None
+    if blocked_reason is None:
+        preview = await _build_preview(
+            db,
+            user,
+            order.cycle_start,
+            plan_period_start=order.cycle_start,
+        )
+        recalculated_lines = _snapshot_lines(preview)
+        recalculated_total = _snapshot_total(recalculated_lines)
+        needed = [line for line in recalculated_lines if line.line_type == "needed"]
         unmatched = sum(1 for line in needed if not line.matched)
         ratio = Decimal(unmatched) / Decimal(len(needed)) if needed else Decimal("1")
         if ratio > unmatched_threshold:
@@ -780,14 +797,24 @@ async def auto_confirm_order(
             cycle_days,
             timezone_name=timezone_name,
         )
-        if budget.locked and order.estimated_total > limit:
+        if (
+            budget.locked
+            and recalculated_total is not None
+            and recalculated_total > limit
+        ):
             blocked_reason = "BUDGET_EXCEEDED"
     if blocked_reason is None:
-        plan = await db.get(MealPlan, order.meal_plan_id) if order.meal_plan_id else None
+        plan_id = preview.meal_plan_id if preview is not None else order.meal_plan_id
+        plan = await db.get(MealPlan, plan_id) if plan_id else None
         if plan is not None and plan.status == "over_budget":
             blocked_reason = "MEALPLAN_OVER_BUDGET"
 
     if blocked_reason is not None:
+        if preview is not None and recalculated_lines is not None:
+            order.meal_plan_id = preview.meal_plan_id
+            order.estimated_total = recalculated_total or _Z
+            order.currency = preview.estimated_total.currency
+            order.items = recalculated_lines
         transition_order(order, "awaiting_user")
         order.blocked_reason = blocked_reason
         order.auto_confirm_at = None
@@ -803,6 +830,7 @@ async def auto_confirm_order(
             timezone_name=timezone_name,
             lead_days=lead_days,
             local_hour=local_hour,
+            preview=preview,
         )
     except ApiError as exc:
         if exc.code == "ORDER_ALREADY_CONFIRMED":
