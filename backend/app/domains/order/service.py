@@ -589,7 +589,14 @@ async def _confirm_existing(
     now = utcnow()
     transition_order(order, "confirmed")
     order.meal_plan_id = preview.meal_plan_id
-    order.estimated_total = preview.estimated_total.amount
+    order.estimated_total = sum(
+        (
+            line.unit_price
+            for line in lines
+            if line.line_type == "needed" and line.unit_price is not None
+        ),
+        _Z,
+    )
     order.currency = preview.estimated_total.currency
     order.items = lines
     order.confirmed_at = now
