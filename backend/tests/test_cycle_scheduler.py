@@ -7,6 +7,7 @@ from decimal import Decimal
 
 from sqlalchemy import func, select
 
+from app.core.errors import ApiError
 from app.domains.auth.models import User
 from app.domains.budget.models import BudgetPlan
 from app.domains.cycle import service as cycle_service
@@ -121,6 +122,27 @@ async def test_due_settings_scan_locks_and_accepts_generation(db, monkeypatch):
     await asyncio.sleep(0)
     assert (processed, generated) == (1, 1)
     assert len(scheduled) == 1
+
+
+async def test_scheduler_quietly_waits_when_mealplan_is_generating(
+    db, monkeypatch, caplog
+):
+    _user, _budget, setting = await _active_cycle(db)
+
+    async def already_generating(*_args, **_kwargs):
+        raise ApiError(409, "MEALPLAN_GENERATING", "already in progress")
+
+    monkeypatch.setattr(
+        cycle_service.mealplan_service,
+        "start_meal_plan_generation",
+        already_generating,
+    )
+    assert await cycle_scheduler.process_due_settings(NOW, _policy()) == (1, 0)
+    await db.refresh(setting)
+    assert setting.last_generated_cycle_start is None
+    assert setting.last_stage is None
+    assert setting.next_run_at == NOW
+    assert "사이클 사용자 단계 처리 실패" not in caplog.text
 
 
 async def test_generation_failure_retries_same_plan_once_and_obeys_daily_quota(db):
@@ -261,6 +283,34 @@ async def test_generated_plan_becomes_saved_draft(db):
     assert order.cycle_start == CYCLE_START
     assert order.auto_confirm_at is not None
     assert setting.last_stage == "drafted"
+
+
+async def test_fourth_draft_failure_persists_terminal_stage(db, monkeypatch):
+    user, _budget, setting = await _active_cycle(db)
+    setting.last_stage = "generated"
+    setting.last_generated_cycle_start = CYCLE_START
+    setting.stage_attempts = 3
+    setting.next_run_at = NOW
+    await db.commit()
+
+    async def fail_draft(*_args, **_kwargs):
+        raise RuntimeError("fallback draft failed")
+
+    monkeypatch.setattr(cycle_service.order_service, "create_draft", fail_draft)
+    result = await cycle_service.process_due_setting(
+        db,
+        user,
+        setting,
+        policy=_policy(),
+        now=NOW,
+        generation_allowed=True,
+    )
+
+    assert result is None
+    await db.refresh(setting)
+    assert setting.stage_attempts == 4
+    assert setting.last_stage == "generate_failed"
+    assert setting.next_run_at > NOW
 
 
 async def test_auto_confirm_due_us_order_moves_to_awaiting_user(db):

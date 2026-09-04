@@ -55,23 +55,27 @@ async def cycle_limit(
     *,
     timezone_name: str = "Asia/Seoul",
 ) -> Decimal:
-    """사이클 안분액에서 cycle_start 소속 월의 기확정 주문 합계를 차감한다."""
+    """월초부터 이번 사이클 끝까지의 누적 안분액에서 같은 기간 확정액을 차감한다."""
     plan = await db.scalar(select(BudgetPlan).where(BudgetPlan.user_id == user.id))
     if plan is None:
         raise ApiError(409, "BUDGET_PLAN_REQUIRED", "Create a budget plan first")
 
-    share = prorate(
-        plan.amount,
-        (cycle_start + timedelta(days=offset) for offset in range(cycle_days)),
-    )
-    tz = ZoneInfo(timezone_name)
     month_start = date(cycle_start.year, cycle_start.month, 1)
     if cycle_start.month == 12:
         next_month = date(cycle_start.year + 1, 1, 1)
     else:
         next_month = date(cycle_start.year, cycle_start.month + 1, 1)
+    accrual_end = min(cycle_start + timedelta(days=cycle_days), next_month)
+    share = prorate(
+        plan.amount,
+        (
+            month_start + timedelta(days=offset)
+            for offset in range((accrual_end - month_start).days)
+        ),
+    )
+    tz = ZoneInfo(timezone_name)
     start_utc = datetime.combine(month_start, time.min, tzinfo=tz).astimezone(UTC)
-    end_utc = datetime.combine(next_month, time.min, tzinfo=tz).astimezone(UTC)
+    end_utc = datetime.combine(accrual_end, time.min, tzinfo=tz).astimezone(UTC)
 
     # 순환 import를 막기 위해 주문 모델은 함수 실행 시점에만 로드한다.
     from app.domains.order.models import Order

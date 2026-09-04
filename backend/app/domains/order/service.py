@@ -423,6 +423,22 @@ async def _open_order(
     ).scalar_one_or_none()
 
 
+async def has_saved_preview(
+    db: AsyncSession, user_id: uuid.UUID, cycle_start: date
+) -> bool:
+    """현재 사이클의 저장 초안이 있어 외부 조회 없이 preview를 반환할 수 있는지 확인한다."""
+    order_id = await db.scalar(
+        select(Order.id)
+        .where(
+            Order.user_id == user_id,
+            Order.cycle_start == cycle_start,
+            Order.status.in_(("draft", "awaiting_user")),
+        )
+        .limit(1)
+    )
+    return order_id is not None
+
+
 async def preview_order(
     db: AsyncSession,
     user: User,
@@ -573,7 +589,14 @@ async def _confirm_existing(
     now = utcnow()
     transition_order(order, "confirmed")
     order.meal_plan_id = preview.meal_plan_id
-    order.estimated_total = preview.estimated_total.amount
+    order.estimated_total = sum(
+        (
+            line.unit_price
+            for line in lines
+            if line.line_type == "needed" and line.unit_price is not None
+        ),
+        _Z,
+    )
     order.currency = preview.estimated_total.currency
     order.items = lines
     order.confirmed_at = now
@@ -881,7 +904,7 @@ async def update_delivery(
         if order.inbound_at is not None:
             await fridge_service.delete_delivery_items(db, user.id, order.id)
         order.inbound_at = None
-        order.delivery_eta = (order.delivery_eta or utcnow()) + timedelta(days=1)
+        order.delivery_eta = utcnow() + timedelta(days=1)
         order.delivery_confirm_attempts += 1
         order.delivery_state = (
             "unknown"

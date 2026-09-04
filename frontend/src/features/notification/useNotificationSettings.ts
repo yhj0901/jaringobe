@@ -43,6 +43,7 @@ export function useNotificationSettings(): NotificationSettingsState {
 
   const settingsRef = useRef<NotificationSetting[]>([]);
   const savingRef = useRef<Set<NotificationType>>(new Set());
+  const pendingRef = useRef<Map<NotificationType, SettingPatch>>(new Map());
 
   const applySettings = useCallback((next: NotificationSetting[]) => {
     settingsRef.current = next;
@@ -72,8 +73,6 @@ export function useNotificationSettings(): NotificationSettingsState {
   /** 행 단위 즉시 저장 — 낙관적 갱신 후 실패 시 이전 값으로 롤백 (ui-design 12장) */
   const update = useCallback(
     async (type: NotificationType, patch: SettingPatch) => {
-      if (savingRef.current.has(type)) return; // 행 연타 방지
-
       const previous = settingsRef.current;
       const optimistic = previous.map((setting) =>
         setting.type === type ? { ...setting, ...patch } : setting,
@@ -81,17 +80,39 @@ export function useNotificationSettings(): NotificationSettingsState {
       applySettings(optimistic);
       setUpdateError(false);
 
+      if (savingRef.current.has(type)) {
+        const pending = pendingRef.current.get(type);
+        pendingRef.current.set(type, { ...pending, ...patch });
+        return;
+      }
+
       const addSaving = new Set(savingRef.current);
       addSaving.add(type);
       syncSaving(addSaving);
 
-      const result = await putNotificationSettings([{ type, ...patch }]);
-      if (result.ok) {
-        // 서버 진실(전체 settings 재반환)로 확정 (api-spec 6-A-4)
-        applySettings(result.data.settings);
-      } else {
-        applySettings(previous); // 실패 → 롤백
-        setUpdateError(true);
+      let activePatch = patch;
+      let rollbackSettings = previous;
+      while (true) {
+        const result = await putNotificationSettings([{ type, ...activePatch }]);
+        if (result.ok) {
+          // 서버 진실(전체 settings 재반환)로 확정 (api-spec 6-A-4)
+          applySettings(result.data.settings);
+        } else {
+          applySettings(rollbackSettings); // 실패 → 해당 요청 직전 값으로 롤백
+          setUpdateError(true);
+        }
+
+        const pending = pendingRef.current.get(type);
+        if (pending === undefined) break;
+        pendingRef.current.delete(type);
+        rollbackSettings = settingsRef.current;
+        activePatch = pending;
+        applySettings(
+          rollbackSettings.map((setting) =>
+            setting.type === type ? { ...setting, ...activePatch } : setting,
+          ),
+        );
+        setUpdateError(false);
       }
 
       const clearSaving = new Set(savingRef.current);
