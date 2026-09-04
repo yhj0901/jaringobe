@@ -263,6 +263,34 @@ async def test_generated_plan_becomes_saved_draft(db):
     assert setting.last_stage == "drafted"
 
 
+async def test_fourth_draft_failure_persists_terminal_stage(db, monkeypatch):
+    user, _budget, setting = await _active_cycle(db)
+    setting.last_stage = "generated"
+    setting.last_generated_cycle_start = CYCLE_START
+    setting.stage_attempts = 3
+    setting.next_run_at = NOW
+    await db.commit()
+
+    async def fail_draft(*_args, **_kwargs):
+        raise RuntimeError("fallback draft failed")
+
+    monkeypatch.setattr(cycle_service.order_service, "create_draft", fail_draft)
+    result = await cycle_service.process_due_setting(
+        db,
+        user,
+        setting,
+        policy=_policy(),
+        now=NOW,
+        generation_allowed=True,
+    )
+
+    assert result is None
+    await db.refresh(setting)
+    assert setting.stage_attempts == 4
+    assert setting.last_stage == "generate_failed"
+    assert setting.next_run_at > NOW
+
+
 async def test_auto_confirm_due_us_order_moves_to_awaiting_user(db):
     user = User(
         nickname="US user",

@@ -661,7 +661,13 @@ async def _process_draft_stage(
             settings.next_run_at = now + timedelta(minutes=delay)
             await db.commit()
             return
-        raise
+        settings.last_stage = "generate_failed"
+        settings.next_run_at = _next_generation_at(window.cycle_start, settings, policy)
+        _log_transition(
+            user.id, "generate_failed", "draft_fallback_failed", window.cycle_start
+        )
+        await db.commit()
+        return
     settings.last_stage = "drafted"
     settings.stage_attempts = 0
     settings.next_run_at = _next_generation_at(window.cycle_start, settings, policy)
