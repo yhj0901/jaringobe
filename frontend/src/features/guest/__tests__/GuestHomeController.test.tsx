@@ -44,9 +44,9 @@ function seedPlan(plan: GuestPlan, autoOrderNotifiedAt?: string) {
   );
 }
 
-async function renderController() {
+async function renderController(locale: 'ko' | 'en' = 'ko') {
   const utils = render(
-    <IntlWrapper>
+    <IntlWrapper locale={locale}>
       <GuestHomeController />
     </IntlWrapper>,
   );
@@ -274,4 +274,17 @@ describe('GuestHomeController 재방문 알림 (FR-316, ui-design 8장)', () => 
     await renderController();
     expect(screen.queryByText('다시 오셨네요!')).not.toBeInTheDocument();
   });
+});
+
+
+it.each([
+  ['en', '120', 'USD', '$52.00'],
+  ['ko', '130000', 'KRW', '₩57,200'],
+] as const)('%s: 저장된 저예산 초안을 복원한 홈도 실제 입력 금액을 반영한다', async (locale, amount, currency, remaining) => {
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+  useGuestStore.setState({ plan: undefined, promptHistory: {}, savedAt: undefined });
+  seedPlan({ householdSize: 1, amount, currency, mealDirection: 'diet' }, new Date().toISOString());
+  await renderController(locale);
+  expect(screen.getByText(remaining)).toBeInTheDocument();
 });

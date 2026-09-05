@@ -4,11 +4,15 @@ import {
   HOUSEHOLD_BANDS,
   MEAL_DIRECTIONS,
   getDefaultViewModel,
+  getMatrix,
   getSampleViewModel,
   toBudgetBand,
   toHouseholdBand,
 } from '@/features/guest/sampleMatrix';
 import type { AppLocale } from '@/i18n/routing';
+
+import { budgetRange } from '@/features/household/onboardingLogic';
+import { BUDGET_PRESETS, HOUSEHOLD_MIN, HOUSEHOLD_MAX } from '@/shared/config/constants';
 
 const LOCALES: AppLocale[] = ['ko', 'en'];
 const AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/;
@@ -106,5 +110,60 @@ describe('toBudgetBand', () => {
     expect(toBudgetBand('450', 'en')).toBe('p2');
     expect(toBudgetBand('700', 'en')).toBe('p3');
     expect(toBudgetBand('2000', 'en')).toBe('p4');
+  });
+});
+
+
+describe('입력 예산을 반영하는 체험 금액', () => {
+  it.each(LOCALES)('%s: 모든 밴드의 샘플 금액은 기준 프리셋 이하다', (locale) => {
+    const matrix = getMatrix(locale);
+    for (const [index, band] of BUDGET_BANDS.entries()) {
+      for (const household of HOUSEHOLD_BANDS) {
+        for (const amount of Object.values(matrix.budgetMood[band][household])) {
+          expect(BigInt(amount)).toBeLessThanOrEqual(BigInt(BUDGET_PRESETS[locale].amounts[index]!));
+        }
+      }
+    }
+  });
+
+  it.each(LOCALES)('%s: 1~10인 위저드 최소·권장·최대 및 모든 슬라이더 값에서 예산을 넘지 않는다', (locale) => {
+    const currency = BUDGET_PRESETS[locale].currency;
+    for (let size = HOUSEHOLD_MIN; size <= HOUSEHOLD_MAX; size += 1) {
+      const { min, rec, max, step } = budgetRange(size, currency);
+      const amounts = new Set([min, rec, max]);
+      for (let value = min; value <= max; value += step) amounts.add(value);
+      for (const amount of amounts) {
+        const vm = getSampleViewModel(locale, {
+          householdBand: toHouseholdBand(size),
+          budgetBand: toBudgetBand(String(amount), locale),
+          direction: 'health',
+        }, 'guest-planned', String(amount));
+        for (const money of Object.values(vm.budgetMood)) {
+          expect(BigInt(money.amount)).toBeGreaterThanOrEqual(0n);
+          expect(BigInt(money.amount)).toBeLessThanOrEqual(BigInt(amount));
+          expect(money.currency).toBe(currency);
+        }
+      }
+    }
+  });
+
+  it.each([
+    ['en', '120', '52', '16', '4'],
+    ['ko', '130000', '57200', '17766', '5200'],
+  ] as const)('%s: 보고된 저예산 잔액 초과를 재현하는 입력 %s', (locale, amount, remaining, saved, waste) => {
+    const vm = getSampleViewModel(locale, {
+      householdBand: '1', budgetBand: toBudgetBand(amount, locale), direction: 'diet',
+    }, 'guest-planned', amount);
+    expect(vm.budgetMood.remaining.amount).toBe(remaining);
+    expect(vm.budgetMood.saved.amount).toBe(saved);
+    expect(vm.budgetMood.wastePrevented.amount).toBe(waste);
+  });
+
+  it.each(LOCALES)('%s: 프리셋 입력은 기존 샘플 금액을 그대로 유지한다', (locale) => {
+    for (const [index, band] of BUDGET_BANDS.entries()) {
+      const selector = { householdBand: '1' as const, budgetBand: band, direction: 'health' as const };
+      expect(getSampleViewModel(locale, selector, 'guest-planned', BUDGET_PRESETS[locale].amounts[index]).budgetMood)
+        .toEqual(getSampleViewModel(locale, selector, 'guest-planned').budgetMood);
+    }
   });
 });
