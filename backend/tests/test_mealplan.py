@@ -58,7 +58,8 @@ async def test_create_returns_202_accepted(client, respx_mock):
 
 async def test_create_and_get_mealplan(client, respx_mock):
     await login(client, respx_mock)
-    assert (await _create_budget(client)).status_code == 201
+    # 성공 경로: 월 예산을 이틀로 안분해도 mock 6끼 원가를 충당하도록 설정한다.
+    assert (await _create_budget(client, amount="1000000")).status_code == 201
 
     body = await _create_plan(
         client, {"days": 2, "mealsPerDay": 3, "allergies": ["peanut"]}
