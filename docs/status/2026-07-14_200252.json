@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-07-14T20:02:52+09:00",
+  "session_topic": "앱 웹뷰 래핑 + 푸시 알림 — 인프라(리비전 0008) 완료, 구현 단계 진입 가능",
+  "command": "/인프라시작 리비전 0008_notification_app (GATE 3 승인 후)",
+  "agent": "agents/infra.md",
+  "status": "리비전 0008 작성·왕복 검증 PASS — /API시작 + /UI시작 병렬 진행 가능",
+  "tasks": [
+    {"id": 1, "subject": "기획 (GATE 1)", "status": "completed"},
+    {"id": 2, "subject": "설계 (GATE 2)", "status": "completed"},
+    {"id": 3, "subject": "리비전 0008_notification_app 작성 + 로컬 왕복 검증 (GATE 3)", "status": "completed"},
+    {"id": 4, "subject": "/API시작 — notification 도메인 + mealplan 비동기 전환", "status": "pending"},
+    {"id": 5, "subject": "/UI시작 — shared/bridge + /settings/notifications + 폴링 + mobile/ 쉘", "status": "pending"}
+  ],
+  "artifacts": [
+    "backend/alembic/versions/0008_notification_app.py (신규, 미커밋)",
+    "backend/alembic/versions/0007_store_connections_global.py (global-region 브랜치에서 검증용으로 워킹트리 복사 — 커밋 금지, 해당 브랜치가 머지 주체)",
+    "docs/설계/db-schema.md (0008 반영·정정)"
+  ],
+  "key_findings": "① meal_plans.status 는 실제로 CHECK 제약 없음(String(20)+서비스 검증) → processing/failed 는 DDL 불필요, mealplan 서비스 열거 검증에만 추가 (API 백엔드 통보). ② feature/global-region 브랜치에 0007 존재 → 본 리비전은 0008(down_revision=0007)로 조정, global-region 선머지 필수. ③ 왕복 검증 0006→0008→0006→0008 PASS, partial index ix_notification_settings_due 실물 확인. 로컬 DB 는 head(0008) 상태로 유지.",
+  "recommended_actions": "다음: /API시작 (notification 도메인 신규 + mealplan 202 비동기 + auth app/session) 과 /UI시작 (frontend 브리지/알림설정/폴링 + mobile/ Expo 쉘) 병렬. 커밋 시 주의: 0007_store_connections_global.py 는 커밋 제외(git add 대상에서 제거), feature 브랜치 분리, db: prefix. main 머지 순서: global-region → 본 기능",
+  "pending_user_input": "구현 시작 지시 (/API시작, /UI시작)"
+}
