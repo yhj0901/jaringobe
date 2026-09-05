@@ -12,9 +12,14 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.db import engine
 from app.core.errors import ApiError, api_error_handler, error_body, validation_error_handler
+from app.core.logging import configure_logging
 from app.core.ratelimit import auth_ip_limiter
 from app.domains.cycle.scheduler import run_cycle_loop
 from app.domains.notification.scheduler import run_scheduler_loop
+
+
+# 앱 임포트 시점에 로깅을 먼저 세운다 — lifespan 이전에 나는 로그도 잡기 위해.
+configure_logging(get_settings().log_level, json_format=get_settings().log_json)
 
 
 @asynccontextmanager
@@ -44,7 +49,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="JARINGOBE API",
     description="예산 안에서 식단 자동 생성 · 식재료 0 · 자동 주문",
-    version="0.1.0",
+    version="0.2.0",
     lifespan=lifespan,
 )
 

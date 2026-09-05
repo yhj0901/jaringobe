@@ -85,3 +85,17 @@
 
 - 키 추가/변경은 인프라 에이전트가 `.env.example` 과 이 문서를 함께 갱신한다
 - 애플 로그인(P1) 도입 시 추가 예정: `APPLE_CLIENT_ID / APPLE_TEAM_ID / APPLE_KEY_ID / APPLE_PRIVATE_KEY_PATH`
+
+## 로깅 (v0.2.0 신규)
+
+| 키 | 기본 | 용도 |
+|----|------|------|
+| `LOG_LEVEL` | `INFO` | 앱 로그 레벨. 도메인 모듈이 `extra` 로 남기는 구조화 필드(`user_id`·`stage`·`reason`·`cycle_start` 등)가 이 레벨에서 출력된다 |
+| `LOG_JSON` | `true` | 한 줄 JSON 포맷. 로컬에서 사람이 읽기 편한 형태가 필요하면 `false` |
+
+`app/core/logging.py` 가 앱 임포트 시점에 설정한다. 설정 전에는 `extra` 필드가 **어디에도 출력되지 않아**
+운영에서 사이클 단계 전이·알림 발송·실패 사유를 추적할 수 없었다(QA BUG-011).
+
+**서드파티 로거는 WARNING 으로 고정된다** (`httpx`·`httpcore`·`urllib3`·`asyncio`·`multipart`·`watchfiles`).
+`httpx` 는 INFO 에서 요청 URL 을 통째로 찍는데, 앱 로그인 원타임 코드처럼 쿼리스트링에 실린 비밀이
+그대로 로그에 남는다(CWE-532/598). 진단이 필요하면 `LOG_LEVEL=DEBUG` 로 함께 올린다.

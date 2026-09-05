@@ -90,6 +90,10 @@ class Settings(BaseSettings):
     cycle_cancel_window_days: int = 7
     cycle_delivery_unknown_attempts: int = 3
 
+    # 로깅 — extra 구조화 필드를 실제로 출력하기 위한 설정 (core/logging.py)
+    log_level: str = "INFO"
+    log_json: bool = True
+
     # 쿠키 Secure 플래그 — 로컬 http 개발에서는 false, 배포(https) 시 true
     cookie_secure: bool = False
 

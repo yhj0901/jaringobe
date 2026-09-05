@@ -30,6 +30,13 @@ services:
   backend:
     build: ../backend
     restart: unless-stopped
+    # .env 전체를 컨테이너에 주입한다. --env-file 은 compose 파일의 ${} 치환에만 쓰이고
+    # 컨테이너 환경에는 전달되지 않으므로, 이것이 없으면 CYCLE_*·EXPO_ACCESS_TOKEN·
+    # APP_SCHEME·REMINDER_* 가 서버에서 기본값으로만 동작해 스케줄러를 끄고 켤 수 없다.
+    # 아래 environment 는 env_file 보다 우선하므로 임계값(특히 DATABASE_URL)은 그대로 강제된다.
+    env_file:
+      - path: ../.env
+        required: false
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       # entrypoint 가 기동 시 alembic upgrade head 실행 (false 로 끄고 수동 운용 가능)
