@@ -178,7 +178,7 @@ describe('GuestHomeController', () => {
     await renderController();
     fireEvent.click(screen.getAllByRole('button', { name: /레시피 보기$/ })[0] as HTMLElement);
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('AI 추천 레시피')).toBeInTheDocument();
+    expect(within(dialog).getByText('샘플 레시피')).toBeInTheDocument();
     // 게스트 샘플은 steps 부재 → 기본 조리법 3단계 고정 문구
     expect(within(dialog).getByText(/재료를 깨끗이 씻고/)).toBeInTheDocument();
     // 저장이 필요한 게이트 문구는 뜨지 않는다

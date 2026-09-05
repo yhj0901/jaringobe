@@ -299,6 +299,8 @@
     },
     "recipe": {
       "aiBadge": "AI recipe",
+      "sampleBadge": "Sample recipe",
+      "sampleNotice": "This is a trial preview. The time, difficulty, and steps are shared examples, not cooking instructions for this dish.",
       "openAria": "View recipe for {meal}",
       "timeMinutes": "{minutes} min",
       "timeDefault": "~20 min",
