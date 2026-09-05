@@ -89,6 +89,7 @@ export function GuestHomeController() {
         direction: plan.mealDirection,
       },
       'guest-planned',
+      plan.amount,
     );
   }, [hydrated, plan, locale]);
 

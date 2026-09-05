@@ -299,6 +299,8 @@
     },
     "recipe": {
       "aiBadge": "AI 추천 레시피",
+      "sampleBadge": "샘플 레시피",
+      "sampleNotice": "체험용 예시예요. 시간·난이도·조리 단계는 공통 예시이며, 이 메뉴의 실제 조리법이 아니에요.",
       "openAria": "{meal} 레시피 보기",
       "timeMinutes": "{minutes}분",
       "timeDefault": "약 20분",
