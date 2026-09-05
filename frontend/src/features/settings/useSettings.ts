@@ -66,7 +66,7 @@ export interface SettingsState {
   user: UserMeResponse | null;
   /** GET households/me — 404 HOUSEHOLD_NOT_FOUND 면 null (설정 전) */
   members: HouseholdMemberInput[] | null;
-  /** 예산 현재값 — GET budget/plans 우선, 404 면 mealplans/latest 요약 폴백 (없으면 null) */
+  /** 월 예산 현재값 — GET budget/plans, 404 면 null (식단 요약은 기간 안분액) */
   budget: Money | null;
   /** 최신 식단 id — 재생성 대상 (없으면 생성 폴백, FR-403) */
   planId: string | null;
@@ -166,9 +166,7 @@ export function useSettings(): SettingsState {
     }
 
     // 예산안 현재값 (api-spec 2-2) — 요약·편집 초기값·부분 수정 병합 베이스 (FR-402)
-    let budgetKnown = false;
     if (budgetPlan.ok) {
-      budgetKnown = true;
       setBudget(budgetPlan.data.budget);
       applyProfile({
         direction: budgetPlan.data.mealDirection,
@@ -177,6 +175,7 @@ export function useSettings(): SettingsState {
         known: true,
       });
     } else if (budgetPlan.status === 404) {
+      setBudget(null); // 식단 안분액을 월 예산으로 사용하지 않으며 reload 시에도 초기화한다.
       applyProfile(INITIAL_PROFILE); // BUDGET_PLAN_NOT_FOUND — 기존 폴백 유지 (reload 시 초기화)
     } else {
       setStatus('error');
@@ -186,12 +185,9 @@ export function useSettings(): SettingsState {
     if (latest.ok) {
       planIdRef.current = latest.data.id;
       setPlanId(latest.data.id);
-      // v1.5: processing/failed 는 budgetSummary=null — 폴백 없이 미확정 유지
-      if (!budgetKnown) setBudget(latest.data.budgetSummary?.budget ?? null);
     } else if (latest.status === 404 && latest.code === MEALPLAN_NOT_FOUND_CODE) {
       planIdRef.current = null;
       setPlanId(null);
-      if (!budgetKnown) setBudget(null);
     } else {
       setStatus('error');
       return;

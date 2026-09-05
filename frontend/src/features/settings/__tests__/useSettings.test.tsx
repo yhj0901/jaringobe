@@ -195,13 +195,28 @@ describe('useSettings 조회 분기 (ui-design 9장)', () => {
     expect(result.current.profile.known).toBe(false);
   });
 
-  it('budget 404 + latest 있음 → latest 요약 금액으로 폴백 (기존 폴백 유지)', async () => {
+  it('budget 404 + latest 있음 → 식단 안분액을 월 예산으로 사용하지 않음', async () => {
     seedHappyPath();
     budgetPlanGetMock.mockResolvedValue(err(404, 'BUDGET_PLAN_NOT_FOUND'));
     const { result } = await renderReady();
 
-    expect(result.current.budget).toEqual({ amount: '700000.00', currency: 'KRW' });
+    expect(result.current.budget).toBeNull();
+    expect(result.current.planId).toBe('plan-1');
     expect(result.current.profile.known).toBe(false);
+  });
+
+  it('reload 중 budget 404 → 이전 월 예산 초기화, 식단 재생성 대상 유지', async () => {
+    seedHappyPath();
+    const { result } = await renderReady();
+    expect(result.current.budget).toEqual(BUDGET_PLAN_DETAIL.budget);
+
+    budgetPlanGetMock.mockResolvedValue(err(404, 'BUDGET_PLAN_NOT_FOUND'));
+    await act(async () => result.current.reload());
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    expect(result.current.budget).toBeNull();
+    expect(result.current.profile.known).toBe(false);
+    expect(result.current.planId).toBe('plan-1');
   });
 
   it('budget 5xx → error', async () => {
@@ -330,10 +345,9 @@ describe('useSettings 저장 동작 (FR-402)', () => {
     });
   });
 
-  it('savePreference — 예산 현재값이 없으면(404) 인원 기반 권장값 폴백 (CWE-20 범위 준수)', async () => {
+  it('savePreference — 예산 404이면 기존 식단이 있어도 인원 기반 월 권장값 사용', async () => {
     seedHappyPath();
     budgetPlanGetMock.mockResolvedValue(err(404, 'BUDGET_PLAN_NOT_FOUND'));
-    latestMock.mockResolvedValue(err(404, 'MEALPLAN_NOT_FOUND'));
     putBudgetMock.mockResolvedValue(
       ok({
         id: 'b1',
