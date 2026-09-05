@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-09-05T19:32:08.327738+09:00",
+  "session_topic": "실사용 탐색 게스트 흐름",
+  "command": "Orca dispatched exploratory QA",
+  "agent": "Codex",
+  "status": "ko/en 실사용 탐색 및 보고서 검토 완료; 현재 브랜치 커밋",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "ko/en 데스크톱·모바일 탐색 및 오류 수집",
+      "status": "completed"
+    },
+    {
+      "id": 2,
+      "subject": "테스트 보고서 작성 및 현재 브랜치 커밋",
+      "status": "completed"
+    }
+  ],
+  "artifacts": [
+    "docs/테스트/실사용탐색-게스트흐름.md"
+  ],
+  "key_findings": {
+    "severity": {
+      "Critical": 0,
+      "High": 0,
+      "Medium": 3,
+      "Low": 1
+    },
+    "issues": [
+      "로고 icon.png 500",
+      "영문 Breakfast 라벨 겹침",
+      "입력 월 예산보다 큰 남은 예산 샘플",
+      "레시피 공통 문구"
+    ],
+    "flow": "ko/en 게스트 예산 적용에서 로그인 진입까지 성공",
+    "blocked": "OAuth 키 부재로 회원 기능 검증 불가"
+  },
+  "recommended_actions": "확정 UI 결함 4건 후속 수정; 인증 키 확보 후 회원 기능 별도 검증; 기획 차이는 보고서 확인 필요 항목 참조",
+  "pending_user_input": "코디네이터 질문 msg_6df206720d0e: 신규 게스트 위저드 기획 의도"
+}
