@@ -96,6 +96,79 @@ async def test_generation_and_regeneration_use_plan_period_budget(
     await assert_summary()
 
 
+@pytest.mark.parametrize(
+    "as_of,days,limit",
+    [
+        ("2026-09-24", 7, "42000.00"),
+        ("2026-09-30", 1, "6000.00"),
+    ],
+)
+async def test_monthly_summary_and_regeneration_use_exclusive_end(
+    client,
+    respx_mock,
+    monkeypatch,
+    as_of,
+    days,
+    limit,
+):
+    """monthly 응답·GET 요약·재생성에서 같은 남은 날짜 전체를 사용한다."""
+    from app.domains.store.schemas import StoreCartResponse, krw
+
+    cost = Decimal(limit) + Decimal("0.01")
+    monkeypatch.setattr(service, "_price", AsyncMock(return_value=cost))
+    monkeypatch.setattr(
+        service.store_service,
+        "build_cart",
+        AsyncMock(
+            return_value=StoreCartResponse(items=[], total=krw(Decimal("0")), matched_count=0),
+        ),
+    )
+    await login(client, respx_mock)
+    await client.put(
+        "/api/v1/budget/plans",
+        json={
+            "householdSize": 2,
+            "budget": {"amount": "180000", "currency": "KRW"},
+            "mealDirection": "health",
+            "locked": True,
+            "cuisines": [],
+        },
+    )
+    response = await client.post(
+        "/api/v1/mealplans/monthly",
+        json={
+            "asOf": as_of,
+            "mealsPerDay": 1,
+            "cycle": "weekly",
+        },
+    )
+    assert response.status_code == 201
+    monthly = response.json()
+    assert monthly["days"] == days
+    assert monthly["proratedBudget"]["amount"] == limit
+    assert monthly["withinBudget"] is False
+    plan_id = monthly["mealPlanId"]
+    for regenerate in (False, True):
+        if regenerate:
+            accepted = await client.post(
+                f"/api/v1/mealplans/{plan_id}/regenerate",
+                json={"scope": "all"},
+            )
+            assert accepted.status_code == 202
+        got = await client.get(f"/api/v1/mealplans/{plan_id}")
+        assert got.status_code == 200
+        body = got.json()
+        assert body["periodEnd"] == monthly["periodEnd"] == "2026-10-01"
+        assert monthly["firstOrder"]["periodEnd"] == "2026-10-01"
+        assert len(body["meals"]) == days
+        assert max(meal["planDate"] for meal in body["meals"]) == "2026-09-30"
+        summary = body["budgetSummary"]
+        assert summary["budget"] == monthly["proratedBudget"]
+        assert summary["plannedCost"] == monthly["plannedCost"]
+        assert summary["remaining"]["amount"] == "-0.01"
+        assert summary["withinBudget"] is False
+
+
 async def test_summary_rechecks_legacy_status_and_current_budget(
     client,
     respx_mock,

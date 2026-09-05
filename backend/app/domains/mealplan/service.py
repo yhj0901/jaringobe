@@ -608,7 +608,7 @@ async def build_monthly_plan(
     plan = MealPlan(
         user_id=user.id, budget_plan_id=budget.id, status=status, total_cost=total,
         currency=cur, region=region,
-        period_start=as_of, period_end=as_of + timedelta(days=remaining - 1),
+        period_start=as_of, period_end=as_of + timedelta(days=remaining),
     )
     _apply_drafts(plan, drafts, as_of, remaining, cur)
     db.add(plan)
@@ -637,12 +637,12 @@ async def build_monthly_plan(
     cart = await store_service.build_cart(to_buy, req.mall, req.max_pages)
 
     first_order = FirstCycleOrder(
-        period_start=as_of, period_end=as_of + timedelta(days=first_days - 1),
+        period_start=as_of, period_end=first_end_excl,
         days=first_days, needed=shortfall.items, cart=cart,
     )
     return MonthlyPlanResponse(
         meal_plan_id=plan.id, status=status,
-        period_start=as_of, period_end=as_of + timedelta(days=remaining - 1), days=remaining,
+        period_start=as_of, period_end=plan.period_end, days=remaining,
         monthly_budget=MoneyOut(amount=budget.amount, currency=cur),
         prorated_budget=MoneyOut(amount=prorated, currency=cur),
         prorate_ratio=ratio,
