@@ -223,6 +223,168 @@ orders.error.{STORE_NOT_CONNECTED|NOTHING_TO_ORDER|MEALPLAN_NOT_FOUND|ORDER_NOT_
 
 ## 변경 이력
 - 2026-08-15: **v1.7** — 자동주문 P0: 회원 AutoOrderCard 해제, `/orders` 리뷰, 장바구니 탭→/orders, i18n `memberHome.autoOrder`+`orders.*`. 정직 시뮬레이션 카피. 게스트 불변. (타 설계 문서는 동일 범위를 **v1.6** 으로 표기 — 본 문서는 지역전환이 이미 v1.6을 사용)
+> **문서 정합 안내(v1.8)**: 아래 14장은 `feature/auto-order-p0`(13장 `/orders`, 본 문서 v1.7) 와 `feature/app-webview-push`(12장 앱 웹뷰·알림 설정, v1.5) 가 main 에 머지된 상태를 전제한다. 두 브랜치가 각각 12장/13장을 사용했으므로 머지 시 장 번호 재배정이 필요하다(문서 에이전트 소관).
+
+## 14. 주간 자동 사이클 (v1.8 — 루프완결-주간사이클)
+
+> 기획: `docs/기획/루프완결-주간사이클.md` 6장. **13장(자동주문 P0)의 `/orders` 화면을 확장**하며 새 페이지를 만들지 않는다. 신규 라우트 없음 — 사이클은 홈·주문·냉장고·설정 4개 기존 화면에 얹힌다.
+
+### 14-1. 라우트·컴포넌트 증분
+
+| 위치 | 신규/변경 | 내용 |
+|------|-----------|------|
+| `/` (홈) | **신규 컴포넌트** | `features/cycle/CycleStatusCard` — 사이클 상태 카드 (FR-824). `AutoOrderCard` **위**에 배치하고 두 카드를 합치지 않는다(사이클=시간축, 자동주문=장바구니 — 관심사가 다르다) |
+| `/orders` | **확장** | 13장의 리뷰 화면에 상태 4종 분기 추가 (`draft`/`awaiting_user`/`confirmed`/`failed`) |
+| `/fridge` | **신규 컴포넌트** | `features/fridge/DeliveryConfirmSheet` — 배송 확인·보정 시트 |
+| `/settings` | **신규 컴포넌트** | `features/cycle/CycleSettingsCard` — 주기·요일·자동확정·일시정지 (9장 설정 페이지에 섹션 추가) |
+| `features/cycle/` | **신규 디렉토리** | `api.ts`(`getCycle`/`putCycleSettings`/`postCycleSkip`), `types.ts`, `useCycle.ts` |
+
+```
+frontend/src/features/cycle/
+  CycleStatusCard.tsx        # 홈 상태 카드 (stage 분기)
+  CycleSettingsCard.tsx      # 설정 섹션
+  DormantReturnCard.tsx      # 휴면 복귀 1회 카드 (FR-818)
+  useCycle.ts / api.ts / types.ts
+frontend/src/features/fridge/DeliveryConfirmSheet.tsx
+frontend/src/features/order/   # 13장 기존 — 상태 분기만 확장 (복제 금지)
+```
+
+### 14-2. 홈 사이클 상태 카드 — `stage` 단일 분기 (FR-824)
+
+`GET /cycle` 의 **`stage` 값 하나로 분기**한다. 프론트가 주문·식단 상태를 조합해 단계를 추론하지 않는다(추론 로직이 서버와 어긋나면 사용자에게 거짓말을 하게 된다).
+
+| `stage` | 카드 표시 | 주 CTA |
+|---------|-----------|--------|
+| `idle` | "다음 주 식단은 {nextRunAt} 에 준비할게요" | — |
+| `generating` | 스켈레톤 + `aria-busy="true"` "다음 주 식단 준비 중" | — |
+| `generated` | "다음 주 식단이 나왔어요" | 식단 섹션으로 스크롤 / 재생성 |
+| `generate_failed` | "다음 주 식단을 만들지 못했어요" | **직접 만들기** (`PlanCreateSheet`) |
+| `drafted` | "장바구니 승인 대기 · {autoConfirmAt 까지}" | **[승인하기]** (1탭, 주 CTA) · [보기] · [이번 주 건너뛰기] |
+| `awaiting_user` | 차단 사유 배너 (`blockedReason` → i18n) | 사유별 해소 CTA (아래) |
+| `confirmed` | "배송 대기 · {deliveryEta} 도착 예정" — **v1.9**: `{deliveryEta}` 는 `currentOrder.deliveryEta` 에서 읽는다. `draftOrder` 는 확정 이후 항상 null 이라 v1.8 구현(`CycleStatusCard`)의 `draftOrder?.deliveryEta` 참조는 빈 문자열이 된다(api-spec §9 진행 수치) | 주문 스냅샷 보기 · [주문 취소] |
+| `delivered` | "이번 주 진행 중 · {완료}/{전체} 완료" — **v1.9**: `{완료}` = `mealPlan.completedMealCount`, `{전체}` = `mealPlan.mealCount`. 필드 부재로 일반 문구("식사 완료 체크로 냉장고 재고를 맞춰 주세요")로 우회했던 것을 되돌린다. **품목 단위 배송 수치는 표시하지 않는다**(서버에 데이터 없음 — api-spec §9) | 식단 섹션(완료 체크) |
+| `nothing_to_order` | "이번 주는 냉장고로 충분해요" | 냉장고 보기 |
+| `skipped_user` | "이번 주는 쉬어가요" | — |
+| `skipped_dormant` | **휴면 복귀 카드** "이번 주 식단 만들까요?" — 그 사이클에 **1회만** | **[만들기]** · [닫기] |
+| `deferred_quota` | "곧 준비할게요" — **실패로 표시하지 않는다** | — |
+| `paused` | "자동 사이클이 꺼져 있어요" | 설정으로 |
+
+`blockedReason` → 해소 CTA 매핑:
+
+| 사유 | 문구(요지) | CTA |
+|------|-----------|-----|
+| `BUDGET_EXCEEDED` | "예산을 넘을 것 같아요" | 승인 / 품목 제외(P1) / 식단 재생성 |
+| `UNMATCHED_RATIO` | "못 찾은 재료가 많아요" | 장바구니 확인 |
+| `STORE_DISCONNECTED` | "스토어 연동이 풀렸어요" | 설정으로 |
+| `AUTO_CONFIRM_OFF` | "승인을 기다리고 있어요" | 승인하기 |
+| `US_NO_PRICE` | "가격 정보가 없어 직접 확인이 필요해요" | 장바구니 확인 |
+| `MEALPLAN_OVER_BUDGET` | "예산을 넘는 식단이에요" | 식단 재생성 |
+
+- **휴면 복귀 카드 닫기(FR-818)** 는 `localStorage` 에 `cycle.dormantDismissed:{cycleStart}` 로만 기록한다(서버 상태 아님). 사이클이 바뀌면 자연히 다시 노출된다. **밀린 알림을 소급 표시하지 않는다.**
+- **자동확정 예정 시각은 반드시 텍스트로** 표기한다: "내일 09:00에 자동으로 확정돼요" (사용자 로컬 시각). 통제감의 핵심 장치다.
+- 상태 전이는 `aria-live="polite"` 라이브 리전으로 스크린리더에 통지한다.
+
+### 14-3. `/orders` 상태 분기 확장 (13장 확장)
+
+> **`GET /orders/latest` 계약 확장(api-spec 10-4)에 대응하는 필수 변경.** v1.6 화면은 `status='confirmed'` 만 가정하고 있어 초안 상태에서 오동작한다.
+
+| status | 화면 |
+|--------|------|
+| `draft` | 섹션 A 살 재료(needed) / 섹션 B 냉장고가 충당(covered) + 추정 합계 + **시뮬레이션 고지** + **자동확정 예정 시각 안내** + [승인하기] / [품목 편집](P1) / [이번 주 건너뛰기] |
+| `awaiting_user` | 상단 **차단 사유 배너**(위 매핑) + 해소 CTA. 나머지는 draft 와 동일. **v1.9**: [다시 계산하기] 는 `POST /orders/{id}/recalculate`(api-spec 10-7) 를 호출하고 응답 `OrderResponse` 로 `latest` 를 교체한다 — 기존 `GET /orders/preview?refresh=true` 호출은 제거 |
+| `confirmed` | 스냅샷 + 배송 예정일 + `autoConfirmed` 면 "자동으로 확정됐어요" 배지 + [주문 취소](취소 기간 내) |
+| `cancelled` / `expired` | 사유 문구 + 다음 사이클 안내. 조작 CTA 없음 |
+| `failed` | **v1.9 개정**: `cancelled`/`expired` 와 동일한 **터미널 카드**(다음 사이클 안내, 조작 CTA 없음). ~~사유 + [다시 시도]~~ / "다시 계산하기" CTA **제거** — 백엔드에 `failed` 생산 경로가 없고 재계산은 열린 초안에만 적용되어 실패 행을 되살리지 못한다(api-spec 10-8). 분기 자체는 유지(latest 계약 6값 방어) |
+
+- **승인 결과는 응답을 그대로 그린다.** 초안 캐시로 확정 화면을 만들지 않는다 — 서버 재계산 결과가 초안과 다를 수 있다(api-spec 10-1). 다를 경우 "재료가 조금 바뀌었어요" 안내를 1줄 표시한다.
+- 시뮬레이션 고지는 **색이 아니라 텍스트**로 표기한다(색 단독 구분 금지, 접근성). 승인/확정 CTA 근처에 항상 유지.
+- 승인 버튼은 요청 중 비활성(연타 방지). `409 ORDER_ALREADY_CONFIRMED` 수신 시 에러가 아니라 **"이미 확정됐어요"** 로 표시하고 최신 상태를 재조회한다(멱등의 UX 표현).
+
+### 14-4. `/fridge` 배송 확인 시트
+
+등록 직후(`fridge_inbound` 알림 탭 또는 `stage=confirmed→delivered` 전이) 냉장고 상단에 시트를 띄운다.
+
+```
+"받으셨나요? 이 재료들을 담아둘게요"
+  [맞아요]        → POST /orders/{id}/delivery { received: true }
+  [수량 수정]      → 기존 PATCH /fridge/items/{id} 재사용
+  [아직 안 왔어요] → POST /orders/{id}/delivery { received: false }  (롤백 + 도착 예정 +1일)
+```
+
+- 문구를 **"담았어요"가 아니라 "받으셨나요?"** 로 한다 — `delivery_eta` 는 추정치이고, 단정했다가 실제로 안 왔으면 신뢰가 깨진다.
+- 3회 "아직" 이후(`deliveryState='unknown'`)에는 시트를 자동으로 띄우지 않고 "받으면 알려주세요" 배너로 낮춘다.
+- 유통기한은 등록 시 비어 있다(`expiresAt=null`). 시트에서 입력하도록 유도하되 강제하지 않는다.
+- 기존 임박 배너에 "임박 재료는 다음 식단에 먼저 쓰여요" 한 줄을 추가한다(FR-806 의 사용자 체감 지점).
+
+### 14-5. `/settings` 자동 주문 섹션
+
+```
+[자동 주문]
+  사이클             [활성 / 일시정지]            → PUT /cycle/settings { enabled }
+  주기               ( ) 주 1회  ( ) 주 2회        → { frequency }   ※ US 는 "주 1회 권장" 보조 문구
+  기준 요일           [일 월 화 수 목 금 토]        → { anchorWeekday }  (0=일요일)
+  자동확정            [on / off]                   → { autoConfirm }
+                     off 설명: "항상 내가 승인할게요"
+  타임존              (표시 + 변경)                 → { timezone }
+  스토어 연동          (기존 9장 카드)
+```
+
+- `autoConfirm` 토글 아래에 고정 고지: **"자동확정은 알림 도달 여부와 무관하게 동작합니다"** (기획 10장 신뢰성 — 푸시가 안 와도 확정된다는 사실을 숨기지 않는다).
+- 요일 선택은 **0=일요일** 기준(JS `getDay()`). API 와 UI 가 같은 규약을 쓴다.
+- `frequency='biweekly'` 선택 시 "그레이스가 12시간으로 짧아져요" 안내 1줄.
+
+### 14-6. i18n (`messages/ko.json` · `en.json` **동시 작성** — 하드코딩 금지)
+
+신규 네임스페이스 `cycle.*` + 기존 `orders.*` 확장. **게스트 키(`guestHome.*`)는 변경하지 않는다.**
+
+```
+cycle.card.title
+cycle.stage.{idle|generating|generated|generateFailed|drafted|awaitingUser|confirmed|delivered
+             |nothingToOrder|skippedUser|skippedDormant|deferredQuota|paused}.{title,body}
+cycle.stage.drafted.autoConfirmAt            // "{time}에 자동으로 확정돼요"
+cycle.blocked.{BUDGET_EXCEEDED|UNMATCHED_RATIO|STORE_DISCONNECTED|AUTO_CONFIRM_OFF
+               |US_NO_PRICE|MEALPLAN_OVER_BUDGET}.{title,cta}
+cycle.cta.{approve|view|skip|createNow|dismiss|goSettings|cancelOrder}
+cycle.dormant.{title,body,cta}
+cycle.settings.{section,enabled,frequency,frequencyWeekly,frequencyBiweekly,frequencyUsHint,
+                biweeklyGraceHint,anchorWeekday,autoConfirm,autoConfirmOffHint,
+                autoConfirmPushNotice,timezone}
+cycle.weekday.{0..6}
+cycle.error.{CYCLE_ALREADY_CONFIRMED|RATE_LIMITED}
+
+orders.status.{draft|awaitingUser|confirmed|cancelled|expired|failed}
+orders.autoConfirmedBadge                    // "자동으로 확정됐어요"
+orders.recalculatedNotice                    // "재료가 조금 바뀌었어요"
+orders.alreadyConfirmed                      // 409 멱등 안내
+orders.deliveryEta                           // "{date} 도착 예정"
+orders.cancelCta
+orders.error.{ORDER_INVALID_STATE|ORDER_ALREADY_CONFIRMED|ORDER_CANCEL_WINDOW_CLOSED}
+
+fridge.delivery.{title,body,yes,adjust,notYet,unknownBanner}
+fridge.expiring.nextPlanHint                 // "임박 재료는 다음 식단에 먼저 쓰여요"
+
+notification.orderApproval.{title,body}
+notification.fridgeInbound.{title,body}
+notification.cyclePaused.{title,body}
+settings.notifications.type.{orderApproval|fridgeInbound|cyclePaused}
+```
+
+- API 에러 `detail.code` → `cycle.error.{code}` / `orders.error.{code}`, 미정의는 `common.error.fallback`.
+- **(v1.9)** `orders.recalculateCta`/`orders.recalculating` 은 `awaiting_user` 재계산 버튼용으로 유지. `orders.terminal.failed.body` 는 "다시 계산" 을 언급하지 않고 다음 사이클 안내로 바꾼다(14-3). `cycle.stage.delivered.body` 는 `{completed}/{total}` 파라미터를 받는다(14-2).
+- 푸시 본문 템플릿의 **원본은 백엔드 `sender.TEMPLATES`**(api-spec 11-1)다. 위 `notification.*` 키는 **설정 화면의 타입 라벨·인앱 배너용**이며 푸시 본문을 프론트가 다시 만들지 않는다(이중 관리 금지).
+- 날짜·시각·금액은 기존 `MoneyText`/`Intl` 포맷 재사용 — 로캘·통화(KRW/USD) 표시는 프론트 담당.
+
+### 14-7. 접근성·상태 관리 원칙
+
+- **파생 상태를 프론트에서 만들지 않는다**: `stage`·`blockedReason` 은 서버가 준 값을 그대로 분기한다. 클라이언트 추론은 서버와 어긋나는 순간 거짓 정보가 된다.
+- 색 단독 구분 금지 — 시뮬레이션 고지, 차단 사유, 상태 배지는 전부 **텍스트**를 동반한다.
+- 사이클 상태 전이·확정 결과는 `aria-live="polite"`. 생성 중 스켈레톤은 `aria-busy`.
+- 폴링: `stage='generating'` 일 때만 `GET /mealplans/{id}` 폴링(기존 v1.5 규약 재사용). 그 외 상태에서 `/cycle` 자동 폴링을 하지 않는다 — 화면 진입·포커스 복귀 시 1회 조회로 충분하다(불필요한 서버 부하 방지).
+- **푸시는 보조 채널**: 알림이 오지 않아도 홈 카드와 `/orders` 에서 동일한 정보·조작이 가능해야 한다. 푸시 전용 흐름을 만들지 않는다.
+
+## 변경 이력
+- 2026-09-04: **v1.9** — api-spec v1.9 대응(신규 화면 없음). 14-2 `confirmed`/`delivered` 카드의 데이터 출처를 `currentOrder.deliveryEta`·`mealPlan.completedMealCount/mealCount` 로 확정(일반 문구 우회 종료), 14-3 `awaiting_user` 재계산 → `POST /orders/{id}/recalculate`, `failed` 는 터미널 카드로 개정(CTA 제거), 14-6 i18n 파라미터 메모. 구현은 후속 태스크
+- 2026-08-30: **v1.8** — 주간 자동 사이클 14장: 홈 `CycleStatusCard`(stage 단일 분기 13종), `/orders` 상태 6종 확장(**latest 계약 확장 대응 필수**), `/fridge` 배송 확인 시트("받으셨나요?"), `/settings` 자동 주문 섹션, i18n `cycle.*` 신규 + `orders.*`/`fridge.delivery.*` 확장. 파생 상태 클라이언트 추론 금지 원칙. 신규 라우트 없음
 - 2026-07-10: v1.6 — 지역·통화 전환 행 + 글로벌 배지 + 국가별 스토어 세트 12장 증보 (글로벌-지역전환)
 - 2026-07-09: 최초 작성 (설계 토론 3라운드 UI 교차 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — 회원 홈(member 모드) 7장 증보 (회원홈-식단연결 기획)

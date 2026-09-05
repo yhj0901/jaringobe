@@ -94,11 +94,19 @@ class MealPlanResponse(CamelModel):
     status: str
     region: str
     currency: str
-    period_start: date
-    period_end: date
-    budget_summary: BudgetSummary
-    meals: list[MealOut]
+    # v1.5: processing/failed 상태에서는 period/budgetSummary null + meals [] (api-spec §3-2)
+    period_start: date | None = None
+    period_end: date | None = None
+    budget_summary: BudgetSummary | None = None
+    meals: list[MealOut] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
+
+
+class MealPlanAcceptedResponse(CamelModel):
+    """202 Accepted — 생성/재생성 비동기 접수 (api-spec §3-2 v1.5)."""
+
+    id: uuid.UUID
+    status: Literal["processing"] = "processing"
 
 
 # 내부 전달용(직렬화 아님)

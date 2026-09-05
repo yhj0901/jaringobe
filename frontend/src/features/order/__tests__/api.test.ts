@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createOrder, fetchLatestOrder, fetchOrderPreview } from '@/features/order/api';
+import {
+  approveOrder,
+  cancelOrder,
+  confirmOrderDelivery,
+  createOrder,
+  fetchLatestOrder,
+  fetchOrderPreview,
+  recalculateOrder,
+} from '@/features/order/api';
 
 function mockFetch(status: number, jsonBody: unknown = {}) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -47,5 +55,26 @@ describe('order API 클라이언트 (api-spec 7장)', () => {
     const result = await createOrder({ store: 'kurly' });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('STORE_NOT_CONNECTED');
+  });
+
+  it('recalculateOrder → POST /orders/{id}/recalculate', async () => {
+    const fetchMock = mockFetch(200, {});
+    await recalculateOrder('a/b');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/v1/orders/a%2Fb/recalculate');
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.method).toBe('POST');
+    expect(init.body).toBeUndefined();
+  });
+
+  it('approve/cancel/delivery 액션은 id를 인코딩하고 계약 body만 보낸다', async () => {
+    const fetchMock = mockFetch(200, {});
+    await approveOrder('a/b');
+    await cancelOrder('a/b');
+    await confirmOrderDelivery('a/b', false);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/v1/orders/a%2Fb/approve');
+    expect(JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string)).toEqual({});
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/v1/orders/a%2Fb/cancel');
+    expect(fetchMock.mock.calls[2]?.[0]).toBe('/api/v1/orders/a%2Fb/delivery');
+    expect(JSON.parse((fetchMock.mock.calls[2]?.[1] as RequestInit).body as string)).toEqual({ received: false });
   });
 });

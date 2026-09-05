@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-08-30T13:15:00+09:00",
+  "session_topic": "주간 자동 사이클(루프 완결) — 기획~마이그레이션 완료, 다른 머신 이어받기 정리",
+  "command": "/orchestration → 이어받기 정리",
+  "agent": "orchestrator (Orca run_017dbfdfe35c, 로컬 전용)",
+  "status": "GATE 1·2·3 통과. 코드·문서 전부 원격 반영 완료. 리뷰 지적 8건 미수정 상태로 QA 대기",
+  "tasks": [
+    {"id": 1, "subject": "기획 (GATE 1) — docs/loop-cycle-plan", "status": "completed"},
+    {"id": 2, "subject": "자동주문 P0 검증 + PR #40", "status": "completed"},
+    {"id": 3, "subject": "설계 v1.8 (GATE 2) — design/loop-cycle", "status": "completed"},
+    {"id": 4, "subject": "app-webview-push 통합 + 리비전 0010 리넘버", "status": "completed"},
+    {"id": 5, "subject": "사이클 백엔드 구현 (cycle 도메인·스케줄러·되먹임·멱등성)", "status": "completed"},
+    {"id": 6, "subject": "사이클 프론트 구현 (/orders 6상태·1탭 승인·i18n 135키)", "status": "completed"},
+    {"id": 7, "subject": "마이그레이션 0011·0012 (GATE 3) + 백필 회귀 검증", "status": "completed"},
+    {"id": 8, "subject": "코드 리뷰 — 지적 8건 도출", "status": "completed"},
+    {"id": 9, "subject": "리뷰 지적 8건 수정 (심각 2건 우선)", "status": "pending"},
+    {"id": 10, "subject": "설계 v1.9 증분 — 갭 3건 반영", "status": "pending"},
+    {"id": 11, "subject": "PR #40 머지 → loop-cycle-base PR", "status": "pending"},
+    {"id": 12, "subject": "QA (GATE 4) → 문서", "status": "pending"},
+    {"id": 13, "subject": "Vercel BACKEND_URL 교체 (현재 API 전부 502)", "status": "pending"},
+    {"id": 14, "subject": "백엔드 상시 호스팅처 결정 (릴리즈 시점)", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/운영가이드/작업-이어받기.md (이 세션의 인계 문서 — 다른 머신은 여기부터)",
+    "docs/기획/루프완결-주간사이클.md",
+    "docs/설계/{api-spec,db-schema,architecture,security-design,ui-design}.md v1.8",
+    "backend/app/domains/cycle/*, backend/alembic/versions/{0011_cycle_core,0012_cycle_links}.py",
+    "frontend/src/features/cycle/*",
+    "docs/운영가이드/backend-portable-guide.md"
+  ],
+  "key_findings": {
+    "중심_브랜치": "feature/loop-cycle-base — 자동주문 P0 + 알림/웹뷰 + 사이클 구현 + 0011·0012. 여기서 이어받는다",
+    "원격_반영": "모든 워커 커밋이 origin/feature/loop-cycle-base 에서 도달 가능. 로컬 전용 미푸시 작업 없음",
+    "검증치": "백엔드 360 passed 커버리지 93% / 프론트 503 passed 94.56% + tsc + build / i18n ko=en=567 / alembic heads 0012 단일 / 마이그레이션 왕복 성공",
+    "최고위험_해소": "0011 이 기존 confirmed 주문에 inbound_at:=confirmed_at 백필. 실데이터 재현 결과 재등록 스캔 대상 0건 — 냉장고 2배 차단 확인",
+    "심각_결함_1": "budget/service.py cycle_limit — share 는 주간 안분인데 committed 는 월 전체 합계. 2주차부터 한도 0 → 예산 락 사용자 자동주문 전면 차단. architecture.md 3-9-4 수식도 동일해 설계·구현 동시 수정 필요",
+    "심각_결함_2": "order/router.py preview 레이트리밋 회귀 — 자동주문 P0 는 무조건 적용이었으나 사이클 작업이 refresh 일 때만으로 약화. /preview 가 네이버 5페이지+LLM 을 부르는데 회원 홈 마운트마다 무제한 호출",
+    "리뷰_지적_나머지": "excludeNames 총액 미반영 / 초안 실패 무한 재시도 / 배송 미수령 처리가 즉시 재-due / 이전 사이클 주문이 확정 UI 차단 / 스케줄러 409 매틱 재시도 / 알림 설정 동시편집 유실",
+    "PR40": "리뷰 지적 0건, mergeable. 8건은 전부 사이클 신규 코드였고 PR40 범위가 아님",
+    "배포": "백엔드 상시 서버 없음(요금). Vercel 프론트는 /ko 200 이지만 API 전부 502. cloudflared quick tunnel 은 두 번 죽었고 URL 이 매번 바뀜 → named tunnel(api.jaringobe.cloud) 권장, 첫 단계 브라우저 인증은 사용자 몫",
+    "키_부재": "KAKAO_*/GOOGLE_*/ANTHROPIC_API_KEY 비어 있음 — 소셜 로그인 불가, AI 식단 mock",
+    "워커_지적_정확도": "구현 워커들이 올린 전제 오류 지적 6건이 전부 사실이었음 (기획서 베이스 누락, app-webview-push 선행조건, 0009 revision id 관례, 설계 API 공백, confirmed_at NOT NULL 누락, 인덱스 방향 드리프트)"
+  },
+  "recommended_actions": "① 심각 결함 2건(예산 한도·레이트리밋) 우선 수정 ② 리뷰 지적 6건 확인·수정 ③ 설계 v1.9 로 갭 3건 반영 ④ PR #40 머지 ⑤ QA(GATE 4) → 문서. 다른 머신에서는 docs/운영가이드/작업-이어받기.md 를 먼저 읽을 것",
+  "pending_user_input": "터널 방식(named vs quick), PR #40 머지 시점, 수정 워커 착수 여부"
+}

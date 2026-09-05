@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-09-04T23:30:00+09:00",
+  "session_topic": "설계 v1.9 증분 — 주간 사이클 구현↔문서 정합 (CycleState 진행 수치 · failed 복구 경로 · confirmed_at 표기 · cycle_limit 대조 · GET 부작용 보안 판단)",
+  "command": "(설계 워커) Orca task_6aaf4cce294c / dispatch ctx_532294c2f268",
+  "agent": "agents/design.md",
+  "status": "5개 설계 문서 v1.9 증분 갱신 완료. 코드·마이그레이션 변경 없음. 현재 브랜치(feature/loop-cycle-base 기반 워크트리) 커밋, 푸시는 코디네이터 검토 후",
+  "tasks": [
+    {"id": 1, "subject": "CycleState 배송 진행 수치 — currentOrder(추가 쿼리 0) + mealPlan.mealCount/completedMealCount(집계 1건), 품목 단위 배송 수치는 데이터 부재로 미제공 사유 명시 (api-spec §9)", "status": "completed"},
+    {"id": 2, "subject": "failed 주문 복구 경로 — 전용 엔드포인트 신설 안 함, refresh 우회 승격 안 함, 생산 경로 없는 예약 상태로 확정 (api-spec 10-8)", "status": "completed"},
+    {"id": 3, "subject": "orders.confirmed_at NOT NULL → NULL 표기 정정 (리비전 0011 DROP NOT NULL, db-schema 2-8/2-10/3-B)", "status": "completed"},
+    {"id": 4, "subject": "budget.cycle_limit 수식 ↔ 구현 대조 — 일치. 시그니처 timezone_name 표기만 보정 (architecture 3-9-4)", "status": "completed"},
+    {"id": 5, "subject": "GET /orders/preview?refresh=true GET 부작용·Origin 우회 — 수용 대신 POST /orders/{id}/recalculate 로 메서드 변경 결정 (security-design 5-7, api-spec 10-7)", "status": "completed"},
+    {"id": 6, "subject": "ui-design 14장 v1.9 대응 (confirmed/delivered 데이터 출처, awaiting_user 재계산 호출, failed 터미널 카드)", "status": "completed"},
+    {"id": 7, "subject": "후속 구현 태스크: recalculate 라우터 + preview refresh 제거 + 프론트 호출 교체 + CycleState 필드 추가 (한 PR)", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/설계/api-spec.md (v1.9)",
+    "docs/설계/db-schema.md (v1.9)",
+    "docs/설계/architecture.md (v1.9)",
+    "docs/설계/security-design.md (v1.9)",
+    "docs/설계/ui-design.md (v1.9)"
+  ],
+  "key_findings": {
+    "failed_생산경로": "backend 에 orders.status='failed' 를 만드는 코드가 없다. CHECK(0011)와 _ALLOWED_TRANSITIONS 에만 존재. 프론트 FailedOrderState 의 '다시 계산하기'(preview?refresh=true)는 draft/awaiting_user 만 갱신하므로 failed 행에 대해 시각적 no-op",
+    "currentOrder_비용": "build_cycle_state 의 _current_order 가 이미 상태 무관 최신 주문 1행을 로드하므로 currentOrder 노출은 추가 쿼리 0. 끼니 집계는 meals 1건(ix_meals_plan_date 선두 컬럼)",
+    "품목단위_배송수치_불가": "배송 확인은 주문 단위 CAS(inbound_at). order_items 에 라인별 배송 상태 없음. 항상 0/M 또는 M/M 이라 수치로 무의미",
+    "cycle_limit_대조": "month_start/next_month/accrual_end, prorate 범위, confirmed_at 로컬→UTC 범위, status=confirmed, max(0, share−committed) quantize 전부 문서와 일치. 문서 시그니처에 timezone_name 누락만 보정",
+    "GET_부작용_판단": "SameSite=Lax 는 최상위 내비게이션 GET 에 쿠키를 붙이므로 링크 클릭으로 피해자 초안 재계산 유발 가능. 영향 낮음(본인 초안, 정당한 값). 수정 비용이 낮고 §3 전제(GET 안전)를 지켜야 하므로 메서드 변경 결정. 반영 전 잠정 수용",
+    "추가_불일치_발견": [
+      "CycleStatusCard confirmed 단계가 draftOrder?.deliveryEta 를 읽지만 확정 이후 draftOrder 는 항상 null → 표시 시각 빈 문자열 (i18n body 가 {time} 을 안 써서 눈에 안 보임). v1.9 currentOrder.deliveryEta 로 교체 대상",
+      "api-spec 7-1 은 preview 429 를 무조건 3회/분으로 적었으나 구현(P0-2 수정)은 저장 스냅샷 조회는 리미터 미적용 → 7-1/10-5 에 명시",
+      "db-schema 2-8 next_suggested_at 'confirmed_at + 7 days' 는 구현(생성 시각 + 7일/3일)과 다름 → 정정",
+      "db-schema 3-B 의 '리비전 번호 잠정' 문구가 확정된 0011·0012 와 어긋남 → 확정 표기",
+      "security-design CWE 대응표 사이에 v1.6 변경 이력 줄이 끼어 표가 끊겨 있었음 → 이력 절로 이동",
+      "architecture.md 에 '## 변경 이력' 절이 2개 → 1개로 병합",
+      "Order 모델 docstring 'P0 status=confirmed' 는 구식 (코드 주석 — 이번 태스크 범위 밖, 미수정)"
+    ]
+  },
+  "recommended_actions": "① 코디네이터 검토 후 푸시·PR ② 후속 구현 태스크(백엔드: POST /orders/{id}/recalculate + preview refresh 제거 + CycleState currentOrder/mealCount; 프론트: handleRefresh 교체, CycleStatusCard confirmed→currentOrder.deliveryEta, delivered {completed}/{total}, failed 터미널 카드) 를 한 PR 로 ③ QA 회귀 항목: refresh GET 이 초안을 바꾸지 않음 / recalculate Origin 불일치 403",
+  "pending_user_input": "없음 (설계 결정 5건 모두 근거와 함께 문서에 기록. 이견 시 재소집)"
+}

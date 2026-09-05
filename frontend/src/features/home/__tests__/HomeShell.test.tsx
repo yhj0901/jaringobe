@@ -59,6 +59,45 @@ describe('HomeShell (FR-101)', () => {
     expect(screen.queryByRole('button', { name: '시작하기' })).not.toBeInTheDocument();
   });
 
+  it.each([
+    ['generated', '생성됨', '이번 사이클 장바구니를 만들 준비가 됐어요.'],
+    ['drafted', '승인 대기', '이번 주 장바구니를 확인하고 한 번에 승인해 주세요.'],
+    ['awaiting_user', '승인 대기', '이번 주 장바구니를 확인하고 한 번에 승인해 주세요.'],
+    ['delivered', '확정', '배송분이 냉장고에 등록됐어요.'],
+  ] as const)('회원 자동주문 카드가 %s 사이클을 표시한다', (stage, status, description) => {
+    const vm = {
+      ...getDefaultViewModel('ko'),
+      mode: 'member' as const,
+      autoOrder: { active: true, stores: [] },
+    };
+    renderWithIntl(
+      <HomeShell
+        viewModel={vm}
+        cycleSlot={<p>사이클 상태 카드</p>}
+        autoOrderCycle={{ stage, deliveryEta: null }}
+      />,
+    );
+    expect(screen.getByText('사이클 상태 카드')).toBeInTheDocument();
+    expect(screen.getByText(status)).toBeInTheDocument();
+    expect(screen.getByText(description)).toBeInTheDocument();
+  });
+
+  it('회원 자동주문 카드가 UTC 배송 예정 시각을 로컬 포맷으로 표시한다', () => {
+    const vm = {
+      ...getDefaultViewModel('ko'),
+      mode: 'member' as const,
+      autoOrder: { active: true, stores: [] },
+    };
+    renderWithIntl(
+      <HomeShell
+        viewModel={vm}
+        autoOrderCycle={{ stage: 'confirmed', deliveryEta: '2026-09-07T03:00:00Z' }}
+      />,
+    );
+    expect(screen.getByText('배송 예정')).toBeInTheDocument();
+    expect(screen.getByText(/9월 7일.*12:00/)).toBeInTheDocument();
+  });
+
   it('hideTrialBadge: 게스트 샘플 셸에서 체험 배지만 숨기고 예시 라벨은 유지한다 (ui-design 8장)', () => {
     renderWithIntl(<HomeShell viewModel={getDefaultViewModel('ko')} hideTrialBadge />);
     expect(screen.queryByText('체험 모드')).not.toBeInTheDocument();

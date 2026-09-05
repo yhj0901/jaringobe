@@ -36,6 +36,7 @@ provider → GET /auth/{provider}/callback?code&state
 ## 3. CSRF / CORS / Origin
 
 - 쿠키 인증이므로 CSRF 표면 존재 → **이중 방어**: ① `SameSite=Lax` ② 상태 변경 메서드(POST 등)에 **Origin 헤더 검증 미들웨어** (`FRONTEND_ORIGIN` 불일치 시 403 `FORBIDDEN_ORIGIN`)
+  - **(v1.9)** 미들웨어는 `POST/PUT/PATCH/DELETE` 에만 적용된다(`main.py` `_STATE_CHANGING_METHODS`). 따라서 이 방어는 **GET/HEAD 핸들러가 부작용을 갖지 않는다는 전제** 위에서만 성립한다(안전 메서드 원칙, CWE-650). 전제를 깬 사례와 판단은 5-7.
 - CORS: Next.js rewrites 프록시로 동일 오리진 — **백엔드 CORS 미허용(기본 차단)**. 직접 호출 필요 시 설계 변경 프로세스 경유
 - 백엔드는 프록시 뒤 배치 전제 — 직접 노출 시에도 위 Origin 검증이 유지되도록 미들웨어는 앱 레벨에 둔다
 
@@ -87,6 +88,66 @@ provider → GET /auth/{provider}/callback?code&state
 - **정직 표시**: `simulation: true` 고정. `paid`/`charged` 상태값 도입 금지. 가짜 승인번호·카드 마스킹 영수증 생성 금지
 - 게스트 주문 persist 금지. 확정 inbound 는 서버 내부 `fridge.add_items` 만 (프론트 이중 POST 로 source 위조 여지 차단)
 
+## 5-6. 주간 자동 사이클 접점 (v1.8 — 루프완결-주간사이클)
+
+> 기획 8장 승계 + 설계 확정 사항. 신규 표면: 서버 스케줄러가 **사용자 개입 없이** 식단을 생성하고 주문을 확정하고 냉장고를 변경한다.
+
+| CWE | 항목 | 요구사항 |
+|-----|------|----------|
+| **CWE-639** | IDOR / 본인 스코프 | `/cycle*`·`/orders/{id}/*` 전부 경로에 `user_id` 없음 — 인증 유저 본인 행만. `{id}` 를 받는 3종(`approve`/`cancel`/`delivery`)은 **소유자 검증 후 403 `FORBIDDEN`**. **스케줄러도 예외가 아니다** — due 스캔이 대상 행을 고른 뒤의 모든 조회·변경은 반드시 그 `user_id` 로 스코프한다. 배치라는 이유로 전역 쿼리를 쓰면 그 자체가 IDOR |
+| **CWE-602** | 클라이언트 검증 의존 금지 | `POST /orders/{id}/approve` 는 라인·가격·`matched` 를 **받지 않는다**(`extra='forbid'`). 서버가 식단+냉장고+시세를 재계산한다. 프론트 preview 캐시로 확정 금지. `excludeNames`(P1)는 **이름만** 받고 가격·수량은 서버 값 사용 |
+| **CWE-841** | 부적절한 상태 전이 | 주문 상태 머신을 애플리케이션에서 강제: `draft → awaiting_user → confirmed → cancelled` / `draft\|awaiting_user → expired` / `* → failed`. **`confirmed → draft` 역행 금지**, `inbound_at IS NOT NULL` 인 주문 재확정 금지. 위반은 `409 ORDER_INVALID_STATE`. 배송 상태(`delivery_state`)를 `status` 와 **별도 축**으로 분리해 상태 머신 오염을 막는다 |
+| **CWE-367** | TOCTOU / 경합 | 자동확정 게이트 판정과 저장 사이에 사용자가 수동 확정할 수 있다 → **부분 유니크 인덱스가 최종 방어선**(`uq_orders_confirmed_cycle`). 게이트 통과만으로 안전하다고 가정하지 않는다. `IntegrityError` 는 **정상 스킵**으로 처리하고 사용자에게 에러 알림을 보내지 않는다 |
+| **CWE-770** | 자원 소모 | 자동 생성: 사용자당 사이클 1회 + 전체 일일 상한(FR-817, architecture 3-9-10). 사용자 요청: `/cycle/settings`·`/cycle/skip`·`approve`·`cancel`·`delivery` **5회/분**, ~~`preview?refresh=true`~~ → `POST /orders/{id}/recalculate` **3회/분**(기존 store 리미터, v1.9 — 5-7). 저장 초안 스냅샷을 돌려주는 `GET /orders/preview` 는 외부 조회가 없어 리미터 미적용, 즉석 계산만 3회/분. **스케줄러 자신에게도 상한을 적용** — 사용자별 결정적 지터(0~30분)로 동시 폭주를 막아 스스로 rate limit 을 치지 않게 한다 |
+| **CWE-522** | 자격증명 보호 | `user_cycle_settings`·`orders` 에 스토어 시크릿·쿠키·토큰 컬럼 **금지**. 네이버·Expo 키는 `.env` 만. 장바구니 링크의 쿼리 파라미터를 로그에 남기지 않는다 |
+| **CWE-359** | 개인정보 노출 | 푸시 본문에 **예산액·금액·가구 구성·건강(알레르기) 정보 금지** — 잠금화면 전제. "장바구니가 준비됐어요" 수준까지만, 상세는 앱을 열어야 보이게 한다. `notification_logs` 는 본문 원문 대신 `template_key` 만 기록(기존 정책 승계) |
+| **CWE-601** | 오픈 리다이렉트 | 알림 딥링크 `data.path` 는 **내부 상대경로 화이트리스트**만: `/orders`, `/fridge`, `/mealplan/{id}`. 외부 URL·커스텀 스킴 차단 |
+| **CWE-20** | 입력 검증 | `frequency`(weekly\|biweekly), `anchorWeekday`(0~6), `timezone`(**IANA 화이트리스트** `zoneinfo.available_timezones()`), `received`(boolean), `excludeNames`(≤40개·각 ≤200자). `status`·`simulation`·`lineType`·`cycleStart`·`deliveryEta`·`autoConfirmAt` 은 **서버가 부여**하며 클라이언트가 설정할 수 없다. `POST /cycle/skip` 은 대상 사이클을 body 로 받지 않는다(과거 사이클 조작 표면 제거) |
+| **CWE-532** | 로그 민감정보 | 구조화 로그에 `user_id`·`stage`·`reason`·`cycle_start` 만. **금액·재료명·가구 구성·예산액 금지** |
+| **CWE-79** | XSS | 상품 `title`/`mallName` 은 기존 HTML 태그 스트립 + React 이스케이프 유지. `link` 는 **https 만** 저장·렌더 (v1.6 정책 승계) |
+
+### 자동화 특유의 보안 판단 (v1.8)
+
+- **정직 표시 (US-814)**: `simulation=true` 고정. `paid`/`charged` 상태값 도입 **금지**. 가짜 승인번호·영수증 생성 금지. 자동확정 알림·화면에도 "연동 표시 기준 시뮬레이션 (실결제 아님)" / EN 동등 문구를 유지한다. `CycleState.simulation` 을 응답 계약에 고정 필드로 둔 것은 프론트가 이 고지를 빠뜨릴 수 없게 하기 위함이다.
+- **"자동으로 돈을 쓰는 시스템"의 신뢰 경계**: 현재는 시뮬레이션이므로 자동확정이 금전 손실을 만들지 않는다. **실결제 도입 시점에 자동확정 로직을 그대로 켜두면 안 된다.** 실결제 전환은 ① 자동확정에 대한 **별도 명시 동의**(약관 + 앱 내 재확인) ② 1회 상한액 ③ 확정 후 N시간 취소 가능 기간 ④ 결제 실패 재시도 정책을 **선행 조건**으로 하며, 실결제 기획의 GATE 항목으로 이관한다.
+- **예산 락은 자동화가 넘을 수 없는 선이다**: `locked=true` 인 사용자는 한도를 넘는 자동확정이 **불가능**하다(게이트 ⑤). `locked=false` 는 사용자가 명시적으로 해제한 상태이므로 경고만 하고 통과시킨다 — 시스템이 사용자의 명시적 결정을 대신 뒤집지 않는다.
+- **스케줄러 실행 권한**: 스케줄러는 HTTP 요청 컨텍스트가 없으므로 인증 미들웨어를 거치지 않는다. 따라서 **서비스 계층이 `user_id` 를 인자로 강제**하는 구조를 유지한다(전역 세션·암묵적 현재 사용자 개념을 만들지 않는다).
+- **멀티 인스턴스**: 단일 인스턴스 전제(architecture 3-9-3). 중복 실행은 보안 문제는 아니지만 **자원 소모(CWE-770)** 이슈이므로 배포 형상 제약으로 문서화한다.
+
+### 규제
+
+| 항목 | 요구사항 |
+|------|----------|
+| 정보통신망법 | 본 설계의 알림 3종(`order_approval`/`fridge_inbound`/`cycle_paused`)은 사용자가 설정한 **트랜잭션 알림**으로 광고성 정보가 아니다. **광고성 푸시 도입 시** 별도 명시 동의 + 야간(21~08시) 전송 제한 체계가 선행되어야 한다 |
+| GDPR/CCPA | 주문 이력 24개월 보관 후 배치 삭제(v1.6 승계), 발송 이력 90일, 디바이스 토큰은 계정 삭제 시 즉시 파기. `user_cycle_settings`·`fridge_items.order_id` 는 `users` CASCADE / `orders` SET NULL 로 탈퇴 시 정리된다 |
+| 개인정보 최소화 | `users.last_seen_at` 은 활성 판정 목적의 **단일 타임스탬프**이며 접속 이력을 누적하지 않는다(행동 로그가 아니다). `last_generated_at` 도 마지막 1건만 보관 |
+
+## 5-7. GET 부작용 경로 — `GET /orders/preview?refresh=true` (v1.9 — 코드 리뷰 보안 점검 반영)
+
+**사실 (2026-09-04 코드 대조)**
+- `GET /api/v1/orders/preview?refresh=true` 는 열린 초안(`draft`/`awaiting_user`)의 `meal_plan_id`·`estimated_total`·`currency`·`items` 를 재계산값으로 **갱신 저장**하고, `draft` 면 `blocked_reason` 을 NULL 로 지운다(`order.service.preview_order`). 읽기 메서드가 사용자 데이터를 바꾼다.
+- Origin 검증 미들웨어(`main.py` `_STATE_CHANGING_METHODS = {POST, PUT, PATCH, DELETE}`)는 GET 을 보지 않는다. 브라우저도 **최상위 GET 내비게이션에는 Origin 헤더를 보내지 않으므로** GET 에 검증을 추가하는 것으로는 막을 수 없다. 이것은 미들웨어의 결함이 아니라 **GET 은 부작용이 없어야 한다**는 전제(RFC 9110 안전 메서드, CWE-650)를 핸들러가 깬 문제다.
+- `SameSite=Lax` 는 서브리소스(img/fetch) GET 에는 쿠키를 붙이지 않지만 **최상위 내비게이션 GET 에는 붙인다.** 따라서 공격자 페이지가 링크·`window.location` 으로 이 URL 을 열면 피해자 쿠키로 재계산이 실행된다.
+
+**영향 평가 — 낮음**
+
+| 항목 | 평가 |
+|------|------|
+| 변경 범위 | 피해자 **본인** 초안의 라인·합계가 서버가 계산한 정당한 최신값으로 바뀐다. 타인 데이터·금전·확정 상태 변화 없음. `awaiting_user` 의 차단 사유·`auto_confirm_at` 은 유지된다 |
+| 악용 가치 | 사실상 없음 — 결과는 "사용자가 직접 다시 계산하기를 누른 것"과 같다 |
+| 자원 소모 | 피해자 계정의 3회/분 리미터를 소진시켜 정당한 재계산을 잠시 막을 수 있고, 네이버 시세 조회 비용을 유발한다(CWE-770 측면) |
+| 정보 노출 | 없음 — 응답은 공격자 오리진에서 읽을 수 없다(동일 오리진 정책) |
+
+**결정: 수용하지 않고 메서드를 바꾼다.** `POST /api/v1/orders/{id}/recalculate`(api-spec 10-7) 로 이전하고 `GET /orders/preview` 에서 `refresh` 파라미터를 제거한다.
+- 근거 ① 영향은 낮지만 **수정 비용도 낮다**(라우터 1개 추가 + 파라미터 1개 제거 + 프론트 호출 1곳 교체). "수용" 근거 문서를 유지·재검토하는 비용이 더 크다.
+- 근거 ② 이 경로를 남기면 §3 "상태 변경 메서드에 Origin 검증" 이라는 문장이 **거짓**이 된다. 방어 계층의 전제(GET 은 안전하다)를 지켜야 메서드 화이트리스트가 의미를 갖는다.
+- 근거 ③ 실결제(기획 Q4) 도입 후 같은 패턴이 남아 있으면 "재계산"이 금전 결과에 닿을 수 있다. 시뮬레이션 단계에서 원칙을 세워 두는 것이 싸다.
+- 대안 검토: (a) GET 에도 Origin 검증 — 최상위 내비게이션에는 Origin 이 없어 무효. (b) `Sec-Fetch-Site` 헤더 검증 — 근본 원인(부작용 GET)을 남긴 채 방어만 덧댐, 기각. (c) 수용 — 위 ②③ 으로 기각.
+
+**잠정 수용 조건(구현 반영 전까지)**: 리미터 3회/분이 걸려 있고 영향이 본인 초안 재계산에 한정됨을 확인했으므로 **핫픽스 대상이 아니다.** 후속 구현 태스크(api-spec 10-7 "이행")에서 한 PR 로 처리한다. QA 회귀 항목: ① 반영 후 `GET /orders/preview?refresh=true` 가 저장 초안을 바꾸지 않는다 ② `POST /orders/{id}/recalculate` 는 Origin 불일치 시 403 `FORBIDDEN_ORIGIN` 이다.
+
+**일반 규칙(신설)**: GET/HEAD 핸들러는 DB 쓰기·외부 호출 부작용을 갖지 않는다. 최초 호출 시 **멱등한 기본값 행 생성**(`GET /cycle`·`GET /notifications/settings` 의 lazy 생성)만 예외로 인정하고, 사용자 데이터 **값을 바꾸는** GET 은 금지한다. 코드 리뷰 체크리스트에 추가한다.
+
 ## 6. 시크릿 관리
 
 - 전 시크릿 `.env` 전용 (`JWT_SECRET`, provider client secret). `.env.example` 만 커밋, 코드/로그/status JSON 기록 금지
@@ -107,9 +168,15 @@ provider → GET /auth/{provider}/callback?code&state
 | CWE-922 | 클라이언트 저장 | localStorage 비식별 데이터만 |
 | CWE-307 | 무차별 대입 | auth/budget rate limit |
 | CWE-639 | IDOR | order preview/POST/latest 본인 스코프, `/orders/{id}` 미제공 (v1.6) |
-| CWE-770 | 자원 소모 | order preview 3/분(store 재사용) · POST 5/분 (v1.6) |
+| CWE-770 | 자원 소모 | order preview 즉석 계산 3/분(store 재사용) · POST 5/분 (v1.6) · `recalculate` 3/분 (v1.9) |
+| CWE-841 | 상태 전이 | 주문 상태 머신 강제, `confirmed→draft` 역행 금지 (v1.8) |
+| CWE-367 | TOCTOU | 자동확정 게이트 ↔ 수동 확정 경합 — 부분 유니크 인덱스가 최종 방어선 (v1.8) |
+| CWE-532 | 로그 민감정보 | 사이클 구조화 로그에 금액·재료명·가구 구성 금지 (v1.8) |
+| CWE-650 | 안전 메서드 부작용 | GET 핸들러 부작용 금지 원칙 — `preview?refresh` 를 `POST /orders/{id}/recalculate` 로 이전 (v1.9, 5-7) |
 
 ## 변경 이력
+- 2026-09-04: **v1.9** — 5-7 신설: `GET /orders/preview?refresh=true` 의 GET 부작용·Origin 검증 우회(CWE-650) 사실 기록, 영향 평가(낮음), **수용 대신 메서드 변경** 결정(`POST /orders/{id}/recalculate`, api-spec 10-7) + 반영 전 잠정 수용 조건 + GET 부작용 금지 일반 규칙. §3 전제 명시, 5-6 CWE-770 행·CWE 대응표 갱신, 표 사이에 끼어 있던 v1.6 이력 줄을 본 절로 이동(내용 변경 없음). 코드 변경 없음 — 구현은 후속 태스크
+- 2026-08-30: **v1.8** — 주간 자동 사이클 접점 5-6 (CWE-639/602/841/367/770/522/359/601/20/532/79). 스케줄러도 user_id 스코프 강제, 자동확정 5중 게이트, 부분 유니크 = TOCTOU 최종 방어선, 푸시 본문 금액·가구 구성 금지, 실결제 전환 선행 조건 이관. 설계 토론 5라운드 합의
 - 2026-08-15: **v1.6** — 자동주문 P0 접점 5-5 (CWE-639/20/602/770/522/79). simulation=true, paid 상태 없음, 주문 테이블에 스토어 시크릿 없음, 상품 링크 https-only. 설계 토론 5라운드 합의
 - 2026-07-09: 최초 작성 (설계 토론 4라운드 보안 검토 반영, 합의 완료)
 - 2026-07-09: v1.1 — mealplan 접점 5-1 증보

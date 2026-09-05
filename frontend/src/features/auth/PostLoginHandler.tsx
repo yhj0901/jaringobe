@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { fetchMe } from '@/features/auth/useSession';
 import { resolvePostLoginAction } from '@/features/auth/postLogin';
 import { importGuestPlan } from '@/features/budget/importGuestPlan';
+import { flushPendingDeviceToken } from '@/features/notification/deviceRegistration';
 import { useGuestStore } from '@/features/guest/store';
 import { saveOnboardingPrefill } from '@/features/household/prefill';
 import { KNOWN_NOTICE_CODES, VISITED_MARKER_KEY } from '@/shared/config/constants';
@@ -39,6 +40,9 @@ export function PostLoginHandler() {
 
     // FR-316: 로그인 이력 마커 — 재방문 게스트 [로그인/구경] 알림 판정용 (PII 아님)
     window.localStorage.setItem(VISITED_MARKER_KEY, '1');
+
+    // ui-design 12장: 미로그인 중 보류된 푸시 토큰을 로그인 완료 시 등록 (앱 내 한정 — 웹은 no-op)
+    void flushPendingDeviceToken();
 
     const run = async () => {
       await useGuestStore.persist.rehydrate();

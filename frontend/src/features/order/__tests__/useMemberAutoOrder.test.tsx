@@ -1,16 +1,18 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useMemberAutoOrder } from '@/features/order/useMemberAutoOrder';
 import { IntlWrapper } from '@/test/renderWithIntl';
 import type { ApiResult } from '@/shared/api/client';
-import type { OrderPreviewResponse } from '@/features/order/types';
+import type { OrderPreviewResponse, OrderResponse } from '@/features/order/types';
 import type { StoreConnectionsResponse } from '@/features/store/types';
 
 const previewMock = vi.fn<() => Promise<ApiResult<OrderPreviewResponse>>>();
 const storesMock = vi.fn<() => Promise<ApiResult<StoreConnectionsResponse>>>();
+const latestMock = vi.fn<() => Promise<ApiResult<OrderResponse>>>();
 
 vi.mock('@/features/order/api', () => ({
   fetchOrderPreview: () => previewMock(),
+  fetchLatestOrder: () => latestMock(),
 }));
 vi.mock('@/features/store/api', () => ({
   fetchStoreConnections: () => storesMock(),
@@ -25,6 +27,10 @@ function fail(status: number, code: string): ApiResult<never> {
 
 afterEach(() => {
   vi.clearAllMocks();
+});
+
+beforeEach(() => {
+  latestMock.mockResolvedValue(fail(404, 'ORDER_NOT_FOUND'));
 });
 
 describe('useMemberAutoOrder', () => {
@@ -66,6 +72,11 @@ describe('useMemberAutoOrder', () => {
         cart: { items: [], total: { amount: '0.00', currency: 'KRW' }, matchedCount: 0, notes: [] },
         estimatedTotal: { amount: '0.00', currency: 'KRW' },
         notes: [],
+        orderId: null,
+        status: null,
+        autoConfirmAt: null,
+        blockedReason: null,
+        cycleStart: '2026-08-17',
       }),
     );
 

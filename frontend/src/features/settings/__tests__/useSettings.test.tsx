@@ -17,8 +17,11 @@ import {
 } from '@/features/mealplan/api';
 import { fetchStoreConnections, putStoreConnection } from '@/features/store/api';
 import { putUserRegion } from '@/features/settings/regionApi';
+import { deleteDevice } from '@/features/notification/api';
+import { useBridgeStore } from '@/shared/bridge/store';
 import { VISITED_MARKER_KEY } from '@/shared/config/constants';
 import { IntlWrapper } from '@/test/renderWithIntl';
+import { stubAppEnvironment } from '@/test/appEnv';
 import type { MealPlanResponse } from '@/features/mealplan/types';
 import type { ApiResult } from '@/shared/api/client';
 
@@ -40,6 +43,7 @@ vi.mock('@/features/store/api', () => ({
   putStoreConnection: vi.fn(),
 }));
 vi.mock('@/features/settings/regionApi', () => ({ putUserRegion: vi.fn() }));
+vi.mock('@/features/notification/api', () => ({ deleteDevice: vi.fn() }));
 
 const fetchMeMock = vi.mocked(fetchMe);
 const logoutMock = vi.mocked(postLogout);
@@ -53,6 +57,7 @@ const regenerateMock = vi.mocked(regenerateMealPlan);
 const storesMock = vi.mocked(fetchStoreConnections);
 const putStoreMock = vi.mocked(putStoreConnection);
 const regionMock = vi.mocked(putUserRegion);
+const deleteDeviceMock = vi.mocked(deleteDevice);
 
 function ok<T>(data: T, status = 200): ApiResult<T> {
   return { ok: true, status, data };
@@ -190,13 +195,28 @@ describe('useSettings 조회 분기 (ui-design 9장)', () => {
     expect(result.current.profile.known).toBe(false);
   });
 
-  it('budget 404 + latest 있음 → latest 요약 금액으로 폴백 (기존 폴백 유지)', async () => {
+  it('budget 404 + latest 있음 → 식단 안분액을 월 예산으로 사용하지 않음', async () => {
     seedHappyPath();
     budgetPlanGetMock.mockResolvedValue(err(404, 'BUDGET_PLAN_NOT_FOUND'));
     const { result } = await renderReady();
 
-    expect(result.current.budget).toEqual({ amount: '700000.00', currency: 'KRW' });
+    expect(result.current.budget).toBeNull();
+    expect(result.current.planId).toBe('plan-1');
     expect(result.current.profile.known).toBe(false);
+  });
+
+  it('reload 중 budget 404 → 이전 월 예산 초기화, 식단 재생성 대상 유지', async () => {
+    seedHappyPath();
+    const { result } = await renderReady();
+    expect(result.current.budget).toEqual(BUDGET_PLAN_DETAIL.budget);
+
+    budgetPlanGetMock.mockResolvedValue(err(404, 'BUDGET_PLAN_NOT_FOUND'));
+    await act(async () => result.current.reload());
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    expect(result.current.budget).toBeNull();
+    expect(result.current.profile.known).toBe(false);
+    expect(result.current.planId).toBe('plan-1');
   });
 
   it('budget 5xx → error', async () => {
@@ -325,10 +345,9 @@ describe('useSettings 저장 동작 (FR-402)', () => {
     });
   });
 
-  it('savePreference — 예산 현재값이 없으면(404) 인원 기반 권장값 폴백 (CWE-20 범위 준수)', async () => {
+  it('savePreference — 예산 404이면 기존 식단이 있어도 인원 기반 월 권장값 사용', async () => {
     seedHappyPath();
     budgetPlanGetMock.mockResolvedValue(err(404, 'BUDGET_PLAN_NOT_FOUND'));
-    latestMock.mockResolvedValue(err(404, 'MEALPLAN_NOT_FOUND'));
     putBudgetMock.mockResolvedValue(
       ok({
         id: 'b1',
@@ -513,6 +532,119 @@ describe('useSettings 재생성·로그아웃 (FR-401/403)', () => {
       outcome = await result.current.regenerate();
     });
     expect(outcome).toBe('failed');
+  });
+
+  it('재생성 409 MEALPLAN_REGENERATE_EMPTY → 기존 생성 폴백으로 신규 POST 전환 (api-spec 3-5 v1.5.1)', async () => {
+    seedHappyPath();
+    regenerateMock.mockResolvedValueOnce(err(409, 'MEALPLAN_REGENERATE_EMPTY'));
+    createMock.mockResolvedValue(ok(PLAN, 201));
+    const { result } = await renderReady();
+
+    let outcome: string | null = null;
+    await act(async () => {
+      outcome = await result.current.regenerate();
+    });
+    expect(outcome).toBe('ok');
+    expect(regenerateMock).toHaveBeenCalledWith('plan-1');
+    // 신규 생성 — 프로필 선호 라벨(일식)로 POST /mealplans (latest 없음 폴백과 동일 경로)
+    expect(createMock).toHaveBeenCalledWith({
+      days: 7,
+      mealsPerDay: 3,
+      allergies: [],
+      preferences: ['일식'],
+    });
+    expect(result.current.generating).toBe(false);
+  });
+
+  it('재생성 409 MEALPLAN_REGENERATE_EMPTY 후 신규 생성도 실패하면 failed', async () => {
+    seedHappyPath();
+    regenerateMock.mockResolvedValueOnce(err(409, 'MEALPLAN_REGENERATE_EMPTY'));
+    createMock.mockResolvedValueOnce(err(500, 'UNKNOWN'));
+    const { result } = await renderReady();
+
+    let outcome: string | null = null;
+    await act(async () => {
+      outcome = await result.current.regenerate();
+    });
+    expect(outcome).toBe('failed');
+  });
+
+  it('재생성 409 MEALPLAN_GENERATING → ok (홈에서 진행 중 폴링 합류, ui-design 12장)', async () => {
+    seedHappyPath();
+    regenerateMock.mockResolvedValueOnce(err(409, 'MEALPLAN_GENERATING'));
+    const { result } = await renderReady();
+
+    let outcome: string | null = null;
+    await act(async () => {
+      outcome = await result.current.regenerate();
+    });
+    expect(outcome).toBe('ok');
+  });
+
+  it('앱 내 로그아웃 → DELETE /notifications/devices/{token} 선행 후 POST logout (ui-design 12장)', async () => {
+    seedHappyPath();
+    logoutMock.mockResolvedValue(ok(undefined, 204));
+    deleteDeviceMock.mockResolvedValue(ok(undefined, 204));
+    const app = stubAppEnvironment();
+    useBridgeStore.setState({ deviceToken: 'ExponentPushToken[abc]' });
+    try {
+      const { result } = await renderReady();
+      let done = false;
+      await act(async () => {
+        done = await result.current.logout();
+      });
+      expect(done).toBe(true);
+      expect(deleteDeviceMock).toHaveBeenCalledWith('ExponentPushToken[abc]');
+      // 토큰 해제가 로그아웃보다 먼저 (선행)
+      const deleteOrder = deleteDeviceMock.mock.invocationCallOrder[0] ?? 0;
+      const logoutOrder = logoutMock.mock.invocationCallOrder[0] ?? 0;
+      expect(deleteOrder).toBeLessThan(logoutOrder);
+    } finally {
+      useBridgeStore.getState().reset();
+      app.restore();
+    }
+  });
+
+  it('앱 내 토큰 해제 실패해도 로그아웃은 진행한다 / 토큰 없으면 DELETE 생략', async () => {
+    seedHappyPath();
+    logoutMock.mockResolvedValue(ok(undefined, 204));
+    deleteDeviceMock.mockResolvedValue(err(500, 'UNKNOWN'));
+    const app = stubAppEnvironment();
+    useBridgeStore.setState({ deviceToken: 'ExponentPushToken[abc]' });
+    try {
+      const { result } = await renderReady();
+      let done = false;
+      await act(async () => {
+        done = await result.current.logout();
+      });
+      expect(done).toBe(true);
+
+      // 토큰 미보유 — DELETE 생략
+      deleteDeviceMock.mockClear();
+      useBridgeStore.getState().reset();
+      await act(async () => {
+        await result.current.logout();
+      });
+      expect(deleteDeviceMock).not.toHaveBeenCalled();
+    } finally {
+      useBridgeStore.getState().reset();
+      app.restore();
+    }
+  });
+
+  it('웹(브라우저) 로그아웃은 토큰 해제 없이 진행한다', async () => {
+    seedHappyPath();
+    logoutMock.mockResolvedValue(ok(undefined, 204));
+    useBridgeStore.setState({ deviceToken: 'ExponentPushToken[abc]' });
+    try {
+      const { result } = await renderReady();
+      await act(async () => {
+        await result.current.logout();
+      });
+      expect(deleteDeviceMock).not.toHaveBeenCalled();
+    } finally {
+      useBridgeStore.getState().reset();
+    }
   });
 
   it('로그아웃 204 → visited 마커 기록 + true (FR-401)', async () => {

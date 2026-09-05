@@ -56,7 +56,8 @@ def decode_access_token(token: str) -> dict:
 # ---------- OAuth state ----------
 
 
-def create_state_token(provider: str, next_path: str) -> str:
+def create_state_token(provider: str, next_path: str, client: str = "web") -> str:
+    """client(web|app) 를 state 서명에 포함 — 콜백 분기 위조 차단 (CWE-352, v1.5)."""
     settings = get_settings()
     now = utcnow()
     claims = {
@@ -64,14 +65,15 @@ def create_state_token(provider: str, next_path: str) -> str:
         "nonce": secrets.token_urlsafe(16),
         "next": next_path,
         "provider": provider,
+        "client": client,
         "iat": now,
         "exp": now + timedelta(minutes=settings.oauth_state_expire_minutes),
     }
     return jwt.encode(claims, settings.jwt_secret, algorithm=settings.jwt_alg)
 
 
-def decode_state_token(token: str, provider: str) -> str:
-    """state 검증 후 next 상대경로 반환. 실패 시 InvalidStateError."""
+def decode_state_token(token: str, provider: str) -> tuple[str, str]:
+    """state 검증 후 (next 상대경로, client) 반환. 실패 시 InvalidStateError."""
     settings = get_settings()
     try:
         claims = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_alg])
@@ -79,7 +81,10 @@ def decode_state_token(token: str, provider: str) -> str:
         raise InvalidStateError("state signature/expiry validation failed") from exc
     if claims.get("purpose") != _STATE_PURPOSE or claims.get("provider") != provider:
         raise InvalidStateError("state purpose/provider mismatch")
-    return sanitize_next_path(str(claims.get("next", "/")))
+    client = claims.get("client", "web")
+    if client not in ("web", "app"):
+        client = "web"
+    return sanitize_next_path(str(claims.get("next", "/"))), client
 
 
 def sanitize_next_path(next_path: str) -> str:
@@ -105,6 +110,19 @@ def generate_refresh_token() -> str:
 
 def hash_refresh_token(raw: str) -> str:
     """SHA-256 hex(64자) — DB 에는 해시만 저장."""
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+# ---------- 앱 로그인 원타임 코드 (v1.5, security-design.md 5-4) ----------
+
+
+def generate_app_login_code() -> str:
+    """256bit 랜덤 원타임 코드. 원문은 딥링크로만 전달, DB 저장 금지 (CWE-598)."""
+    return secrets.token_urlsafe(32)
+
+
+def hash_app_login_code(raw: str) -> str:
+    """SHA-256 hex(64자) — DB 에는 해시만 저장 (refresh_tokens 와 동일 원칙)."""
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 

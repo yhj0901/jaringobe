@@ -14,6 +14,10 @@ RUN uv pip install --system .
 COPY alembic.ini ./
 COPY alembic ./alembic
 
+# 진입점 — DB 대기 → alembic upgrade head → uvicorn($PORT)
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

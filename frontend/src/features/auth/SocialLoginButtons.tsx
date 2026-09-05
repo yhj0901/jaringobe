@@ -4,8 +4,10 @@ import { useLocale, useTranslations } from 'next-intl';
 import {
   buildAuthorizeUrl,
   providerOrder,
+  sanitizeNextPath,
   type SocialProvider,
 } from '@/features/auth/authorizeUrl';
+import { isApp, sendToApp, BRIDGE_VERSION } from '@/shared/bridge';
 
 interface SocialLoginButtonsProps {
   next?: string;
@@ -57,6 +59,15 @@ export function SocialLoginButtons({ next }: SocialLoginButtonsProps) {
   const t = useTranslations('auth.login');
 
   const handleClick = (provider: SocialProvider) => {
+    // 앱 내: 웹뷰 OAuth 차단 정책 대응 — 커스텀 탭/시스템 브라우저로 위임, 3사 공통 (ui-design 12장)
+    if (isApp()) {
+      sendToApp({
+        v: BRIDGE_VERSION,
+        type: 'LOGIN_PROVIDER',
+        payload: { provider, next: sanitizeNextPath(next) },
+      });
+      return;
+    }
     // OAuth 는 브라우저 내비게이션 전용 (api-spec 1-1) — fetch 아님
     window.location.href = buildAuthorizeUrl(provider, next);
   };

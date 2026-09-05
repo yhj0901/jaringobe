@@ -1,4 +1,4 @@
-"""fridge 도메인 SQLAlchemy 모델 — 마이그레이션 0003과 1:1 일치.
+"""fridge 도메인 SQLAlchemy 모델 — 0003 + v1.8 delivery 연결 계약.
 
 가상 냉장고 재고. user_id 기준. UUID PK, timestamptz(UTC).
 """
@@ -28,7 +28,14 @@ def _utcnow() -> datetime:
 
 class FridgeItem(Base):
     __tablename__ = "fridge_items"
-    __table_args__ = (Index("ix_fridge_items_user_expires", "user_id", "expires_at"),)
+    __table_args__ = (
+        Index("ix_fridge_items_user_expires", "user_id", "expires_at"),
+        Index(
+            "ix_fridge_items_order_id",
+            "order_id",
+            postgresql_where=text("order_id IS NOT NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
@@ -36,6 +43,9 @@ class FridgeItem(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    order_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True
     )
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Numeric(10, 3), nullable=False)

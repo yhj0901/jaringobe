@@ -231,3 +231,6 @@ __marimo__/
 .streamlit/secrets.toml
 .vercel
 .env*.local
+
+# DB 덤프 산출물 (이관용 — 커밋 금지)
+backups/

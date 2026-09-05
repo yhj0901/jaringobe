@@ -1,5 +1,8 @@
-# api.jaringobe.cloud — 자동 TLS(Let's Encrypt) + 백엔드 리버스 프록시
-# 80/443 인바운드 개방 필요 (ACME 발급·갱신 포함)
-api.jaringobe.cloud {
+# 리버스 프록시 + 자동 TLS(Let's Encrypt)
+#
+# API_DOMAIN 환경변수로 도메인을 주입한다 (docker/docker-compose.server.yml → .env).
+#   - 도메인 지정 시  : API_DOMAIN=api.example.com  → 자동 HTTPS (80/443 인바운드 개방 필요)
+#   - 도메인 없을 때  : 미지정 → :80 으로 HTTP 서비스 (IP 접속·내부망·임시 검증용)
+{$API_DOMAIN::80} {
 	reverse_proxy backend:8000
 }

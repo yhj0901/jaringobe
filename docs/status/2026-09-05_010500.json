@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-09-05T01:05:00+09:00",
+  "session_topic": "QA 재판정 — 주간 자동 사이클(루프 완결) GATE 4 (수정 병합 341995c 이후)",
+  "command": "/QA시작 재판정 (Orca 디스패치 task_c1d4ee375ca2)",
+  "agent": "agents/qa.md",
+  "status": "GATE 4 통과 — Critical 0 / High 0 / Medium 0 / Low 5(미처리 4 + 신규 관찰 1). 문서 4종·하네스 갱신, 커밋 대기",
+  "tasks": [
+    {"id": 1, "subject": "1차 QA 산출물·수정 diff 정독", "status": "completed"},
+    {"id": 2, "subject": "전용 DB jaringobe_qa2(+_unit) 생성·0012 마이그레이션", "status": "completed"},
+    {"id": 3, "subject": "회귀 기준선: 백엔드 375/94%, 프론트 509/94.61%, tsc, i18n 567/567", "status": "completed"},
+    {"id": 4, "subject": "하네스 재실행 S1~S8 101/102(S1-08b=BUG-006), HTTP 52/53(H-20=BUG-007), LIVE-01 PASS", "status": "completed"},
+    {"id": 5, "subject": "재판정 하네스 qa_rejudge.py R-01~09 20/21 (R-04b → BUG-012 Low 신규)", "status": "completed"},
+    {"id": 6, "subject": "S8-04 수정 워커 주장 검증 → 하네스 문제 확정·수정 / BUG-006 DDL 필요 확인", "status": "completed"},
+    {"id": 7, "subject": "docs/테스트 4문서 + harness/README 갱신, 커밋(푸시 금지)", "status": "in_progress"}
+  ],
+  "artifacts": [
+    "docs/테스트/버그리포트.md", "docs/테스트/시나리오테스트.md", "docs/테스트/테스트계획.md", "docs/테스트/보안테스트.md",
+    "docs/테스트/harness/README.md", "docs/테스트/harness/qa_rejudge.py", "docs/테스트/harness/qa_loop.py", "docs/테스트/harness/http_tests.py"
+  ],
+  "key_findings": {
+    "gate4": "통과. High 2(BUG-001/002)·Medium 2(BUG-003/004)·Low 3(005/008/009) 전부 [수정 확인]. 1차 PASS 항목 퇴행 없음",
+    "bug001": "차단이 확정·eta·inbound 이전. 재계산 스냅샷 기준 게이트 ④⑤, 역방향(초안 초과·재계산 이하)은 확정. 락 사용자 초과 confirmed 0건",
+    "bug002": "DB 쿼리 이후 실패 주입에서 1/5/15분 백오프·4회차 폴백 동작. 매 tick 재시도 사라짐",
+    "s8_04": "수정 워커 주장 사실 — eta 도달 후 정상 inbound 로 delivered. 하네스 기대값 수정, 순수 재현 R-05 추가",
+    "unresolved_low": ["BUG-006 DDL 필요(order_items.from_fridge) → 인프라 후속 R-9", "BUG-007 리미터 공유 버킷", "BUG-010 타임존 UI", "BUG-011 로거(운영 전 필수 R-7)"],
+    "new": "BUG-012 Low — D-1 자동확정 재계산 시세 장애 시 매 tick 재시도(백오프 없음, 회귀 아님, 설계 결정 필요)",
+    "blocked": ["실 소셜 로그인", "실 LLM 되먹임", "실 네이버 시세", "Expo 실발송", "스테이징 E2E"]
+  },
+  "recommended_actions": "문서 에이전트 인계(/문서시작). 후속: R-9(0013 from_fridge), R-10(BUG-012 설계 결정), R-11(리미터 분리), R-7(로거, 운영 전 필수), R-8(실키 후 BLOCKED 재검증)",
+  "pending_user_input": "없음 — 코디네이터 판정 대기"
+}

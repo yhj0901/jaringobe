@@ -14,9 +14,14 @@ import { budgetRange } from '@/features/household/onboardingLogic';
 import { createMealPlan, fetchLatestMealPlan, regenerateMealPlan } from '@/features/mealplan/api';
 import {
   MEALPLAN_DAYS_DEFAULT,
+  MEALPLAN_GENERATING_CODE,
   MEALPLAN_MEALS_PER_DAY,
   MEALPLAN_NOT_FOUND_CODE,
+  MEALPLAN_REGENERATE_EMPTY_CODE,
 } from '@/features/mealplan/constants';
+import { deleteDevice } from '@/features/notification/api';
+import { isApp } from '@/shared/bridge';
+import { useBridgeStore } from '@/shared/bridge/store';
 import { fetchStoreConnections, putStoreConnection } from '@/features/store/api';
 import { storeIdsForCountry } from '@/features/store/constants';
 import { putUserRegion } from '@/features/settings/regionApi';
@@ -61,7 +66,7 @@ export interface SettingsState {
   user: UserMeResponse | null;
   /** GET households/me — 404 HOUSEHOLD_NOT_FOUND 면 null (설정 전) */
   members: HouseholdMemberInput[] | null;
-  /** 예산 현재값 — GET budget/plans 우선, 404 면 mealplans/latest 요약 폴백 (없으면 null) */
+  /** 월 예산 현재값 — GET budget/plans, 404 면 null (식단 요약은 기간 안분액) */
   budget: Money | null;
   /** 최신 식단 id — 재생성 대상 (없으면 생성 폴백, FR-403) */
   planId: string | null;
@@ -161,9 +166,7 @@ export function useSettings(): SettingsState {
     }
 
     // 예산안 현재값 (api-spec 2-2) — 요약·편집 초기값·부분 수정 병합 베이스 (FR-402)
-    let budgetKnown = false;
     if (budgetPlan.ok) {
-      budgetKnown = true;
       setBudget(budgetPlan.data.budget);
       applyProfile({
         direction: budgetPlan.data.mealDirection,
@@ -172,6 +175,7 @@ export function useSettings(): SettingsState {
         known: true,
       });
     } else if (budgetPlan.status === 404) {
+      setBudget(null); // 식단 안분액을 월 예산으로 사용하지 않으며 reload 시에도 초기화한다.
       applyProfile(INITIAL_PROFILE); // BUDGET_PLAN_NOT_FOUND — 기존 폴백 유지 (reload 시 초기화)
     } else {
       setStatus('error');
@@ -181,11 +185,9 @@ export function useSettings(): SettingsState {
     if (latest.ok) {
       planIdRef.current = latest.data.id;
       setPlanId(latest.data.id);
-      if (!budgetKnown) setBudget(latest.data.budgetSummary.budget);
     } else if (latest.status === 404 && latest.code === MEALPLAN_NOT_FOUND_CODE) {
       planIdRef.current = null;
       setPlanId(null);
-      if (!budgetKnown) setBudget(null);
     } else {
       setStatus('error');
       return;
@@ -302,23 +304,38 @@ export function useSettings(): SettingsState {
   const regenerate = useCallback(async (): Promise<RegenerateOutcome> => {
     setGenerating(true);
     const currentPlanId = planIdRef.current;
-    const result =
-      currentPlanId !== null
-        ? await regenerateMealPlan(currentPlanId)
-        : await createMealPlan({
-            days: MEALPLAN_DAYS_DEFAULT,
-            mealsPerDay: MEALPLAN_MEALS_PER_DAY,
-            allergies: [],
-            preferences: profileRef.current.cuisines.map((cuisine) => tCuisine(cuisine)),
-          });
+    const createNew = () =>
+      createMealPlan({
+        days: MEALPLAN_DAYS_DEFAULT,
+        mealsPerDay: MEALPLAN_MEALS_PER_DAY,
+        allergies: [],
+        preferences: profileRef.current.cuisines.map((cuisine) => tCuisine(cuisine)),
+      });
+    let result =
+      currentPlanId !== null ? await regenerateMealPlan(currentPlanId) : await createNew();
+    if (
+      !result.ok &&
+      result.status === 409 &&
+      result.code === MEALPLAN_REGENERATE_EMPTY_CODE
+    ) {
+      // v1.5.1: meals 0 failed 플랜 — 원 요청 파라미터 소실로 재생성 불가 → 기존 생성 폴백으로 신규 POST (api-spec 3-5, BUG-002)
+      result = await createNew();
+    }
     setGenerating(false);
     if (result.ok) return 'ok';
+    // 이미 생성 진행 중(409) — 홈에서 진행 중 플랜 폴링에 합류 (ui-design 12장)
+    if (result.status === 409 && result.code === MEALPLAN_GENERATING_CODE) return 'ok';
     return result.status === 429 ? 'rate-limited' : 'failed';
   }, [tCuisine]);
 
   /** FR-401: 로그아웃 — 204 성공 (401 은 이미 만료된 세션이므로 성공 취급) + visited 마커 */
   const logout = useCallback(async () => {
     setLoggingOut(true);
+    // 앱 내 한정: 이 기기 푸시 토큰 해제 선행 — 실패해도 로그아웃은 진행 (ui-design 12장, FR-003)
+    if (isApp()) {
+      const deviceToken = useBridgeStore.getState().deviceToken;
+      if (deviceToken !== null) await deleteDevice(deviceToken);
+    }
     const result = await postLogout();
     setLoggingOut(false);
     const success = result.ok || result.status === 401;

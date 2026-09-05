@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-07-14T18:56:50+09:00",
+  "session_topic": "앱 웹뷰 래핑 + 푸시 알림 (식단 생성 완료 알림, 식사 리마인더) 기획",
+  "command": "/기획시작 앱 웹뷰 래핑 + 푸시 알림",
+  "agent": "agents/planning.md",
+  "status": "기획서 작성 완료 — GATE 1 승인 대기",
+  "tasks": [
+    {"id": 1, "subject": "git 동기화 (behind 4 → ff pull)", "status": "completed"},
+    {"id": 2, "subject": "6-에이전트 토론 4라운드 및 합의", "status": "completed"},
+    {"id": 3, "subject": "docs/기획/앱-웹뷰-푸시알림.md 작성 + 옵시디언 미러", "status": "completed"},
+    {"id": 4, "subject": "GATE 1 승인 → /설계시작 인계", "status": "pending"}
+  ],
+  "artifacts": ["docs/기획/앱-웹뷰-푸시알림.md"],
+  "key_findings": "스택 확정: mobile/ = Expo RN + react-native-webview + Expo Push Service (Capacitor 기각). 핵심 전제: POST /mealplans 동기→비동기(202+status) 전환, 웹 폴링 병행. 구글 OAuth 웹뷰 차단 → 커스텀 탭 대응 필수. 애플 로그인 P1 은 iOS 출시 전 필수 → Android 선출시 허용. DB 신규 3테이블(device_tokens/notification_settings/notification_logs)+mealplans.status 컬럼, 모두 additive. 리마인더는 당일 끼니 식단 존재+미완료 시에만 발송. Apple 4.2 리젝 Plan B = 네이티브 탭바.",
+  "recommended_actions": "GATE 1 승인 후 /설계시작 — 설계 확정 항목: 브리지 프로토콜 상세, 비동기 실행 방식(BackgroundTasks vs 큐), 카카오 웹뷰 정책 재확인, notification 도메인 API 스펙, next_send_at 스케줄러 설계. CLAUDE.md 에 mobile/ 관할(UI 프론트엔드) 반영 필요",
+  "pending_user_input": "GATE 1 승인 (\"기획 승인\" 또는 \"설계 시작해\")"
+}

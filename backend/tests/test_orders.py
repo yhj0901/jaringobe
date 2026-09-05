@@ -3,7 +3,7 @@
 conftest 의 client/login 픽스처 사용. 식단은 mock LLM 대신 DB 시드로 재료를 고정한다.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID
 
@@ -11,7 +11,9 @@ import pytest
 from sqlalchemy import select
 
 from app.core.security import utcnow
+from app.domains.auth.models import User
 from app.domains.mealplan.models import Meal, MealIngredient, MealPlan
+from app.domains.order import service as order_service
 from app.domains.order.models import Order, OrderItem
 from tests.conftest import login
 
@@ -43,8 +45,16 @@ async def _setup(client, respx_mock):
     return me, res.json()["id"]
 
 
-async def _seed_plan(db, user_id, budget_id, meals, region="KR", currency="KRW") -> MealPlan:
-    start = utcnow().date()
+async def _seed_plan(
+    db,
+    user_id,
+    budget_id,
+    meals,
+    region="KR",
+    currency="KRW",
+    start=None,
+) -> MealPlan:
+    start = start or utcnow().date()
     plan = MealPlan(
         user_id=UUID(str(user_id)),
         budget_plan_id=UUID(str(budget_id)),
@@ -88,6 +98,50 @@ async def test_preview_404_without_mealplan(client, respx_mock):
     assert res.json()["detail"]["code"] == "MEALPLAN_NOT_FOUND"
 
 
+async def test_preview_without_saved_draft_is_rate_limited_without_refresh(
+    client, respx_mock
+):
+    await login(client, respx_mock)
+    for _ in range(3):
+        response = await client.get("/api/v1/orders/preview")
+        assert response.status_code == 404
+    limited = await client.get("/api/v1/orders/preview")
+    assert limited.status_code == 429
+    assert limited.json()["detail"]["code"] == "RATE_LIMITED"
+
+
+async def test_preview_saved_draft_reads_do_not_consume_expensive_rate_limit(
+    client, db, respx_mock
+):
+    me, budget_id = await _setup(client, respx_mock)
+    cycle_start = date.fromisoformat((await client.get("/api/v1/cycle")).json()["cycleStart"])
+    await _seed_plan(
+        db,
+        me["id"],
+        budget_id,
+        [{"ingredients": [{"name": "계란", "quantity": "4", "unit": "ea"}]}],
+        start=cycle_start,
+    )
+    user = await db.get(User, UUID(me["id"]))
+    assert user is not None
+    draft = await order_service.create_draft(
+        db,
+        user,
+        cycle_start=cycle_start,
+        frequency="weekly",
+        auto_confirm=True,
+        grace_hours=24,
+        force_unmatched=True,
+    )
+    assert draft is not None
+    await db.commit()
+
+    for _ in range(6):
+        response = await client.get("/api/v1/orders/preview")
+        assert response.status_code == 200, response.text
+        assert response.json()["orderId"] == str(draft.id)
+
+
 async def test_preview_splits_needed_covered_trim_case(client, db, respx_mock):
     """이름 strip+lower + 단위 일치로 냉장고 감산. toBuy==0 은 covered."""
     me, budget_id = await _setup(client, respx_mock)
@@ -124,6 +178,10 @@ async def test_preview_splits_needed_covered_trim_case(client, db, respx_mock):
     assert body["estimatedTotal"]["amount"] == "0.00"
     assert body["estimatedTotal"]["currency"] == "KRW"
     assert all(item["matched"] is False for item in body["cart"]["items"])
+    assert body["notes"] == ["PRICE_LOOKUP_UNAVAILABLE"]
+    assert body["cart"]["notes"] == ["PRICE_LOOKUP_UNAVAILABLE"]
+    assert "NAVER_CLIENT" not in str(body)
+    assert ".env" not in str(body)
 
 
 async def test_preview_excludes_completed_meals(client, db, respx_mock):
@@ -173,8 +231,8 @@ async def test_post_store_not_supported_404(client, respx_mock):
     assert res.json()["detail"]["code"] == "STORE_NOT_SUPPORTED"
 
 
-async def test_post_success_inbounds_needed_only(client, db, respx_mock):
-    """확정 → 주문 스냅샷 + needed 만 fridge inbound(source=order). covered 는 inbound 금지."""
+async def test_post_defers_inbound_until_delivery_and_is_idempotent(client, db, respx_mock):
+    """확정 시 등록하지 않고 배송 확인 뒤 needed 만 delivery 로 1회 등록한다."""
     me, budget_id = await _setup(client, respx_mock)
     await _seed_plan(
         db, me["id"], budget_id,
@@ -198,6 +256,9 @@ async def test_post_success_inbounds_needed_only(client, db, respx_mock):
     assert body["frequency"] == "weekly"
     assert body["simulation"] is True
     assert body["confirmedAt"].endswith("Z")
+    assert body["deliveryEta"].endswith("Z")
+    assert body["inboundAt"] is None
+    assert body["deliveryState"] == "pending"
     assert body["nextSuggestedAt"].endswith("Z")
     assert body["estimatedTotal"]["amount"] == "0.00"
     assert body["estimatedTotal"]["currency"] == "KRW"
@@ -217,16 +278,31 @@ async def test_post_success_inbounds_needed_only(client, db, respx_mock):
     item_rows = (await db.scalars(select(OrderItem))).all()
     assert {r.line_type for r in item_rows} == {"needed", "covered"}
 
+    before_delivery = (await client.get("/api/v1/fridge")).json()
+    assert not [i for i in before_delivery if i["source"] == "delivery"]
+
+    delivered = await client.post(
+        f"/api/v1/orders/{body['id']}/delivery", json={"received": True}
+    )
+    assert delivered.status_code == 200, delivered.text
+    assert delivered.json()["deliveryState"] == "delivered"
+    assert delivered.json()["inboundAt"].endswith("Z")
+    # 같은 보정 재시도는 compare-and-set no-op 이어야 한다.
+    repeated = await client.post(
+        f"/api/v1/orders/{body['id']}/delivery", json={"received": True}
+    )
+    assert repeated.status_code == 200, repeated.text
+
     fridge = (await client.get("/api/v1/fridge")).json()
-    order_rows = [i for i in fridge if i["source"] == "order"]
-    assert len(order_rows) == 1
-    assert order_rows[0]["name"] == "계란"
-    assert order_rows[0]["quantity"] == "10"
-    assert order_rows[0]["expiresAt"] is None
+    delivery_rows = [i for i in fridge if i["source"] == "delivery"]
+    assert len(delivery_rows) == 1
+    assert delivery_rows[0]["name"] == "계란"
+    assert delivery_rows[0]["quantity"] == "10"
+    assert delivery_rows[0]["expiresAt"] is None
     onion_total = sum(Decimal(i["quantity"]) for i in fridge if i["name"] == "양파")
     assert onion_total == Decimal("3")
     egg_total = sum(Decimal(i["quantity"]) for i in fridge if i["name"] == "계란")
-    assert egg_total == Decimal("12")  # 기존 2 + inbound 10
+    assert egg_total == Decimal("12")  # 기존 2 + delivery inbound 10
 
 
 async def test_latest_returns_confirmed_order(client, db, respx_mock):
