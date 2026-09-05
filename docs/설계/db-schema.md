@@ -92,6 +92,7 @@ orders 1 ──── N order_items        (needed/covered 라인 스냅샷)
 | `ingredient_price_refs` | 지역별 기준가 테이블. `ix_price_region_name(region, name)` |
 
 - 상세 명세는 리비전 파일(`0002_mealplan.py`)과 models.py 가 원본 — 본 문서는 요약 유지
+- `meal_plans.period_end`는 주간·월간 모두 **종료일 제외**이며, `[period_start, period_end)`의 일수는 두 날짜의 차이로 계산한다.
 
 ## 2-6. household + budget 확장 (리비전 0004 — GATE 3 대상)
 

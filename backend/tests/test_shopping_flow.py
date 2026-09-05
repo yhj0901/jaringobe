@@ -104,11 +104,11 @@ async def test_monthly_plan_proration_and_first_week(client, respx_mock):
     assert b["proratedBudget"]["amount"] == "354838.71"
     assert b["monthlyBudget"]["amount"] == "500000.00"
     assert b["days"] == 22
-    assert b["periodStart"] == "2026-07-10" and b["periodEnd"] == "2026-07-31"
+    assert b["periodStart"] == "2026-07-10" and b["periodEnd"] == "2026-08-01"
 
     # 첫 주기(7일)만 주문 계산
     fo = b["firstOrder"]
     assert fo["days"] == 7
-    assert fo["periodStart"] == "2026-07-10" and fo["periodEnd"] == "2026-07-16"
+    assert fo["periodStart"] == "2026-07-10" and fo["periodEnd"] == "2026-07-17"
     assert len(fo["needed"]) > 0
     assert "cart" in fo

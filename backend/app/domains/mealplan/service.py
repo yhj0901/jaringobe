@@ -1,6 +1,6 @@
 """mealplan 오케스트레이션 — 생성(LLM)→알레르기 재검증→기준가 비용→예산 검산·재시도→저장.
 
-예산 기준: 유저의 budget_plans.amount (유저당 1개). 초과 시 status=over_budget 투명 노출.
+예산 기준: 월 예산을 해당 식단 날짜들에 안분. 초과 시 status=over_budget 투명 노출.
 v1.5: 생성/재생성은 202 비동기 — 요청 시 processing 행 생성, BackgroundTasks 로 실제 생성.
 """
 
@@ -118,7 +118,7 @@ async def _household_desc(db: AsyncSession, user_id) -> str:
 async def _generate_within_budget(
     db: AsyncSession, budget: BudgetPlan, region: str,
     days: int, meals_per_day: int, allergies: list[str], preferences: list[str],
-    limit_amount: Decimal | None = None,
+    *, limit_amount: Decimal,
 ) -> tuple[list[dict], str, Decimal, list[str]]:
     from app.domains.mealplan.llm import get_llm
 
@@ -127,8 +127,8 @@ async def _generate_within_budget(
 
     currency = budget.currency
     direction = MEAL_DIRECTION_HINT.get(budget.meal_direction, "balanced")
-    # 프로레이트 예산이 주어지면 그 한도로 검산(월예산 전액 아님)
-    limit = limit_amount if limit_amount is not None else budget.amount
+    # 호출자가 식단 날짜에 맞춰 안분한 한도를 반드시 전달한다.
+    limit = limit_amount
     notes: list[str] = []
     budget_hint = ""
     allergy_hint = ""
@@ -218,23 +218,30 @@ def _serialize(plan: MealPlan, budget: BudgetPlan | None, notes: list[str]) -> M
         )
     assert budget is not None
     planned = plan.total_cost
-    summary = BudgetSummary(
-        budget=MoneyOut(amount=budget.amount, currency=plan.currency),
-        planned_cost=MoneyOut(amount=planned, currency=plan.currency),
-        remaining=MoneyOut(amount=budget.amount - planned, currency=plan.currency),
-        within_budget=plan.status == "ready",
+    days = max(1, (plan.period_end - plan.period_start).days)
+    limit = budget_service.prorate(
+        budget.amount,
+        (plan.period_start + timedelta(days=offset) for offset in range(days)),
     )
-    if plan.status == "over_budget" and not notes:
+    within_budget = planned <= limit
+    summary = BudgetSummary(
+        budget=MoneyOut(amount=limit, currency=plan.currency),
+        planned_cost=MoneyOut(amount=planned, currency=plan.currency),
+        remaining=MoneyOut(amount=limit - planned, currency=plan.currency),
+        within_budget=within_budget,
+    )
+    if not within_budget and not notes:
         # 생성이 202 비동기로 바뀌어 초과 사유는 GET 폴링 응답으로도 노출 (FR-206)
         notes = [
-            f"⚠️ 예산 초과: {planned} {plan.currency} > {budget.amount} {plan.currency}"
+            f"⚠️ 예산 초과: {planned} {plan.currency} > {limit} {plan.currency}"
         ]
     meals = [
         _meal_out(m)
         for m in sorted(plan.meals, key=lambda x: (x.plan_date, str(x.id)))
     ]
     return MealPlanResponse(
-        id=plan.id, status=plan.status, region=plan.region, currency=plan.currency,
+        id=plan.id, status="ready" if within_budget else "over_budget",
+        region=plan.region, currency=plan.currency,
         period_start=plan.period_start, period_end=plan.period_end,
         budget_summary=summary, meals=meals, notes=notes,
     )
@@ -332,8 +339,14 @@ async def run_meal_plan_generation(
             budget = await db.get(BudgetPlan, plan.budget_plan_id)
             if budget is None:
                 raise RuntimeError("budget plan missing for meal plan generation")
+            # 식단 원가에는 해당 날짜 몫만 배정한다. 누적 주문 여력은 cycle_limit이 검증한다.
+            limit = budget_service.prorate(
+                budget.amount,
+                (plan.period_start + timedelta(days=offset) for offset in range(days)),
+            )
             drafts, status, total, _notes = await _generate_within_budget(
-                db, budget, plan.region, days, meals_per_day, allergies, preferences
+                db, budget, plan.region, days, meals_per_day, allergies, preferences,
+                limit_amount=limit,
             )
             # 재생성 경로 대비 — 기존 끼니 제거 후 새 결과 반영
             for m in list(plan.meals):
@@ -595,7 +608,7 @@ async def build_monthly_plan(
     plan = MealPlan(
         user_id=user.id, budget_plan_id=budget.id, status=status, total_cost=total,
         currency=cur, region=region,
-        period_start=as_of, period_end=as_of + timedelta(days=remaining - 1),
+        period_start=as_of, period_end=as_of + timedelta(days=remaining),
     )
     _apply_drafts(plan, drafts, as_of, remaining, cur)
     db.add(plan)
@@ -624,12 +637,12 @@ async def build_monthly_plan(
     cart = await store_service.build_cart(to_buy, req.mall, req.max_pages)
 
     first_order = FirstCycleOrder(
-        period_start=as_of, period_end=as_of + timedelta(days=first_days - 1),
+        period_start=as_of, period_end=first_end_excl,
         days=first_days, needed=shortfall.items, cart=cart,
     )
     return MonthlyPlanResponse(
         meal_plan_id=plan.id, status=status,
-        period_start=as_of, period_end=as_of + timedelta(days=remaining - 1), days=remaining,
+        period_start=as_of, period_end=plan.period_end, days=remaining,
         monthly_budget=MoneyOut(amount=budget.amount, currency=cur),
         prorated_budget=MoneyOut(amount=prorated, currency=cur),
         prorate_ratio=ratio,

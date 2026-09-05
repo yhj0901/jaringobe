@@ -821,6 +821,7 @@ Access 재발급 + refresh 회전.
 | 인증 / 리미터 | 인증 필요 / `store_user_limiter` **3회/분** (네이버+LLM) |
 | 요청 | `{ "asOf": "2026-09-01", "mealsPerDay": 3, "cycle": "weekly" }` (전부 선택) |
 | 응답 | `201 MonthlyPlanResponse` — 월 식단 + 첫 주기 주문 미리보기 |
+| 기간 경계 | `periodStart` 포함, `periodEnd` **제외**. `firstOrder`에도 동일하게 적용하며 `days = periodEnd - periodStart`. 2026-09-06부터 기존 포함 종료일을 제외 종료일로 변경해 주간·DB 저장·공통 GET 응답과 통일한다. 예: 9/24부터 7일은 `periodEnd: 2026-10-01`이며 마지막 식사일은 9/30이다 |
 
 > 신규 개발은 이 엔드포인트에 의존하지 않는다. 제거 여부는 주간 사이클 안정화 후 재평가한다.
 

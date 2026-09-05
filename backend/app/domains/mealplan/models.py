@@ -49,6 +49,7 @@ class MealPlan(Base):
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
     region: Mapped[str] = mapped_column(CHAR(2), nullable=False)
     period_start: Mapped[date] = mapped_column(Date, nullable=False)
+    # 주간·월간 모두 종료일 제외: [period_start, period_end), 일수는 두 날짜의 차이.
     period_end: Mapped[date] = mapped_column(Date, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, default=_utcnow, server_default=text("now()")
