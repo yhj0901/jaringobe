@@ -130,7 +130,11 @@ async def _generate_within_budget(
     # 호출자가 식단 날짜에 맞춰 안분한 한도를 반드시 전달한다.
     limit = limit_amount
     notes: list[str] = []
-    budget_hint = ""
+    budget_hint = (
+        f"TOTAL PLAN BUDGET: {limit} {currency} for all {days * meals_per_day} meals. "
+        "Keep the full ingredient usage cost within this limit, including ingredients "
+        "already in the fridge; the server handles stock subtraction separately."
+    )
     allergy_hint = ""
     llm_enabled = get_llm().enabled
     best: tuple[list[dict], Decimal] | None = None

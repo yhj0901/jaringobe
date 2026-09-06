@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
+from time import monotonic
 
 from app.core.config import Settings, get_settings
 
@@ -12,6 +14,7 @@ _JSON_FENCE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
 # 합산해 최악 응답을 85초(<프론트 90초)로 보장: 재시도 진입(≤25s 시점) + 호출 상한 60s
 LLM_TIMEOUT_SECONDS = 60.0
 LLM_MAX_RETRIES = 0
+logger = logging.getLogger(__name__)
 
 
 def _extract_json(text: str) -> dict | list:
@@ -44,12 +47,25 @@ class LLMClient:
 
     async def complete_json(self, system: str, user: str, max_tokens: int = 8000) -> dict | list:
         assert self._client is not None
+        started = monotonic()
+        # Sonnet 5는 adaptive thinking/high가 기본이며 추론도 8000 토큰에 포함된다.
+        # 60초 식단 생성 경로에서는 low로 토큰 지출을 제한한다. 미지원 모델에는 보내지 않는다.
+        # 근거: https://platform.claude.com/docs/en/models/sonnet-5/migration-guide
+        request_options: dict = {}
+        if self.settings.llm_model.startswith("claude-sonnet-5"):
+            request_options["output_config"] = {"effort": "low"}
         resp = await self._client.messages.create(
             model=self.settings.llm_model,
             max_tokens=max_tokens,
             system=system,
             messages=[{"role": "user", "content": user}],
+            **request_options,
         )
+        logger.info("mealplan_llm_response", extra={
+            "event": "mealplan_llm_response", "stop_reason": resp.stop_reason,
+            "output_tokens": resp.usage.output_tokens, "max_tokens": max_tokens,
+            "elapsed_seconds": round(monotonic() - started, 3),
+        })
         raw = "".join(b.text for b in resp.content if b.type == "text")
         return _extract_json(raw)
 

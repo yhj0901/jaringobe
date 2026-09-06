@@ -5,11 +5,42 @@
 
 from __future__ import annotations
 
+import json
+import logging
 from decimal import Decimal
+from typing import Literal
 
 from app.domains.mealplan.llm import get_llm
 
 MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack", "supper"]
+logger = logging.getLogger(__name__)
+
+
+class MealDrafts(list[dict]):
+    """리스트 호환 생성 결과에 출처를 실어 재시도/동시 요청 간 혼동을 방지한다."""
+
+    def __init__(self, meals: list[dict], source: Literal["llm", "fallback"]) -> None:
+        super().__init__(meals)
+        self.generation_source = source
+
+
+def _log_fallback(error: Exception) -> None:
+    # SDK 예외의 str/body/traceback에는 요청/응답 본문이 섞일 수 있다.
+    # JSON 파서의 표준 오류 문구만 허용하고 그 외는 타입/상태별 안전한 요약을 쓴다.
+    status = getattr(error, "status_code", None)
+    if isinstance(error, json.JSONDecodeError):
+        message = f"{error.msg} (line {error.lineno}, column {error.colno})"
+    elif isinstance(status, int):
+        message = f"LLM API returned HTTP {status}"
+    elif isinstance(error, TimeoutError) or type(error).__name__ == "APITimeoutError":
+        message = "LLM request timed out"
+    else:
+        message = "LLM generation failed; exception body omitted"
+    logger.warning("mealplan_generation_fallback", extra={
+        "event": "mealplan_generation_fallback", "generation_source": "fallback",
+        "error_type": type(error).__name__, "error_message": message,
+        "http_status": status if isinstance(status, int) else None,
+    })
 
 _RECIPES: dict[str, list[dict]] = {
     "KR": [
@@ -130,10 +161,21 @@ def _prompt(
         lines.append(budget_hint)
     if fridge_hint:
         lines.append(fridge_hint)
+    # 21끼 상세 JSON이 60초 호출 상한을 넘지 않도록 불필요한 출력량을 줄인다.
+    # 식단 다양성/재고 우선순위/필수 재료 수량은 바꾸지 않는다.
     lines.append(
-        'Return JSON: {"meals":[{"day":1,"meal_type":"breakfast","name":"...",'
-        '"steps":"...","time_minutes":20,"difficulty":"easy|normal|hard",'
-        '"ingredients":[{"name":"...","quantity":1,"unit":"g|ml|ea"}]}]}'
+        "OUTPUT SIZE: Use compact JSON without indentation or commentary. "
+        "Keep each steps value to 3 short cooking instructions, at most 80 characters total. "
+        "Use concise dish names. Include all required ingredients and full quantities, "
+        "but omit optional garnishes and explanations."
+    )
+    lines.append(
+        'Return JSON using positional arrays to avoid repeated keys: '
+        '{"meals":[[1,"breakfast","dish name","steps",20,"easy",[["ingredient",1,"g"]]]]}. '
+        'Meal columns: [day,meal_type,name,steps,time_minutes,difficulty,ingredients]. '
+        'Ingredient columns: [name,quantity,unit]. '
+        'difficulty: easy|normal|hard; unit: g|ml|ea. '
+        'Return all requested meals, with no omitted days.'
     )
     return "\n".join(lines)
 
@@ -146,7 +188,11 @@ async def generate_meals(
 ) -> list[dict]:
     llm = get_llm()
     if not llm.enabled:
-        return _mock(region, days, meals_per_day)
+        logger.info("mealplan_generation_fallback", extra={
+            "event": "mealplan_generation_fallback", "generation_source": "fallback",
+            "error_type": "LLMDisabled", "error_message": "LLM is not configured",
+        })
+        return MealDrafts(_mock(region, days, meals_per_day), "fallback")
 
     try:
         data = await llm.complete_json(
@@ -154,14 +200,27 @@ async def generate_meals(
             _prompt(region, household_size, meal_direction, days, meals_per_day,
                     allergies, preferences, budget_hint, household_desc, fridge_hint),
         )
-    except Exception:
+        return _parse_meals(data, days, meals_per_day)
+    except Exception as exc:
         # api-spec v1.1 §3-2: LLM 실패(타임아웃 포함)는 5xx 가 아니라 규칙 기반 폴백 생성
-        return _mock(region, days, meals_per_day)
+        _log_fallback(exc)
+        return MealDrafts(_mock(region, days, meals_per_day), "fallback")
+
+
+def _parse_meals(data: dict | list, days: int, meals_per_day: int) -> MealDrafts:
     meals_raw = data.get("meals", []) if isinstance(data, dict) else data
     drafts: list[dict] = []
     for m in meals_raw:
+        # 전송만 압축한다. 기존 객체 형식도 받아 외부 draft/API 계약을 유지한다.
+        if isinstance(m, list):
+            m = dict(zip(
+                ("day", "meal_type", "name", "steps", "time_minutes", "difficulty", "ingredients"),
+                m, strict=True,
+            ))
         ings = []
         for i in m.get("ingredients", []):
+            if isinstance(i, list):
+                i = dict(zip(("name", "quantity", "unit"), i, strict=True))
             try:
                 qty = Decimal(str(i.get("quantity", "1")))
             except Exception:
@@ -195,4 +254,4 @@ async def generate_meals(
             continue
         seen.add(key)
         unique.append(d)
-    return unique[: days * meals_per_day]
+    return MealDrafts(unique[: days * meals_per_day], "llm")

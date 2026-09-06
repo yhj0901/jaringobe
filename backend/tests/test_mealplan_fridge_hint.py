@@ -127,6 +127,7 @@ async def test_generate_within_budget_injects_hint_on_all_paths(db, monkeypatch)
 
     async def _generate(*args):
         captured["fridge_hint"] = args[-1]
+        captured["budget_hint"] = args[-3]
         return [
             {
                 "day": 1,
@@ -157,6 +158,7 @@ async def test_generate_within_budget_injects_hint_on_all_paths(db, monkeypatch)
     assert total == Decimal("0")
     assert drafts[0]["name"] == "계란밥"
     assert "- 계란 6 ea" in captured["fridge_hint"]
+    assert "TOTAL PLAN BUDGET: 10000 KRW for all 1 meals" in captured["budget_hint"]
 
     prompt = _prompt(
         "KR",
