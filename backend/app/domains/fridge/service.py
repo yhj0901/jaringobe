@@ -49,18 +49,47 @@ async def list_items(db: AsyncSession, user_id: uuid.UUID) -> list[FridgeItemRea
 
 
 async def add_items(
-    db: AsyncSession, user_id: uuid.UUID, items: list[FridgeItemCreate]
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    items: list[FridgeItemCreate],
+    *,
+    order_id: uuid.UUID | None = None,
+    commit: bool = True,
 ) -> list[FridgeItemRead]:
     created = [
-        FridgeItem(user_id=user_id, name=i.name, quantity=i.quantity, unit=i.unit,
-                   expires_at=i.expires_at, source=i.source)
+        FridgeItem(
+            user_id=user_id,
+            order_id=order_id,
+            name=i.name,
+            quantity=i.quantity,
+            unit=i.unit,
+            expires_at=i.expires_at,
+            source=i.source,
+        )
         for i in items
     ]
     db.add_all(created)
-    await db.commit()
-    for c in created:
-        await db.refresh(c)
+    if commit:
+        await db.commit()
+        for c in created:
+            await db.refresh(c)
+    else:
+        await db.flush()
     return [_read(c) for c in created]
+
+
+async def delete_delivery_items(
+    db: AsyncSession, user_id: uuid.UUID, order_id: uuid.UUID
+) -> None:
+    """특정 주문 배송분 중 현재 남아 있는 재고만 삭제한다."""
+    from sqlalchemy import delete
+
+    await db.execute(
+        delete(FridgeItem).where(
+            FridgeItem.user_id == user_id,
+            FridgeItem.order_id == order_id,
+        )
+    )
 
 
 async def _owned_item(db: AsyncSession, user_id: uuid.UUID, item_id: uuid.UUID) -> FridgeItem:

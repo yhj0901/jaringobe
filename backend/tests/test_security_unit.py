@@ -42,7 +42,26 @@ class TestSanitizeNextPath:
 class TestStateToken:
     def test_roundtrip(self):
         state = create_state_token("kakao", "/mypage")
-        assert decode_state_token(state, "kakao") == "/mypage"
+        assert decode_state_token(state, "kakao") == ("/mypage", "web")
+
+    def test_roundtrip_client_app(self):
+        # v1.5 — client 가 state 서명에 포함돼 왕복한다 (콜백 분기 위조 불가)
+        state = create_state_token("kakao", "/mypage", client="app")
+        assert decode_state_token(state, "kakao") == ("/mypage", "app")
+
+    def test_unknown_client_falls_back_to_web(self):
+        bad = jwt.encode(
+            {
+                "purpose": "oauth_state",
+                "provider": "kakao",
+                "next": "/",
+                "client": "desktop",
+                "exp": 9999999999,
+            },
+            "test-jwt-secret",
+            algorithm="HS256",
+        )
+        assert decode_state_token(bad, "kakao") == ("/", "web")
 
     def test_provider_mismatch(self):
         state = create_state_token("kakao", "/")
@@ -71,7 +90,7 @@ class TestStateToken:
             "test-jwt-secret",
             algorithm="HS256",
         )
-        assert decode_state_token(bad, "kakao") == "/"
+        assert decode_state_token(bad, "kakao") == ("/", "web")
 
 
 class TestAccessToken:

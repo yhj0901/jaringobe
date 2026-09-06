@@ -6,7 +6,11 @@ import {
   sumIngredientCost,
   toLocalIsoDate,
 } from '@/features/mealplan/mapPlanToViewModel';
-import type { MealPlanIngredient, MealPlanResponse } from '@/features/mealplan/types';
+import type {
+  MealPlanBudgetSummary,
+  MealPlanIngredient,
+  MealPlanResponse,
+} from '@/features/mealplan/types';
 
 function ingredient(name: string, amount: string): MealPlanIngredient {
   return {
@@ -18,6 +22,13 @@ function ingredient(name: string, amount: string): MealPlanIngredient {
   };
 }
 
+const BUDGET_SUMMARY: MealPlanBudgetSummary = {
+  budget: { amount: '700000.00', currency: 'KRW' },
+  plannedCost: { amount: '612300.00', currency: 'KRW' },
+  remaining: { amount: '87700.00', currency: 'KRW' },
+  withinBudget: true,
+};
+
 const PLAN: MealPlanResponse = {
   id: 'plan-1',
   status: 'ready',
@@ -25,12 +36,7 @@ const PLAN: MealPlanResponse = {
   currency: 'KRW',
   periodStart: '2026-07-08',
   periodEnd: '2026-07-09',
-  budgetSummary: {
-    budget: { amount: '700000.00', currency: 'KRW' },
-    plannedCost: { amount: '612300.00', currency: 'KRW' },
-    remaining: { amount: '87700.00', currency: 'KRW' },
-    withinBudget: true,
-  },
+  budgetSummary: BUDGET_SUMMARY,
   meals: [
     // 의도적으로 날짜/끼니 순서를 섞어 정렬을 검증한다
     {
@@ -104,7 +110,7 @@ describe('mapPlanToViewModel (FR-201)', () => {
       ...PLAN,
       status: 'over_budget',
       budgetSummary: {
-        ...PLAN.budgetSummary,
+        ...BUDGET_SUMMARY,
         remaining: { amount: '-12300.00', currency: 'KRW' },
         withinBudget: false,
       },
@@ -112,6 +118,14 @@ describe('mapPlanToViewModel (FR-201)', () => {
     const overVm = mapPlanToViewModel(overPlan, { selectedDate: '2026-07-08' });
     expect(overVm.overBudget).toBe(true);
     expect(overVm.budgetMood.remaining.amount).toBe('-12300.00');
+  });
+
+  it('budgetSummary=null (v1.5 processing/failed 방어) → overBudget=false + 0 폴백', () => {
+    const nullSummaryPlan: MealPlanResponse = { ...PLAN, budgetSummary: null };
+    const vm = mapPlanToViewModel(nullSummaryPlan, { selectedDate: '2026-07-08' });
+    expect(vm.overBudget).toBe(false);
+    expect(vm.budgetMood.remaining).toEqual({ amount: '0', currency: 'KRW' });
+    expect(vm.budgetMood.saved).toEqual({ amount: '0', currency: 'KRW' });
   });
 
   it('회원 모드에선 냉장고/자동주문 셸 데이터를 비운다 (FR-208 잠금 카드 대체)', () => {
@@ -132,6 +146,12 @@ describe('defaultSelectedDate (FR-205: 오늘 기본)', () => {
     expect(defaultSelectedDate(PLAN, new Date('2026-07-09T01:00:00'))).toBe('2026-07-09');
     expect(defaultSelectedDate(PLAN, new Date('2026-08-01T01:00:00'))).toBe('2026-07-08');
     expect(defaultSelectedDate(PLAN, new Date('2026-07-01T01:00:00'))).toBe('2026-07-08');
+  });
+
+  it('기간이 null(v1.5 processing/failed)이면 오늘을 반환한다', () => {
+    expect(
+      defaultSelectedDate({ periodStart: null, periodEnd: null }, new Date('2026-07-09T01:00:00')),
+    ).toBe('2026-07-09');
   });
 });
 

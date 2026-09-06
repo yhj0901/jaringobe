@@ -1,10 +1,7 @@
 import type { Country, Money } from '@/shared/api/types';
 import type { StoreId } from '@/features/store/types';
 
-/**
- * order 도메인 API 타입 — docs/설계/api-spec.md 7장(v1.6)과 1:1 일치 (camelCase).
- * P0 는 시뮬레이션 확정만. status=confirmed (paid 도입 금지).
- */
+/** order 도메인 API 타입 — docs/설계/api-spec.md 7장(v1.6) + 10장(v1.8). */
 
 /** GET /api/v1/orders/preview 라인 (needed | covered) */
 export interface OrderPreviewLine {
@@ -43,11 +40,30 @@ export interface OrderPreviewResponse {
   cart: OrderCart;
   estimatedTotal: Money;
   notes: string[];
+  orderId: string | null;
+  status: Extract<OrderStatus, 'draft' | 'awaiting_user'> | null;
+  autoConfirmAt: string | null;
+  blockedReason: OrderBlockedReason | null;
+  cycleStart: string;
 }
 
-export type OrderStatus = 'confirmed';
-export type OrderFrequency = 'weekly';
+export type OrderStatus =
+  | 'draft'
+  | 'awaiting_user'
+  | 'confirmed'
+  | 'cancelled'
+  | 'expired'
+  | 'failed';
+export type OrderFrequency = 'weekly' | 'biweekly';
 export type OrderLineType = 'needed' | 'covered';
+export type OrderDeliveryState = 'pending' | 'delivered' | 'unknown';
+export type OrderBlockedReason =
+  | 'BUDGET_EXCEEDED'
+  | 'UNMATCHED_RATIO'
+  | 'STORE_DISCONNECTED'
+  | 'AUTO_CONFIRM_OFF'
+  | 'US_NO_PRICE'
+  | 'MEALPLAN_OVER_BUDGET';
 
 /** POST /api/v1/orders 요청 — 라인 목록 필드 없음 (CWE-602, extra forbid) */
 export interface OrderCreateRequest {
@@ -73,15 +89,33 @@ export interface OrderResponse {
   frequency: OrderFrequency;
   nextSuggestedAt: string;
   estimatedTotal: Money;
-  confirmedAt: string;
+  confirmedAt: string | null;
   simulation: boolean;
   items: OrderItem[];
+  cycleStart: string;
+  deliveryEta: string | null;
+  inboundAt: string | null;
+  deliveryState: OrderDeliveryState;
+  deliveryConfirmAttempts: number;
+  autoConfirmed: boolean;
+  autoConfirmAt: string | null;
+  blockedReason: OrderBlockedReason | null;
+}
+
+export type CurrentOrderSummary = Pick<
+  OrderResponse,
+  'id' | 'status' | 'deliveryState' | 'deliveryEta' | 'inboundAt' | 'autoConfirmed'
+>;
+
+export interface OrderApproveRequest {
+  excludeNames?: string[];
 }
 
 export const MEALPLAN_NOT_FOUND_CODE = 'MEALPLAN_NOT_FOUND';
 export const ORDER_NOT_FOUND_CODE = 'ORDER_NOT_FOUND';
 export const STORE_NOT_CONNECTED_CODE = 'STORE_NOT_CONNECTED';
 export const NOTHING_TO_ORDER_CODE = 'NOTHING_TO_ORDER';
+export const ORDER_ALREADY_CONFIRMED_CODE = 'ORDER_ALREADY_CONFIRMED';
 
 /** 홈 카드 추천 칩 최대 개수 — 초과분은 +K (ui-design 13장) */
 export const RECOMMENDED_CHIP_CAP = 6;

@@ -12,8 +12,13 @@ import { OverBudgetBanner } from '@/features/mealplan/OverBudgetBanner';
 import { OnboardingCtaBanner } from '@/features/mealplan/OnboardingCtaBanner';
 import { RegenerateConfirmSheet } from '@/features/mealplan/RegenerateConfirmSheet';
 import { RecipeSheet } from '@/features/mealplan/RecipeSheet';
+import { PushSoftAskSheet, usePushSoftAsk } from '@/features/notification/PushSoftAskSheet';
 import { LOCKED_NOTICE_MS } from '@/features/mealplan/constants';
 import { useMemberAutoOrder } from '@/features/order/useMemberAutoOrder';
+import { approveOrder, cancelOrder, fetchLatestOrder } from '@/features/order/api';
+import { ORDER_ALREADY_CONFIRMED_CODE } from '@/features/order/types';
+import { CycleStatusCard } from '@/features/cycle/CycleStatusCard';
+import { useCycle } from '@/features/cycle/useCycle';
 import { useRouter, type AppLocale } from '@/i18n/routing';
 import type { HomeViewModel, MealItem } from '@/features/home/types';
 
@@ -24,10 +29,14 @@ import type { HomeViewModel, MealItem } from '@/features/home/types';
  */
 export function MemberHomeController() {
   const t = useTranslations('memberHome');
+  const tCycle = useTranslations('cycle');
+  const tCommon = useTranslations('common');
   const locale = useLocale() as AppLocale;
   const router = useRouter();
   const home = useMemberHome();
   const autoOrder = useMemberAutoOrder();
+  const cycle = useCycle();
+  const softAsk = usePushSoftAsk();
 
   // FR-605: country != KR 시 홈 헤더 "글로벌" 배지 (조회 전 null 은 미노출)
   const isGlobalRegion = home.country !== null && home.country !== 'KR';
@@ -36,6 +45,8 @@ export function MemberHomeController() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [lockedNotice, setLockedNotice] = useState<string | null>(null);
   const [recipeMeal, setRecipeMeal] = useState<MealItem | null>(null);
+  const [cycleActionBusy, setCycleActionBusy] = useState(false);
+  const [cycleNotice, setCycleNotice] = useState<string | null>(null);
   const noticeTimerRef = useRef<number | null>(null);
 
   useEffect(
@@ -57,9 +68,20 @@ export function MemberHomeController() {
     displayNotice(t('locked.notice'));
   }, [displayNotice, t]);
 
+  // v1.5.1: 재생성 불가(409 MEALPLAN_REGENERATE_EMPTY — 원 요청 정보 소실) → 기존 생성 시트로 전환 (api-spec 3-5, BUG-002)
+  const { createRequired, ackCreateRequired } = home;
+  useEffect(() => {
+    if (!createRequired) return;
+    ackCreateRequired();
+    setCreateOpen(true);
+    displayNotice(t('failed.createRequired'));
+  }, [createRequired, ackCreateRequired, displayNotice, t]);
+
   const handleCreateSubmit = (input: PlanCreateInput) => {
     setCreateOpen(false);
     void home.createPlan(input);
+    // FR-002: 앱 내 + 권한 미결정 → 생성 요청 직후 soft ask 1회 (ui-design 12장)
+    softAsk.requestSoftAsk();
   };
 
   // ui-design 9장: 회원 홈 헤더 GB 아바타 → 설정 페이지 (FR-401)
@@ -84,6 +106,58 @@ export function MemberHomeController() {
     router.push(autoOrder.active ? '/orders' : '/settings');
   };
 
+  const showCycleError = (code: string | null) => {
+    if (code === 'RATE_LIMITED' || code === 'CYCLE_ALREADY_CONFIRMED') {
+      setCycleNotice(tCycle(`error.${code}`));
+      return;
+    }
+    setCycleNotice(tCommon('error.fallback'));
+  };
+
+  const handleCycleApprove = async () => {
+    const id = cycle.cycle?.draftOrder?.id;
+    if (!id || cycleActionBusy) return;
+    setCycleActionBusy(true);
+    setCycleNotice(null);
+    const result = await approveOrder(id);
+    setCycleActionBusy(false);
+    if (!result.ok) {
+      if (result.code === ORDER_ALREADY_CONFIRMED_CODE) {
+        setCycleNotice(tCycle('notice.alreadyConfirmed'));
+        cycle.reload();
+        return;
+      }
+      showCycleError(result.code);
+      return;
+    }
+    setCycleNotice(tCycle('notice.approved'));
+    cycle.reload();
+  };
+
+  const handleCycleSkip = async () => {
+    if (cycleActionBusy) return;
+    setCycleActionBusy(true);
+    setCycleNotice(null);
+    const ok = await cycle.skip();
+    setCycleActionBusy(false);
+    if (!ok) showCycleError(cycle.errorCode);
+  };
+
+  const handleCycleCancel = async () => {
+    if (cycleActionBusy) return;
+    setCycleActionBusy(true);
+    setCycleNotice(null);
+    const latest = await fetchLatestOrder();
+    const result = latest.ok ? await cancelOrder(latest.data.id) : latest;
+    setCycleActionBusy(false);
+    if (!result.ok) {
+      showCycleError(result.code);
+      return;
+    }
+    setCycleNotice(tCycle('notice.cancelled'));
+    cycle.reload();
+  };
+
   const withAutoOrder = (vm: HomeViewModel): HomeViewModel => ({
     ...vm,
     autoOrder: {
@@ -94,6 +168,23 @@ export function MemberHomeController() {
       moreCount: autoOrder.moreCount > 0 ? autoOrder.moreCount : undefined,
     },
   });
+
+  const cycleSlot =
+    cycle.status === 'ready' && cycle.cycle !== null ? (
+      <CycleStatusCard
+        cycle={cycle.cycle}
+        busy={cycleActionBusy || cycle.saving}
+        notice={cycleNotice}
+        onApprove={() => void handleCycleApprove()}
+        onViewOrder={() => router.push('/orders')}
+        onSkip={() => void handleCycleSkip()}
+        onCreateNow={() => setCreateOpen(true)}
+        onViewMealPlan={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onViewFridge={() => router.push('/fridge')}
+        onGoSettings={() => router.push('/settings')}
+        onCancelOrder={() => void handleCycleCancel()}
+      />
+    ) : null;
 
   if (home.status === 'loading') {
     return (
@@ -168,6 +259,49 @@ export function MemberHomeController() {
       </div>
     ) : null;
 
+  // ui-design 12장: 폴링 3분 초과 — "완료되면 알려드릴게요" 안내 (앱은 완료 푸시 수신)
+  const backgroundNoticeBanner = home.backgroundNotice ? (
+    <div
+      role="status"
+      className="mb-3.5 flex items-start justify-between gap-3 rounded-[16px] border border-[#E1E6EF] bg-white p-4 shadow-card"
+    >
+      <p className="text-[13px] font-semibold text-ink-600">{t('generating.background')}</p>
+      <button
+        type="button"
+        onClick={home.dismissBackgroundNotice}
+        className="shrink-0 rounded-[10px] bg-[#F0F2F6] px-3 py-1.5 text-xs font-bold text-ink-500"
+      >
+        {t('error.dismiss')}
+      </button>
+    </div>
+  ) : null;
+
+  // ui-design 12장: latest.status=failed → 재시도 배너 (재생성 유도)
+  const planFailedBanner = home.planFailed ? (
+    <div
+      role="alert"
+      className="mb-3.5 flex flex-col gap-2 rounded-[16px] border border-flame-200 bg-white p-4 shadow-card"
+    >
+      <p className="text-[13px] font-semibold text-ink-600">{t('failed.description')}</p>
+      <button
+        type="button"
+        disabled={generating}
+        onClick={() => void home.regeneratePlan()}
+        className="self-start rounded-[12px] bg-brand-600 px-4 py-2 text-xs font-extrabold text-white disabled:opacity-60"
+      >
+        {t('failed.retry')}
+      </button>
+    </div>
+  ) : null;
+
+  const noticeBanners = (
+    <>
+      {generationErrorBanner}
+      {backgroundNoticeBanner}
+      {planFailedBanner}
+    </>
+  );
+
   const lockedNoticeToast = lockedNotice ? (
     <p
       role="status"
@@ -188,7 +322,7 @@ export function MemberHomeController() {
           hideTrialBadge
           topSlot={
             <>
-              {generationErrorBanner}
+              {noticeBanners}
               <OnboardingCtaBanner
                 variant={needsOnboarding ? 'setup' : 'create'}
                 busy={generating}
@@ -216,6 +350,11 @@ export function MemberHomeController() {
           />
         )}
         {generating ? <GenerationLoading /> : null}
+        <PushSoftAskSheet
+          open={softAsk.open}
+          onAccept={softAsk.accept}
+          onDecline={softAsk.decline}
+        />
         {lockedNoticeToast}
       </>
     );
@@ -230,13 +369,22 @@ export function MemberHomeController() {
       <HomeShell
         viewModel={withAutoOrder(viewModel)}
         autoOrderBusy={autoOrder.loading}
+        cycleSlot={cycleSlot}
+        autoOrderCycle={
+          cycle.cycle
+            ? {
+                stage: cycle.cycle.stage,
+                deliveryEta: autoOrder.latestOrder?.deliveryEta ?? null,
+              }
+            : undefined
+        }
         onAutoOrderStart={goAutoOrder}
         topSlot={
           <>
             {viewModel.overBudget === true ? (
               <OverBudgetBanner busy={generating} onRegenerate={() => setConfirmOpen(true)} />
             ) : null}
-            {generationErrorBanner}
+            {noticeBanners}
           </>
         }
         onSelectDate={home.selectDate}
@@ -263,7 +411,14 @@ export function MemberHomeController() {
         householdSize={home.householdSize ?? undefined}
         onClose={() => setRecipeMeal(null)}
       />
+      <PlanCreateSheet
+        open={createOpen}
+        busy={generating}
+        onClose={() => setCreateOpen(false)}
+        onSubmit={handleCreateSubmit}
+      />
       {generating ? <GenerationLoading /> : null}
+      <PushSoftAskSheet open={softAsk.open} onAccept={softAsk.accept} onDecline={softAsk.decline} />
       {lockedNoticeToast}
     </>
   );

@@ -14,6 +14,7 @@ from pydantic import Field, field_serializer
 from app.core.schema import CamelModel, serialize_utc
 from app.domains.budget.schemas import MoneyOut
 from app.domains.fridge.schemas import ShortfallLine
+from app.domains.mealplan.generation_source import GenerationSource
 from app.domains.store.schemas import StoreCartResponse
 
 # 알레르기/선호 입력 제한 — 항목당 30자, 리스트 최대 10개 (api-spec v1.1 §3-2, security-design 5-1)
@@ -92,13 +93,22 @@ class BudgetSummary(CamelModel):
 class MealPlanResponse(CamelModel):
     id: uuid.UUID
     status: str
+    generation_source: GenerationSource | None = None
     region: str
     currency: str
-    period_start: date
-    period_end: date
-    budget_summary: BudgetSummary
-    meals: list[MealOut]
+    # v1.5: processing/failed 상태에서는 period/budgetSummary null + meals [] (api-spec §3-2)
+    period_start: date | None = None
+    period_end: date | None = None
+    budget_summary: BudgetSummary | None = None
+    meals: list[MealOut] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
+
+
+class MealPlanAcceptedResponse(CamelModel):
+    """202 Accepted — 생성/재생성 비동기 접수 (api-spec §3-2 v1.5)."""
+
+    id: uuid.UUID
+    status: Literal["processing"] = "processing"
 
 
 # 내부 전달용(직렬화 아님)

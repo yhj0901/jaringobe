@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/shared/ui/Badge';
 import { TrialModeBadge } from '@/features/home/TrialModeBadge';
 import { BudgetMoodCard } from '@/features/home/BudgetMoodCard';
@@ -8,6 +8,7 @@ import { FridgePreviewCard } from '@/features/home/FridgePreviewCard';
 import { AutoOrderCard } from '@/features/home/AutoOrderCard';
 import { LockedFeatureCard } from '@/features/mealplan/LockedFeatureCard';
 import type { HomeViewModel, MealItem } from '@/features/home/types';
+import type { CycleStage } from '@/features/cycle/types';
 
 export type LockedTab = 'meal' | 'fridge' | 'cart';
 
@@ -36,6 +37,10 @@ interface HomeShellProps {
   globalBadge?: boolean;
   /** [member 옵셔널 확장] 자동주문 preview 로딩 (aria-busy) */
   autoOrderBusy?: boolean;
+  /** [member] 자동주문 카드 바로 위 사이클 상태 카드 */
+  cycleSlot?: ReactNode;
+  /** [member] 자동주문 카드가 반영할 서버 사이클 상태와 배송 예정 */
+  autoOrderCycle?: { stage: CycleStage; deliveryEta: string | null };
 }
 
 /** 하단 탭바 아이콘 — 디자인 마크업의 인라인 SVG 재사용 */
@@ -135,10 +140,32 @@ export function HomeShell({
   pendingMealIds,
   globalBadge = false,
   autoOrderBusy = false,
+  cycleSlot,
+  autoOrderCycle,
 }: HomeShellProps) {
   const t = useTranslations('guestHome');
   const tMemberOrder = useTranslations('memberHome.autoOrder');
+  const locale = useLocale();
   const isGuest = viewModel.mode !== 'member';
+  const cycleCardKey =
+    autoOrderCycle?.stage === 'generated'
+      ? 'generated'
+      : autoOrderCycle?.stage === 'drafted' || autoOrderCycle?.stage === 'awaiting_user'
+        ? 'awaiting'
+        : autoOrderCycle?.stage === 'confirmed'
+          ? 'deliveryScheduled'
+          : autoOrderCycle?.stage === 'delivered'
+            ? 'confirmed'
+            : null;
+  const deliveryLabel =
+    autoOrderCycle?.deliveryEta
+      ? new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'ko-KR', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date(autoOrderCycle.deliveryEta))
+      : '';
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-surface-app sm:min-h-0 sm:my-6 sm:overflow-hidden sm:rounded-[32px] sm:shadow-card">
@@ -191,15 +218,21 @@ export function HomeShell({
             <>
               {/* 냉장고는 /fridge 수동 관리 페이지로 연결(활성), 자동주문은 AutoOrderCard 재사용 (v1.7) */}
               <LockedFeatureCard feature="fridge" href="/fridge" />
+              {cycleSlot}
               <AutoOrderCard
                 autoOrder={viewModel.autoOrder}
                 onStart={onAutoOrderStart}
                 ctaLabel={tMemberOrder('viewCartCta')}
                 inactiveCtaLabel={tMemberOrder('connectCta')}
                 description={
-                  viewModel.autoOrder.active
-                    ? undefined
-                    : tMemberOrder('disconnectedHint')
+                  cycleCardKey
+                    ? tMemberOrder(`cycle.description.${cycleCardKey}`, { date: deliveryLabel })
+                    : viewModel.autoOrder.active
+                      ? undefined
+                      : tMemberOrder('disconnectedHint')
+                }
+                statusLabel={
+                  cycleCardKey ? tMemberOrder(`cycle.status.${cycleCardKey}`) : undefined
                 }
                 recommendedLabel={tMemberOrder('recommendedLabel')}
                 moreCountLabel={

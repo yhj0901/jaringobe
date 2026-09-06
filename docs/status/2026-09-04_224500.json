@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-09-04T22:45:00+09:00",
+  "session_topic": "코드 리뷰 지적 8건 수정 완료 및 검증",
+  "command": "(수정 워커) Orca run_ac211a7ae73c",
+  "agent": "orchestrator + Codex 수정 워커",
+  "status": "지적 8건 전부 수정·검증·병합 완료(d8e8bff). QA(GATE 4) 착수 가능",
+  "tasks": [
+    {"id": 1, "subject": "P0-1 예산 한도 계산 오류 수정 + 설계 3-9-4 정정", "status": "completed"},
+    {"id": 2, "subject": "P0-2 /preview 레이트리밋 회귀 수정", "status": "completed"},
+    {"id": 3, "subject": "P1 6건 수정", "status": "completed"},
+    {"id": 4, "subject": "코디네이터 독립 검증 (예산 4주 시나리오 실측 + 전체 회귀)", "status": "completed"},
+    {"id": 5, "subject": "설계 v1.9 — 갭 2건 + db-schema confirmed_at 표기", "status": "pending"},
+    {"id": 6, "subject": "PR #40 머지 → loop-cycle-base PR", "status": "pending"},
+    {"id": 7, "subject": "QA (GATE 4) → 문서", "status": "pending"},
+    {"id": 8, "subject": "OAuth 키 발급·반영 (사용자 조치)", "status": "pending"},
+    {"id": 9, "subject": "Vercel BACKEND_URL / 터널 (선택 — 로컬 개발은 불필요)", "status": "pending"}
+  ],
+  "artifacts": [
+    "d8e8bff merge: 코드 리뷰 지적 8건 수정",
+    "docs/운영가이드/작업-이어받기.md 5·8장 갱신",
+    "docs/설계/architecture.md 3-9-4 수식 정정"
+  ],
+  "key_findings": {
+    "채택_수식": "accrued(month_start, min(cycle_start+cycle_days, next_month)) − confirmed(month_start, 동일 종료점). share 와 committed 의 기간을 일치시켜 앞선 사이클 잔액을 이월하고 월 경계 예산을 섞지 않는다",
+    "실측_검증": "월예산 40만원 9월 4주 연속 확정 — 160,000 / 109,333 / 104,267 / 63,760 으로 한도 유지. 수정 전이면 2주차 0 붕괴",
+    "레이트리밋_설계": "refresh 이거나 저장 초안 부재(전체 빌드)일 때만 3회/분 제한. 저장 초안 조회는 통과 — 비용 차이 반영",
+    "검증치": "백엔드 367 passed 커버리지 93% ruff·mypy 무결점 / 프론트 505 passed 94.58% tsc 통과",
+    "남은_설계갭": "CycleState 배송 완료·전체 수 부재, failed 주문 전용 복구 경로 부재, db-schema 의 confirmed_at NOT NULL 표기(구현은 0011 에서 해소)",
+    "보안_점검": "GET /orders/preview?refresh=true 가 상태를 바꾸는데 Origin 검증이 POST/PUT/PATCH/DELETE 에만 걸려 CSRF 방어 우회 — QA 이관",
+    "CLAUDE_md_불일치": "CLAUDE.md 의 옵시디언 미러 경로(/Users/yangheejun/...)가 이 머신에 없어 Permission denied. 워커가 미러만 보류하고 진행했다. 규칙 갱신 필요",
+    "로컬_환경": "백엔드 :8001 / DB :5433 docker 상시 가동. 프론트는 npm run dev 로 :3000. 터널 없이 전체 동작 확인됨"
+  },
+  "recommended_actions": "① 설계 v1.9 증분으로 갭 2건 반영 ② PR #40 머지 후 loop-cycle-base PR ③ QA(GATE 4) ④ CLAUDE.md 옵시디언 경로 규칙 갱신",
+  "pending_user_input": "OAuth 키, PR #40 머지 시점, QA 착수 여부"
+}

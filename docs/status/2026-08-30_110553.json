@@ -1,0 +1,39 @@
+{
+  "timestamp": "2026-08-30T00:00:00+09:00",
+  "session_topic": "선순환 루프 완결 — 주간 자동 사이클 설계 (GATE 2 대상)",
+  "command": "/설계시작 루프완결-주간사이클",
+  "agent": "agents/design.md",
+  "status": "설계 산출물 5문서 v1.8 증분 완료 — 기획서 13장 인계사항 9건 전부 해소, 미결 0건. GATE 2 승인 대기",
+  "tasks": [
+    {"id": 1, "subject": "기획서 2건 정독 (루프완결-주간사이클 662줄 / 회원홈-식단연결 FR-203 개정)", "status": "completed"},
+    {"id": 2, "subject": "현행 코드 실사 (main + auto-order-p0 order 도메인 + app-webview-push notification/scheduler/mealplan 비동기)", "status": "completed"},
+    {"id": 3, "subject": "인계사항 9건 결정", "status": "completed"},
+    {"id": 4, "subject": "냉장고→식단 되먹임 프롬프트 규약 설계", "status": "completed"},
+    {"id": 5, "subject": "스케줄러 3스캔 + 멱등 4중 + 비용 상한 설계", "status": "completed"},
+    {"id": 6, "subject": "docs/설계 5문서 v1.8 증분 갱신", "status": "completed"},
+    {"id": 7, "subject": "GATE 2 사용자 승인", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/설계/architecture.md (3-9 주간 자동 사이클, 12개 하위절)",
+    "docs/설계/db-schema.md (2-9~2-13 + 3-B 마이그레이션 계획)",
+    "docs/설계/api-spec.md (9 cycle 도메인 / 10 order 확장 / 11 기타 / 12 요약 증분)",
+    "docs/설계/security-design.md (5-6 사이클 접점 + CWE 표 증분)",
+    "docs/설계/ui-design.md (14장 주간 자동 사이클)"
+  ],
+  "key_findings": {
+    "인계사항_1_delivery_eta": "timestamptz NULL. 확정 시 (로컬 confirmed_at date + 스토어 lead_days)의 09:00 로컬→UTC. 기존 행 백필에서 inbound_at := confirmed_at 이 필수 — 누락 시 냉장고 재고 2배(최고위험 항목)",
+    "인계사항_2_source": "delivery 로 통합, order 폐기. fridge_items 는 DB CHECK 없어 데이터 UPDATE 1회. 추가로 fridge_items.order_id FK 신설(이름 매칭 롤백은 틀릴 수 있음)",
+    "인계사항_3_prorate": "budget 도메인 공개 함수로 이동. 엔드포인트 만들지 않음(UI 는 GET /cycle 의 weeklyLimit 만 필요). prorate(monthly, days) 원시함수 1개로 기존 월간 안분과 신규 주간 한도 둘 다 표현, 기존 결과 불변",
+    "인계사항_4_정책파라미터": "환경변수(pydantic Settings) 확정. 관리자 인증·UI 부재가 결정적 — 설정 테이블은 편집 수단이 없어 env 보다 나쁨. 전역=env / 사용자=user_cycle_settings 경계",
+    "인계사항_5_도메인": "신규 cycle 도메인. 6개 도메인을 가로지르는 조정자이며 자기 테이블 소유. 의존 단방향(cycle→타 도메인) 고정이 God 도메인화 방지 장치. orders 컬럼·상태머신은 order 도메인 소유 유지",
+    "인계사항_6_생성시점": "lazy(첫 /cycle 접근) 정본 + 온보딩 완료 훅 보조. 마이그레이션 백필 금지",
+    "인계사항_7_CHECK": "ck_notification_settings_type 존재 확인 → 마이그레이션 필요. varchar(30) 이라 컬럼 폭 변경 불필요. downgrade 시 신규 3종 행 선삭제",
+    "인계사항_8_apispec": "신규 6 + 확장 4 편입. GET /orders/latest 는 하위호환 깨짐으로 별도 표기·사유 기재. POST /mealplans/monthly 내부/실험용 표기",
+    "인계사항_9_리비전": "0011_cycle_core(순서민감) + 0012_cycle_links 2개 분할. 잠정 번호 — auto-order-p0(0009)→app-webview-push(0010 리넘버) 머지 후 인프라 확정",
+    "설계_추가분_GATE3": "users.last_seen_at(활성 판정에 접속 신호 부재), fridge_items.order_id(롤백 정확성), orders.auto_confirm_at/delivery_state/blocked_reason/reminded_at(스캔 인덱스·상태축 분리)",
+    "되먹임_핵심": "LLM 에 '냉장고에 있다고 수량을 줄이지 마라'를 명시해야 함 — 감산은 서버 compute_shortfall 이 수행하므로 LLM 이 미리 빼면 이중 감산. 프롬프트 상한 40줄(임박15+일반25) 약 500토큰",
+    "멀티인스턴스": "스캔 ①(식단 생성)만 DB 로 막을 수 없음. CYCLE_SCHEDULER_ENABLED 를 인스턴스 1대만 true. uvicorn --workers N 도 멀티 인스턴스임을 명시"
+  },
+  "recommended_actions": "GATE 2 사용자 승인 → 승인 시 인프라(0011·0012 리비전, 단 브랜치 머지 선행) + API 백엔드(cycle 도메인·order 확장·되먹임) + UI 프론트(14장) 병렬 인계. 선행 조건: feature/auto-order-p0 머지 → feature/app-webview-push 0010 리넘버 머지",
+  "pending_user_input": "GATE 2 설계 승인. 특히 (a) 정책 파라미터 = 환경변수 확정 (b) 신규 cycle 도메인 신설 (c) GET /orders/latest 계약 확장(하위호환 깨짐) (d) 설계 추가 DDL 4건 수용 여부"
+}

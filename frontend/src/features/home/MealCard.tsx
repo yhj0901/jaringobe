@@ -41,7 +41,7 @@ export function MealCard({ meal, onRecipeClick, onToggleComplete, completePendin
         className="h-2 w-2 shrink-0 rounded-full"
         style={{ backgroundColor: SLOT_DOT[meal.slot] }}
       />
-      <span className="w-8 shrink-0 text-xs font-bold text-ink-400">{tMealType(meal.slot)}</span>
+      <span className="w-[9ch] shrink-0 whitespace-nowrap text-xs font-bold text-ink-400">{tMealType(meal.slot)}</span>
       <button
         type="button"
         onClick={onRecipeClick}

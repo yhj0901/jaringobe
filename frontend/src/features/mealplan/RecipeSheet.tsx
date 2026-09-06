@@ -63,7 +63,7 @@ export function RecipeSheet({ meal, householdSize, onClose }: RecipeSheetProps) 
         <div className="mb-1.5 flex items-center gap-2">
           <Badge tone="brand">{tSlot(meal.slot)}</Badge>
           <span className="inline-flex items-center rounded-full bg-[#E6F8F1] px-2 py-0.5 text-[11px] font-bold text-[#0A8A60]">
-            {t('aiBadge')}
+            {t(meal.isSample ? 'sampleBadge' : 'aiBadge')}
           </span>
         </div>
         <h2
@@ -72,6 +72,10 @@ export function RecipeSheet({ meal, householdSize, onClose }: RecipeSheetProps) 
         >
           {meal.name}
         </h2>
+
+        {meal.isSample ? (
+          <p className="mt-3 text-sm leading-relaxed text-ink-400">{t('sampleNotice')}</p>
+        ) : null}
 
         <div className="my-4 flex gap-2">
           <MetaChip

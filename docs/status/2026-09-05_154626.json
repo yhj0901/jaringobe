@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-09-05T15:46:26+09:00",
+  "session_topic": "문서 — 주간 자동 사이클(루프 완결) 파이프라인 마지막 단계: 릴리즈 노트 v0.2.0 + 기술문서 5종 + 운영가이드 4종 갱신",
+  "command": "/문서시작 루프완결-주간사이클 (Orca 디스패치 task_0836ec3d30f3)",
+  "agent": "agents/docs.md",
+  "status": "문서 11건 작성·갱신 완료. 현재 브랜치(feature/loop-cycle-base a6d9bef 기반 워크트리)에 커밋, 푸시는 코디네이터 검토 후",
+  "tasks": [
+    {"id": 1, "subject": "입력 산출물 정독 — 사업계획서·기획(루프완결/자동주문)·설계 v1.8~v1.10·QA 재판정 4문서·이어받기·status JSON", "status": "completed"},
+    {"id": 2, "subject": "사실 확인 — .env.example↔config.py(CYCLE_* 18개), router.py↔도메인 라우터(엔드포인트 전수), alembic 0009~0012, 스키마·서비스 코드, i18n 키 수(567/567, main 356)", "status": "completed"},
+    {"id": 3, "subject": "docs/릴리즈노트/v0.2.0.md 신규 (형식 v0.1.0 동일, 버전 근거 포함)", "status": "completed"},
+    {"id": 4, "subject": "docs/기술문서 5종 갱신 (architecture/api-reference/db/security/i18n)", "status": "completed"},
+    {"id": 5, "subject": "docs/운영가이드 4종 갱신 (install/config/troubleshoot/작업-이어받기)", "status": "completed"},
+    {"id": 6, "subject": "커밋 (푸시 금지) + worker_done 보고", "status": "in_progress"}
+  ],
+  "artifacts": [
+    "docs/릴리즈노트/v0.2.0.md",
+    "docs/기술문서/architecture-guide.md", "docs/기술문서/api-reference.md", "docs/기술문서/db-guide.md",
+    "docs/기술문서/security-guide.md", "docs/기술문서/i18n-guide.md",
+    "docs/운영가이드/install-guide.md", "docs/운영가이드/config-guide.md", "docs/운영가이드/troubleshoot.md",
+    "docs/운영가이드/작업-이어받기.md"
+  ],
+  "key_findings": {
+    "version": "v0.2.0 — 0.x SemVer minor(기능 추가 + 계약 파괴 + DB 리비전 4개). v0.1.0 이후 main 의 중간 기능(PR #5~#38)은 릴리즈 노트 미작성 상태임을 노트에 명시",
+    "code_doc_mismatch": [
+      "코드 버전 문자열 3곳(pyproject/main.py/package.json)이 0.1.0",
+      "앱 웹뷰·푸시 기획서(앱-웹뷰-푸시알림.md)·설계(mobile-app.md, api-spec §6-A/§1-6, ui-design 12장)가 통합 병합 5afd7df 에서 빠져 이 브랜치에 없음 — 코드 주석은 참조 중. 원문 git show 836f0ae",
+      "docker/docker-compose.server.yml 이 CYCLE_*/EXPO_ACCESS_TOKEN/APP_SCHEME/REMINDER_* 를 컨테이너에 전달하지 않음(env_file 미사용, 명시 열거)",
+      "core/ratelimit.py 의 cycle_action_user_limiter 주석 '10회/분' vs 실제 5 (BUG-007 연관)",
+      "api-spec 절 번호가 브랜치별 독립 번호 그대로(§7 order → §9 cycle → §10 order 확장)",
+      "CLAUDE.md 옵시디언 미러 경로가 현 머신에 없음 — 태스크 지시대로 미러링 미시도"
+    ],
+    "unverified_left_blank": [
+      "테스트 수치(375/94%, 509/94.61%)는 직접 재실행하지 않고 QA 재판정 문서 값을 출처와 함께 인용",
+      "앱 웹뷰·푸시 기능의 US ID(US-001~009)는 이 브랜치에 없는 기획서(836f0ae)에서 인용"
+    ],
+    "not_modified": "backend/ frontend/ mobile/ alembic/ docs/기획 docs/설계 docs/테스트 — 지시대로 미수정. 옵시디언 미러 미시도"
+  },
+  "recommended_actions": "① 코디네이터 문서 검토 후 feature/loop-cycle-base 병합 → main PR ② 릴리즈 시 코드 버전 0.2.0 ③ 운영 전 필수 R-7(로거)·R-1·서버 compose 환경변수 ④ QA 후속 R-9/R-10/R-11·BUG-010 ⑤ 실키 후 R-8 ⑥ 웹뷰 기획/설계 문서 복원 결정",
+  "pending_user_input": "없음 — 코디네이터 검토 대기 (버전 번호 v0.2.0 이견 시 재지정 가능)"
+}

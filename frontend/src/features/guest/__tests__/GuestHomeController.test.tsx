@@ -44,9 +44,9 @@ function seedPlan(plan: GuestPlan, autoOrderNotifiedAt?: string) {
   );
 }
 
-async function renderController() {
+async function renderController(locale: 'ko' | 'en' = 'ko') {
   const utils = render(
-    <IntlWrapper>
+    <IntlWrapper locale={locale}>
       <GuestHomeController />
     </IntlWrapper>,
   );
@@ -178,7 +178,7 @@ describe('GuestHomeController', () => {
     await renderController();
     fireEvent.click(screen.getAllByRole('button', { name: /레시피 보기$/ })[0] as HTMLElement);
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('AI 추천 레시피')).toBeInTheDocument();
+    expect(within(dialog).getByText('샘플 레시피')).toBeInTheDocument();
     // 게스트 샘플은 steps 부재 → 기본 조리법 3단계 고정 문구
     expect(within(dialog).getByText(/재료를 깨끗이 씻고/)).toBeInTheDocument();
     // 저장이 필요한 게이트 문구는 뜨지 않는다
@@ -274,4 +274,17 @@ describe('GuestHomeController 재방문 알림 (FR-316, ui-design 8장)', () => 
     await renderController();
     expect(screen.queryByText('다시 오셨네요!')).not.toBeInTheDocument();
   });
+});
+
+
+it.each([
+  ['en', '120', 'USD', '$52.00'],
+  ['ko', '130000', 'KRW', '₩57,200'],
+] as const)('%s: 저장된 저예산 초안을 복원한 홈도 실제 입력 금액을 반영한다', async (locale, amount, currency, remaining) => {
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+  useGuestStore.setState({ plan: undefined, promptHistory: {}, savedAt: undefined });
+  seedPlan({ householdSize: 1, amount, currency, mealDirection: 'diet' }, new Date().toISOString());
+  await renderController(locale);
+  expect(screen.getByText(remaining)).toBeInTheDocument();
 });

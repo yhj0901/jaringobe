@@ -38,10 +38,13 @@ class KakaoAdapter:
         data = {
             "grant_type": "authorization_code",
             "client_id": self._client_id,
-            "client_secret": self._client_secret,
             "redirect_uri": self._redirect_uri,
             "code": code,
         }
+        # 카카오의 Client Secret 은 선택 기능이다. 콘솔에서 사용하지 않는 앱에 빈 값을
+        # 보내면 요청이 거부되므로, 설정된 경우에만 실어 보낸다.
+        if self._client_secret:
+            data["client_secret"] = self._client_secret
         try:
             async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
                 res = await client.post(TOKEN_URL, data=data)

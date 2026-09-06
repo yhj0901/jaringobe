@@ -1,0 +1,2421 @@
+{
+  "variant": "after",
+  "model": "claude-sonnet-5",
+  "runs": [
+    {
+      "trial": 1,
+      "seconds": 23.37,
+      "meals": 21,
+      "unique_menus": 21,
+      "cost_krw": "38140.98",
+      "stocked_kinds": 27,
+      "ingredient_kinds": 27,
+      "stock_usage_ratio": 1.0,
+      "llm_errors": [],
+      "llm_responses": [
+        {
+          "stop_reason": "end_turn",
+          "input_tokens": 1035,
+          "output_tokens": 2343
+        }
+      ],
+      "menu_counts": {
+        "계란말이와 밥": 1,
+        "된장찌개": 1,
+        "고등어구이와 밥": 1,
+        "콩나물국밥": 1,
+        "돼지고기 김치볶음밥": 1,
+        "시금치된장국": 1,
+        "계란찜": 1,
+        "닭고기 감자조림": 1,
+        "순두부찌개": 1,
+        "김치콩나물국밥": 1,
+        "돼지고기 두부조림": 1,
+        "무국": 1,
+        "시금치나물밥": 1,
+        "고추장제육볶음": 1,
+        "계란국": 1,
+        "감자채볶음밥": 1,
+        "닭볶음탕": 1,
+        "두부김치찌개": 1,
+        "콩나물무침밥": 1,
+        "돼지고기김치찌개": 1,
+        "달걀볶음밥": 1
+      },
+      "drafts": [
+        {
+          "day": 1,
+          "meal_type": "breakfast",
+          "name": "계란말이와 밥",
+          "steps": "계란을 풀어 소금 간한다;팬에 부쳐 말아 썬다;밥과 함께 낸다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "3",
+              "unit": "ea",
+              "est_cost": "690.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            },
+            {
+              "name": "식용유",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "22.67"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "meal_type": "lunch",
+          "name": "된장찌개",
+          "steps": "두부와 애호박 썰기;멸치육수에 된장 풀어 끓이기;야채 넣고 끓인다",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "두부",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "애호박",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "480.00"
+            },
+            {
+              "name": "된장",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "135.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "meal_type": "dinner",
+          "name": "고등어구이와 밥",
+          "steps": "고등어에 소금 뿌리기;팬에 굽기;밥과 무생채 곁들이기",
+          "time_minutes": 20,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "고등어",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "3000.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "2",
+              "unit": "g",
+              "est_cost": "4.40"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "무",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "66.67"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "breakfast",
+          "name": "콩나물국밥",
+          "steps": "콩나물을 멸치육수에 데치기;간장으로 간하기;밥을 말아 낸다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "콩나물",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "473.68"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "90.70"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "lunch",
+          "name": "돼지고기 김치볶음밥",
+          "steps": "돼지고기와 김치 볶기;밥 넣고 볶기;참기름 뿌려 마무리",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "돼지고기 다짐육",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "384.00"
+            },
+            {
+              "name": "김치",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "1200.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "dinner",
+          "name": "시금치된장국",
+          "steps": "시금치 데치기;멸치육수에 된장 풀기;시금치 넣고 끓인다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "시금치",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "된장",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "135.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "breakfast",
+          "name": "계란찜",
+          "steps": "계란을 풀어 육수와 섞기;그릇에 담아 찜기에 찌기;소금간 맞추기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "3",
+              "unit": "ea",
+              "est_cost": "690.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "100",
+              "unit": "ml",
+              "est_cost": "50.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "lunch",
+          "name": "닭고기 감자조림",
+          "steps": "닭고기와 감자 손질하기;간장양념에 조리기;당근 추가해 끓이기",
+          "time_minutes": 30,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1400.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1100.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "170.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "설탕",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "12.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "dinner",
+          "name": "순두부찌개",
+          "steps": "순두부와 야채 준비하기;고춧가루로 양념 만들기;끓여 완성하기",
+          "time_minutes": 20,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "순두부",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "1285.71"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "570.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "300",
+              "unit": "ml",
+              "est_cost": "150.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "breakfast",
+          "name": "김치콩나물국밥",
+          "steps": "콩나물과 김치 넣고 끓이기;멸치육수 부어 끓이기;밥 곁들이기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "콩나물",
+              "quantity": "110",
+              "unit": "g",
+              "est_cost": "521.05"
+            },
+            {
+              "name": "김치",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "lunch",
+          "name": "돼지고기 두부조림",
+          "steps": "돼지고기와 두부 준비하기;간장양념 만들기;조려서 완성하기",
+          "time_minutes": 25,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "돼지고기 앞다리살",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1066.67"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "dinner",
+          "name": "무국",
+          "steps": "무를 썰기;멸치육수에 넣고 끓이기;간장으로 간하기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "무",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "90.70"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "breakfast",
+          "name": "시금치나물밥",
+          "steps": "시금치 데치기;참기름과 소금으로 무치기;밥과 함께 낸다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "시금치",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "80.00"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "lunch",
+          "name": "고추장제육볶음",
+          "steps": "돼지고기에 고추장양념 하기;팬에 볶기;양파와 당근 추가",
+          "time_minutes": 25,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "돼지고기 앞다리살",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "340.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "170.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "dinner",
+          "name": "계란국",
+          "steps": "계란 풀기;멸치육수 끓이기;계란 넣어 저어 완성",
+          "time_minutes": 10,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "breakfast",
+          "name": "감자채볶음밥",
+          "steps": "감자 채썰기;식용유에 볶기;밥과 함께 낸다",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "감자",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "825.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "lunch",
+          "name": "닭볶음탕",
+          "steps": "닭고기와 감자 손질하기;고추장양념 만들기;야채 넣고 끓이기",
+          "time_minutes": 35,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "825.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "170.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "340.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "570.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "dinner",
+          "name": "두부김치찌개",
+          "steps": "두부와 김치 준비하기;멸치육수에 끓이기;고춧가루로 간하기",
+          "time_minutes": 20,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "두부",
+              "quantity": "250",
+              "unit": "g",
+              "est_cost": "1333.33"
+            },
+            {
+              "name": "김치",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1600.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "570.00"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "breakfast",
+          "name": "콩나물무침밥",
+          "steps": "콩나물 데치기;참기름과 소금 무치기;밥과 함께 낸다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "콩나물",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "473.68"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "lunch",
+          "name": "돼지고기김치찌개",
+          "steps": "돼지고기와 김치 볶기;멸치육수 부어 끓이기;두부 넣고 끓이기",
+          "time_minutes": 25,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "돼지고기 다짐육",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "384.00"
+            },
+            {
+              "name": "김치",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "533.33"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "dinner",
+          "name": "달걀볶음밥",
+          "steps": "계란 풀어 볶기;밥 넣고 볶기;대파 넣어 마무리",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "seconds": 23.03,
+      "meals": 21,
+      "unique_menus": 21,
+      "cost_krw": "40996.35",
+      "stocked_kinds": 27,
+      "ingredient_kinds": 27,
+      "stock_usage_ratio": 1.0,
+      "llm_errors": [],
+      "llm_responses": [
+        {
+          "stop_reason": "end_turn",
+          "input_tokens": 1035,
+          "output_tokens": 2510
+        }
+      ],
+      "menu_counts": {
+        "계란말이와 밥": 1,
+        "된장찌개": 1,
+        "고등어구이": 1,
+        "콩나물국": 1,
+        "김치찌개": 1,
+        "시금치나물": 1,
+        "순두부계란국": 1,
+        "제육볶음": 1,
+        "감자조림": 1,
+        "계란찜": 1,
+        "닭볶음탕": 1,
+        "두부조림": 1,
+        "김치콩나물국": 1,
+        "돼지고기무국": 1,
+        "애호박볶음": 1,
+        "당근계란볶음밥": 1,
+        "닭고기카레": 1,
+        "순두부찌개": 1,
+        "시금치된장국": 1,
+        "돼지고기김치볶음밥": 1,
+        "고등어조림": 1
+      },
+      "drafts": [
+        {
+          "day": 1,
+          "meal_type": "breakfast",
+          "name": "계란말이와 밥",
+          "steps": "계란을 풀어 소금 간한다.팬에 부쳐 만다.밥과 함께 낸다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "3",
+              "unit": "ea",
+              "est_cost": "690.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            },
+            {
+              "name": "식용유",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "22.67"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "meal_type": "lunch",
+          "name": "된장찌개",
+          "steps": "멸치육수에 된장을 풀고 채소를 넣는다.두부와 애호박을 넣고 끓인다.대파를 넣고 마무리한다",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "된장",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "180.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "애호박",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "480.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "meal_type": "dinner",
+          "name": "고등어구이",
+          "steps": "고등어에 소금을 뿌린다.팬에 굽는다.무채와 곁들인다",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "고등어",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "3000.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "2",
+              "unit": "g",
+              "est_cost": "4.40"
+            },
+            {
+              "name": "무",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "66.67"
+            },
+            {
+              "name": "식용유",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "22.67"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "breakfast",
+          "name": "콩나물국",
+          "steps": "멸치육수에 콩나물을 넣는다.마늘과 소금으로 간한다.대파를 올린다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "콩나물",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "473.68"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "소금",
+              "quantity": "2",
+              "unit": "g",
+              "est_cost": "4.40"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "lunch",
+          "name": "김치찌개",
+          "steps": "김치를 볶다가 돼지고기를 넣는다.물을 넣고 끓인다.두부를 넣고 마무리한다",
+          "time_minutes": 25,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "김치",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1600.00"
+            },
+            {
+              "name": "돼지고기 앞다리살",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "285.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "dinner",
+          "name": "시금치나물",
+          "steps": "시금치를 데친다.마늘과 참기름으로 무친다.소금으로 간한다",
+          "time_minutes": 10,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "시금치",
+              "quantity": "110",
+              "unit": "g",
+              "est_cost": "880.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "breakfast",
+          "name": "순두부계란국",
+          "steps": "순두부와 육수를 끓인다.계란을 풀어 넣는다.소금으로 간한다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "순두부",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "857.14"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "계란",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "230.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "lunch",
+          "name": "제육볶음",
+          "steps": "돼지고기에 고추장 양념을 한다.팬에 볶는다.양파와 대파를 넣는다",
+          "time_minutes": 25,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "돼지고기 앞다리살",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "340.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "160.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "설탕",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "12.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "dinner",
+          "name": "감자조림",
+          "steps": "감자를 썰어 볶는다.간장과 설탕으로 조린다.물을 넣고 졸인다",
+          "time_minutes": 25,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "감자",
+              "quantity": "250",
+              "unit": "g",
+              "est_cost": "1375.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "설탕",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "12.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "22.67"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "breakfast",
+          "name": "계란찜",
+          "steps": "계란을 풀어 육수를 섞는다.그릇에 담아 찐다.소금으로 간한다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "3",
+              "unit": "ea",
+              "est_cost": "690.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "100",
+              "unit": "ml",
+              "est_cost": "50.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "lunch",
+          "name": "닭볶음탕",
+          "steps": "닭고기와 감자, 당근을 넣는다.고추장 양념을 넣고 끓인다.대파를 넣고 마무리한다",
+          "time_minutes": 35,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "825.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "340.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "340.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "dinner",
+          "name": "두부조림",
+          "steps": "두부를 부친다.간장양념을 만든다.두부에 끼얹어 조린다",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "두부",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "1600.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "breakfast",
+          "name": "김치콩나물국",
+          "steps": "콩나물과 김치를 넣고 끓인다.육수를 붓는다.대파로 마무리한다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "콩나물",
+              "quantity": "110",
+              "unit": "g",
+              "est_cost": "521.05"
+            },
+            {
+              "name": "김치",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "lunch",
+          "name": "돼지고기무국",
+          "steps": "돼지고기와 무를 볶는다.물을 넣고 끓인다.간장으로 간한다",
+          "time_minutes": 25,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "돼지고기 앞다리살",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "무",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "15",
+              "unit": "ml",
+              "est_cost": "136.05"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "dinner",
+          "name": "애호박볶음",
+          "steps": "애호박을 썰어 볶는다.마늘과 소금으로 간한다.참기름을 두른다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "애호박",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "480.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "breakfast",
+          "name": "당근계란볶음밥",
+          "steps": "당근과 계란을 볶는다.밥을 넣고 볶는다.소금으로 간한다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "당근",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "170.00"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "1",
+              "unit": "g",
+              "est_cost": "2.20"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "lunch",
+          "name": "닭고기카레",
+          "steps": "닭고기와 감자, 당근을 볶는다.물을 넣고 끓인다.카레가루로 마무리한다",
+          "time_minutes": 30,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1400.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "550.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "272.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "dinner",
+          "name": "순두부찌개",
+          "steps": "고춧가루로 양념한다.순두부와 육수를 넣는다.계란을 넣고 끓인다",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "순두부",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "428.57"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "570.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "300",
+              "unit": "ml",
+              "est_cost": "150.00"
+            },
+            {
+              "name": "계란",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "230.00"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "breakfast",
+          "name": "시금치된장국",
+          "steps": "된장을 육수에 푼다.시금치를 넣는다.마늘로 간한다",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "시금치",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "된장",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "90.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "300",
+              "unit": "ml",
+              "est_cost": "150.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "lunch",
+          "name": "돼지고기김치볶음밥",
+          "steps": "김치와 돼지고기를 볶는다.밥을 넣고 볶는다.참기름으로 마무리한다",
+          "time_minutes": 20,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "김치",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "1200.00"
+            },
+            {
+              "name": "돼지고기 다짐육",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "384.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "dinner",
+          "name": "고등어조림",
+          "steps": "무를 냄비에 깐다.고등어를 올리고 양념한다.끓여서 조린다",
+          "time_minutes": 30,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "고등어",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "3000.00"
+            },
+            {
+              "name": "무",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "133.33"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "285.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "seconds": 20.81,
+      "meals": 21,
+      "unique_menus": 21,
+      "cost_krw": "50013.35",
+      "stocked_kinds": 27,
+      "ingredient_kinds": 27,
+      "stock_usage_ratio": 1.0,
+      "llm_errors": [],
+      "llm_responses": [
+        {
+          "stop_reason": "end_turn",
+          "input_tokens": 1035,
+          "output_tokens": 2354
+        }
+      ],
+      "menu_counts": {
+        "계란국밥": 1,
+        "순두부찌개": 1,
+        "고등어구이와 시금치나물": 1,
+        "두부계란볶음밥": 1,
+        "콩나물국밥": 1,
+        "돼지고기김치볶음": 1,
+        "계란찜": 1,
+        "된장찌개": 1,
+        "닭볶음탕": 1,
+        "김치볶음밥": 1,
+        "감자국": 1,
+        "고등어조림": 1,
+        "시금치된장국": 1,
+        "돼지고기다짐육덮밥": 1,
+        "콩나물무침": 1,
+        "계란말이": 1,
+        "닭고기미역국대체-무국": 1,
+        "두부조림": 1,
+        "애호박볶음밥": 1,
+        "순두부계란탕": 1,
+        "돼지고기감자조림": 1
+      },
+      "drafts": [
+        {
+          "day": 1,
+          "meal_type": "breakfast",
+          "name": "계란국밥",
+          "steps": "멸치육수 끓이기,계란 풀기,밥과 함께 끓이기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "2",
+              "unit": "g",
+              "est_cost": "4.40"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "meal_type": "lunch",
+          "name": "순두부찌개",
+          "steps": "순두부와 육수 끓이기,고춧가루 넣기,대파 넣고 마무리",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "순두부",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "1285.71"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "300",
+              "unit": "ml",
+              "est_cost": "150.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "570.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "meal_type": "dinner",
+          "name": "고등어구이와 시금치나물",
+          "steps": "고등어 굽기,시금치 데치기,참기름과 소금 무치기",
+          "time_minutes": 25,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "고등어",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "6000.00"
+            },
+            {
+              "name": "시금치",
+              "quantity": "110",
+              "unit": "g",
+              "est_cost": "880.00"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            },
+            {
+              "name": "소금",
+              "quantity": "3",
+              "unit": "g",
+              "est_cost": "6.60"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "breakfast",
+          "name": "두부계란볶음밥",
+          "steps": "두부와 계란 볶기,밥 넣고 볶기,간장 조금 넣기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "두부",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1066.67"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            },
+            {
+              "name": "간장",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "45.35"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "lunch",
+          "name": "콩나물국밥",
+          "steps": "콩나물 데치기,멸치육수 끓이기,밥 넣고 끓이기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "콩나물",
+              "quantity": "210",
+              "unit": "g",
+              "est_cost": "994.74"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "285.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "dinner",
+          "name": "돼지고기김치볶음",
+          "steps": "돼지고기 볶기,김치 넣고 볶기,대파 넣고 마무리",
+          "time_minutes": 20,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "돼지고기 앞다리살",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "김치",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1600.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "breakfast",
+          "name": "계란찜",
+          "steps": "계란 풀기,멸치육수 섞기,찜기에 익히기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "3",
+              "unit": "ea",
+              "est_cost": "690.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "100",
+              "unit": "ml",
+              "est_cost": "50.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "2",
+              "unit": "g",
+              "est_cost": "4.40"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "lunch",
+          "name": "된장찌개",
+          "steps": "애호박과 양파 썰기,된장 풀어 끓이기,두부 넣고 마무리",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "된장",
+              "quantity": "30",
+              "unit": "g",
+              "est_cost": "270.00"
+            },
+            {
+              "name": "애호박",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "600.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1066.67"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "300",
+              "unit": "ml",
+              "est_cost": "150.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "dinner",
+          "name": "닭볶음탕",
+          "steps": "닭고기 손질,감자당근 넣고 조리,고추장 양념 넣기",
+          "time_minutes": 35,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1100.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "340.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "30",
+              "unit": "g",
+              "est_cost": "510.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "570.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "breakfast",
+          "name": "김치볶음밥",
+          "steps": "김치 볶기,밥 넣고 볶기,계란후라이 올리기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "김치",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "1200.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "계란",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "230.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "lunch",
+          "name": "감자국",
+          "steps": "감자와 양파 썰기,멸치육수에 끓이기,대파 넣고 마무리",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "감자",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "825.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "dinner",
+          "name": "고등어조림",
+          "steps": "고등어 손질,무와 함께 조림,간장양념 끓이기",
+          "time_minutes": 30,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "고등어",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "6000.00"
+            },
+            {
+              "name": "무",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "285.00"
+            },
+            {
+              "name": "설탕",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "12.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "breakfast",
+          "name": "시금치된장국",
+          "steps": "시금치 데치기,된장 풀어 끓이기,두부 넣기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "시금치",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "된장",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "180.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1066.67"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "300",
+              "unit": "ml",
+              "est_cost": "150.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "lunch",
+          "name": "돼지고기다짐육덮밥",
+          "steps": "다짐육 볶기,양파당근 넣기,간장양념 마무리",
+          "time_minutes": 20,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "돼지고기 다짐육",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "384.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "170.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "15",
+              "unit": "ml",
+              "est_cost": "136.05"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "dinner",
+          "name": "콩나물무침",
+          "steps": "콩나물 데치기,참기름소금 무치기,다진마늘 넣기",
+          "time_minutes": 10,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "콩나물",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "473.68"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            },
+            {
+              "name": "소금",
+              "quantity": "2",
+              "unit": "g",
+              "est_cost": "4.40"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "breakfast",
+          "name": "계란말이",
+          "steps": "계란 풀기,당근대파 다지기,말아서 익히기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "3",
+              "unit": "ea",
+              "est_cost": "690.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "30",
+              "unit": "g",
+              "est_cost": "102.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "lunch",
+          "name": "닭고기미역국대체-무국",
+          "steps": "닭고기 삶기,무 넣고 끓이기,대파 넣고 마무리",
+          "time_minutes": 25,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1400.00"
+            },
+            {
+              "name": "무",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "133.33"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "dinner",
+          "name": "두부조림",
+          "steps": "두부 부치기,간장양념 만들기,조려서 마무리",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "두부",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1066.67"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "설탕",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "12.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "breakfast",
+          "name": "애호박볶음밥",
+          "steps": "애호박 썰어 볶기,밥 넣고 볶기,계란후라이 올리기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "애호박",
+              "quantity": "60",
+              "unit": "g",
+              "est_cost": "360.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "계란",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "230.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "lunch",
+          "name": "순두부계란탕",
+          "steps": "순두부와 계란 넣기,멸치육수 끓이기,소금 간하기",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "순두부",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "857.14"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "300",
+              "unit": "ml",
+              "est_cost": "150.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "2",
+              "unit": "g",
+              "est_cost": "4.40"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "dinner",
+          "name": "돼지고기감자조림",
+          "steps": "돼지고기 볶기,감자 넣고 조리기,간장양념 마무리",
+          "time_minutes": 30,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "돼지고기 앞다리살",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "550.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "설탕",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "12.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "300.00"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

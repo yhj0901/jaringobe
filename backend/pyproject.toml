@@ -1,6 +1,6 @@
 [project]
 name = "jaringobe-backend"
-version = "0.1.0"
+version = "0.2.0"
 description = "JARINGOBE(자린고비) FastAPI 백엔드"
 requires-python = ">=3.12"
 dependencies = [

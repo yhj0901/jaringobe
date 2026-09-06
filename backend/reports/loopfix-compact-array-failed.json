@@ -1,0 +1,666 @@
+{
+  "variant": "after",
+  "model": "claude-sonnet-5",
+  "runs": [
+    {
+      "trial": 1,
+      "seconds": 60.13,
+      "meals": 21,
+      "unique_menus": 6,
+      "cost_krw": "142404.20",
+      "stocked_kinds": 12,
+      "ingredient_kinds": 15,
+      "stock_usage_ratio": 0.8,
+      "llm_errors": [
+        "APITimeoutError"
+      ],
+      "llm_responses": [],
+      "menu_counts": {
+        "된장찌개+공깃밥": 4,
+        "제육볶음": 4,
+        "계란볶음밥": 4,
+        "김치찌개": 3,
+        "닭볶음탕": 3,
+        "미역국+밥": 3
+      },
+      "drafts": [
+        {
+          "day": 1,
+          "meal_type": "breakfast",
+          "name": "된장찌개+공깃밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "두부",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1600.00"
+            },
+            {
+              "name": "된장",
+              "quantity": "30",
+              "unit": "g",
+              "est_cost": "270.00"
+            },
+            {
+              "name": "애호박",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1800.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "meal_type": "lunch",
+          "name": "제육볶음",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "돼지고기앞다리",
+              "quantity": "500",
+              "unit": "g",
+              "est_cost": "7000.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "400.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "40",
+              "unit": "g",
+              "est_cost": "680.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "meal_type": "dinner",
+          "name": "계란볶음밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "4",
+              "unit": "ea",
+              "est_cost": "920.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "310.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "breakfast",
+          "name": "김치찌개",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "김치",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "2400.00"
+            },
+            {
+              "name": "돼지고기앞다리",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "4200.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1600.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "lunch",
+          "name": "닭볶음탕",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "800",
+              "unit": "g",
+              "est_cost": "5600.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "2200.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "680.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "dinner",
+          "name": "미역국+밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "미역",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "소고기",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "7000.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "breakfast",
+          "name": "된장찌개+공깃밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "두부",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1600.00"
+            },
+            {
+              "name": "된장",
+              "quantity": "30",
+              "unit": "g",
+              "est_cost": "270.00"
+            },
+            {
+              "name": "애호박",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1800.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "lunch",
+          "name": "제육볶음",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "돼지고기앞다리",
+              "quantity": "500",
+              "unit": "g",
+              "est_cost": "7000.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "400.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "40",
+              "unit": "g",
+              "est_cost": "680.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "dinner",
+          "name": "계란볶음밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "4",
+              "unit": "ea",
+              "est_cost": "920.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "310.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "breakfast",
+          "name": "김치찌개",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "김치",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "2400.00"
+            },
+            {
+              "name": "돼지고기앞다리",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "4200.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1600.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "lunch",
+          "name": "닭볶음탕",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "800",
+              "unit": "g",
+              "est_cost": "5600.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "2200.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "680.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "dinner",
+          "name": "미역국+밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "미역",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "소고기",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "7000.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "breakfast",
+          "name": "된장찌개+공깃밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "두부",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1600.00"
+            },
+            {
+              "name": "된장",
+              "quantity": "30",
+              "unit": "g",
+              "est_cost": "270.00"
+            },
+            {
+              "name": "애호박",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1800.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "lunch",
+          "name": "제육볶음",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "돼지고기앞다리",
+              "quantity": "500",
+              "unit": "g",
+              "est_cost": "7000.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "400.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "40",
+              "unit": "g",
+              "est_cost": "680.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "dinner",
+          "name": "계란볶음밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "4",
+              "unit": "ea",
+              "est_cost": "920.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "310.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "breakfast",
+          "name": "김치찌개",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "김치",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "2400.00"
+            },
+            {
+              "name": "돼지고기앞다리",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "4200.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1600.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "lunch",
+          "name": "닭볶음탕",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "800",
+              "unit": "g",
+              "est_cost": "5600.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "2200.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "680.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "dinner",
+          "name": "미역국+밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "미역",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "소고기",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "7000.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "breakfast",
+          "name": "된장찌개+공깃밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "두부",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1600.00"
+            },
+            {
+              "name": "된장",
+              "quantity": "30",
+              "unit": "g",
+              "est_cost": "270.00"
+            },
+            {
+              "name": "애호박",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "1800.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "lunch",
+          "name": "제육볶음",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "돼지고기앞다리",
+              "quantity": "500",
+              "unit": "g",
+              "est_cost": "7000.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "400.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "40",
+              "unit": "g",
+              "est_cost": "680.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "dinner",
+          "name": "계란볶음밥",
+          "steps": "1. 재료를 손질해요.\n2. 팬이나 냄비에 재료를 넣고 익혀요.\n3. 간을 맞추고 그릇에 담아 완성해요.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "4",
+              "unit": "ea",
+              "est_cost": "920.00"
+            },
+            {
+              "name": "쌀",
+              "quantity": "400",
+              "unit": "g",
+              "est_cost": "1260.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "1",
+              "unit": "ea",
+              "est_cost": "310.00"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

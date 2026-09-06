@@ -1,3 +1,8 @@
+import asyncio
+import contextlib
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -7,12 +12,45 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.db import engine
 from app.core.errors import ApiError, api_error_handler, error_body, validation_error_handler
+from app.core.logging import configure_logging
 from app.core.ratelimit import auth_ip_limiter
+from app.domains.cycle.scheduler import run_cycle_loop
+from app.domains.notification.scheduler import run_scheduler_loop
+
+
+# 앱 임포트 시점에 로깅을 먼저 세운다 — lifespan 이전에 나는 로그도 잡기 위해.
+configure_logging(get_settings().log_level, json_format=get_settings().log_json)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """앱 수명 주기 — 리마인더·주간 사이클 asyncio 태스크 기동/정지."""
+    settings = get_settings()
+    scheduler_task: asyncio.Task | None = None
+    cycle_task: asyncio.Task | None = None
+    if settings.reminder_scheduler_enabled:
+        scheduler_task = asyncio.create_task(
+            run_scheduler_loop(settings.reminder_scheduler_interval_seconds)
+        )
+    if settings.cycle_scheduler_enabled:
+        cycle_task = asyncio.create_task(
+            run_cycle_loop(settings.cycle_scheduler_interval_seconds)
+        )
+    try:
+        yield
+    finally:
+        for task in (scheduler_task, cycle_task):
+            if task is not None:
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
+
 
 app = FastAPI(
     title="JARINGOBE API",
     description="예산 안에서 식단 자동 생성 · 식재료 0 · 자동 주문",
-    version="0.1.0",
+    version="0.2.0",
+    lifespan=lifespan,
 )
 
 # CORS 미허용(기본 차단) — 프론트는 Next.js rewrites 프록시로 동일 오리진 호출 (security-design.md §3)

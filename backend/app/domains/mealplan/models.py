@@ -21,9 +21,10 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.core.db import Base
+from app.domains.mealplan.generation_source import GenerationSource
 
 
 def _utcnow() -> datetime:
@@ -33,6 +34,10 @@ def _utcnow() -> datetime:
 class MealPlan(Base):
     __tablename__ = "meal_plans"
     __table_args__ = (Index("ix_meal_plans_user_created", "user_id", "created_at"),)
+
+    @validates("generation_source")
+    def _validate_generation_source(self, _key: str, value: str | None) -> str | None:
+        return GenerationSource(value).value if value is not None else None
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
@@ -45,10 +50,13 @@ class MealPlan(Base):
         UUID(as_uuid=True), ForeignKey("budget_plans.id", ondelete="CASCADE"), nullable=False
     )
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ready")
+    # 0013: llm | fallback. 과거 행의 출처는 추정하지 않고 NULL 로 보존한다.
+    generation_source: Mapped[str | None] = mapped_column(String(16), nullable=True)
     total_cost: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
     region: Mapped[str] = mapped_column(CHAR(2), nullable=False)
     period_start: Mapped[date] = mapped_column(Date, nullable=False)
+    # 주간·월간 모두 종료일 제외: [period_start, period_end), 일수는 두 날짜의 차이.
     period_end: Mapped[date] = mapped_column(Date, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, default=_utcnow, server_default=text("now()")

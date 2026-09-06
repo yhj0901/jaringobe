@@ -16,7 +16,7 @@ class FridgeItemCreate(CamelModel):
     quantity: Decimal = Field(gt=0)
     unit: str = Field(default="ea", max_length=16)
     expires_at: date | None = None
-    source: Literal["manual", "delivery", "mealplan", "order"] = "manual"
+    source: Literal["manual", "delivery", "mealplan"] = "manual"
 
 
 class FridgeItemsCreate(CamelModel):

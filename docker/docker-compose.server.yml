@@ -1,6 +1,13 @@
-# 배포 서버 전용 compose — db 포트 비공개(내부 네트워크만), 재시작 정책 포함
-# 사용: docker compose -f docker/docker-compose.server.yml --env-file .env up -d --build
-# (서버의 저장소 루트에서 실행. .env 는 서버에서 생성 — 커밋 금지)
+# 배포/이관 서버 전용 compose — 어떤 호스트(VPS·사내 서버·클라우드 VM)로 옮겨도 동일하게 동작한다.
+#
+# 사용:
+#   1) 저장소 클론 후 루트에 .env 생성 (.env.example 참고 — 커밋 금지)
+#   2) docker compose -f docker/docker-compose.server.yml --env-file .env up -d --build
+#   3) 마이그레이션은 backend 컨테이너 entrypoint 가 자동 실행 (alembic upgrade head)
+#
+# 특징: db 는 공인망 미노출(127.0.0.1 바인딩), caddy 가 유일한 외부 진입점.
+name: jaringobe
+
 services:
   db:
     image: postgres:16
@@ -11,7 +18,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:?}
     # 공인망 미공개 — 서버 localhost 에만 바인딩 (팀원은 SSH 터널로 접속: -L 15432:localhost:5432)
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -23,8 +30,17 @@ services:
   backend:
     build: ../backend
     restart: unless-stopped
+    # .env 전체를 컨테이너에 주입한다. --env-file 은 compose 파일의 ${} 치환에만 쓰이고
+    # 컨테이너 환경에는 전달되지 않으므로, 이것이 없으면 CYCLE_*·EXPO_ACCESS_TOKEN·
+    # APP_SCHEME·REMINDER_* 가 서버에서 기본값으로만 동작해 스케줄러를 끄고 켤 수 없다.
+    # 아래 environment 는 env_file 보다 우선하므로 임계값(특히 DATABASE_URL)은 그대로 강제된다.
+    env_file:
+      - path: ../.env
+        required: false
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # entrypoint 가 기동 시 alembic upgrade head 실행 (false 로 끄고 수동 운용 가능)
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
       JWT_SECRET: ${JWT_SECRET:?}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
@@ -36,9 +52,9 @@ services:
       LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5}
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
-    # 공인망 직접 노출 없음 — caddy(https)가 유일한 진입점. 서버 내 디버깅용 localhost 만 바인딩
+    # 공인망 직접 노출 없음 — caddy 가 유일한 진입점. 서버 내 디버깅용 localhost 만 바인딩
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -46,6 +62,9 @@ services:
   caddy:
     image: caddy:2
     restart: unless-stopped
+    environment:
+      # 도메인 미지정 시 Caddyfile 기본값 :80 (HTTP)
+      API_DOMAIN: ${API_DOMAIN:-}
     ports:
       - "80:80"
       - "443:443"

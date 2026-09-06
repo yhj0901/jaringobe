@@ -5,10 +5,10 @@ status/frequency/lineType/simulation 은 서버가 부여 — 클라이언트가
 """
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 
-from pydantic import ConfigDict, Field, field_serializer
+from pydantic import ConfigDict, Field, StrictBool, field_serializer, field_validator
 from pydantic.alias_generators import to_camel
 
 from app.core.schema import CamelModel, serialize_utc
@@ -49,6 +49,15 @@ class OrderPreviewResponse(CamelModel):
     cart: StoreCartResponse
     estimated_total: MoneyOut
     notes: list[str] = Field(default_factory=list)
+    order_id: uuid.UUID | None = None
+    status: Literal["draft", "awaiting_user"] | None = None
+    auto_confirm_at: datetime | None = None
+    blocked_reason: str | None = None
+    cycle_start: date
+
+    @field_serializer("auto_confirm_at")
+    def _ser_auto_confirm_at(self, value: datetime | None) -> str | None:
+        return serialize_utc(value) if value is not None else None
 
 
 class OrderItemOut(CamelModel):
@@ -68,10 +77,52 @@ class OrderResponse(CamelModel):
     frequency: str
     next_suggested_at: datetime
     estimated_total: MoneyOut
-    confirmed_at: datetime
+    confirmed_at: datetime | None
     simulation: bool
     items: list[OrderItemOut]
+    cycle_start: date
+    delivery_eta: datetime | None = None
+    inbound_at: datetime | None = None
+    delivery_state: Literal["pending", "delivered", "unknown"]
+    delivery_confirm_attempts: int
+    auto_confirmed: bool
+    auto_confirm_at: datetime | None = None
+    blocked_reason: str | None = None
 
-    @field_serializer("next_suggested_at", "confirmed_at")
-    def _ser_dt(self, v: datetime) -> str:
-        return serialize_utc(v)
+    @field_serializer(
+        "next_suggested_at", "confirmed_at", "delivery_eta", "inbound_at", "auto_confirm_at"
+    )
+    def _ser_dt(self, value: datetime | None) -> str | None:
+        return serialize_utc(value) if value is not None else None
+
+
+class OrderApproveRequest(CamelModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+        extra="forbid",
+    )
+
+    exclude_names: list[str] | None = Field(default=None, max_length=40)
+
+    @field_validator("exclude_names")
+    @classmethod
+    def validate_exclude_names(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        for name in value:
+            if not 1 <= len(name) <= 200:
+                raise ValueError("excludeNames entries must be 1..200 characters")
+        return value
+
+
+class DeliveryUpdateRequest(CamelModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+        extra="forbid",
+    )
+
+    received: StrictBool

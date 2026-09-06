@@ -22,14 +22,17 @@ vi.mock('@/features/household/api', () => ({
 }));
 vi.mock('@/features/mealplan/api', () => ({
   createMealPlan: vi.fn(),
+  fetchMealPlan: vi.fn(),
+  fetchLatestMealPlan: vi.fn(),
 }));
 
 const { putHouseholdMembers, putBudgetPlan } = await import('@/features/household/api');
-const { createMealPlan } = await import('@/features/mealplan/api');
+const { createMealPlan, fetchMealPlan } = await import('@/features/mealplan/api');
 
 const householdMock = vi.mocked(putHouseholdMembers);
 const budgetMock = vi.mocked(putBudgetPlan);
 const mealplanMock = vi.mocked(createMealPlan);
+const fetchPlanMock = vi.mocked(fetchMealPlan);
 
 function ok<T>(data: T, status = 200): ApiResult<T> {
   return { ok: true, status, data };
@@ -51,26 +54,25 @@ function mockAllSuccess() {
       createdAt: '2026-07-09T00:00:00Z',
     }, 201),
   );
-  mealplanMock.mockResolvedValue(
-    ok(
-      {
-        id: 'plan-1',
-        status: 'ready',
-        region: 'KR',
-        currency: 'KRW',
-        periodStart: '2026-07-09',
-        periodEnd: '2026-07-15',
-        budgetSummary: {
-          budget: { amount: '260000', currency: 'KRW' },
-          plannedCost: { amount: '200000', currency: 'KRW' },
-          remaining: { amount: '60000', currency: 'KRW' },
-          withinBudget: true,
-        },
-        meals: [],
-        notes: [],
+  // v1.5: 202 Accepted → GET /mealplans/{id} 폴링 완료 (ui-design 12장)
+  mealplanMock.mockResolvedValue(ok({ id: 'plan-1', status: 'processing' as const }, 202));
+  fetchPlanMock.mockResolvedValue(
+    ok({
+      id: 'plan-1',
+      status: 'ready' as const,
+      region: 'KR',
+      currency: 'KRW' as const,
+      periodStart: '2026-07-09',
+      periodEnd: '2026-07-15',
+      budgetSummary: {
+        budget: { amount: '260000', currency: 'KRW' as const },
+        plannedCost: { amount: '200000', currency: 'KRW' as const },
+        remaining: { amount: '60000', currency: 'KRW' as const },
+        withinBudget: true,
       },
-      201,
-    ),
+      meals: [],
+      notes: [],
+    }),
   );
 }
 

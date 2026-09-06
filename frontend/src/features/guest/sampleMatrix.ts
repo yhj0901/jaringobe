@@ -98,11 +98,19 @@ export function getSampleViewModel(
   locale: AppLocale,
   selector: SampleSelector,
   mode: HomeViewModel['mode'],
+  budgetAmount?: string,
 ): HomeViewModel {
   const matrix = getMatrix(locale);
   const directionCell = matrix.directions[selector.direction];
   const mood = matrix.budgetMood[selector.budgetBand][selector.householdBand];
   const currency = matrix.currency;
+  // 위저드·기존 직접 입력은 정수 금액. 부동소수점 없이 정수 나눗셈으로 내림한다.
+  // 프리셋 미만도 같은 비율로 축소하여 잔액·절약·폐기 절감 예시가 입력 예산과 일치한다.
+  const preset = BUDGET_PRESETS[locale].amounts[BUDGET_BANDS.indexOf(selector.budgetBand)]!;
+  const sampleAmount = (amount: string): string =>
+    budgetAmount === undefined
+      ? amount
+      : String((BigInt(amount) * BigInt(budgetAmount)) / BigInt(preset));
 
   const weekPlan: DayPlan[] = directionCell.weekPlan.map((day) => ({
     day: day.day,
@@ -116,9 +124,9 @@ export function getSampleViewModel(
   return {
     mode,
     budgetMood: {
-      remaining: { amount: mood.remaining, currency },
-      saved: { amount: mood.saved, currency },
-      wastePrevented: { amount: mood.wastePrevented, currency },
+      remaining: { amount: sampleAmount(mood.remaining), currency },
+      saved: { amount: sampleAmount(mood.saved), currency },
+      wastePrevented: { amount: sampleAmount(mood.wastePrevented), currency },
     },
     weekPlan,
     fridgePreview: directionCell.fridgePreview,

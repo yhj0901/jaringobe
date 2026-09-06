@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-07-14T22:45:00+09:00",
+  "session_topic": "앱 웹뷰 래핑 + 푸시 알림 — 버그 7건 수정 완료, GATE 4 통과",
+  "command": "수정 진행 (QA 버그 수정 → 회귀 → GATE 4 재판정)",
+  "agent": "오케스트레이터 (API/UI 수정 에이전트 병렬 + 설계 v1.5.1/v1.0.1 증보 + 인프라 .env.example)",
+  "status": "GATE 4 통과 — /문서시작 → /커밋 대기",
+  "tasks": [
+    {"id": 1, "subject": "기획~구현~QA (GATE 1~3, 버그 7건 리포트)", "status": "completed"},
+    {"id": 2, "subject": "설계 증보: api-spec v1.5.1(REGENERATE_EMPTY·타임아웃 수렴·createdAt 갱신), mobile-app v1.0.1(SYNC_REQUEST)", "status": "completed"},
+    {"id": 3, "subject": "BUG-001~007 수정 + 정식 테스트화 (백 294 / 프론트 409 / mobile 20 PASS)", "status": "completed"},
+    {"id": 4, "subject": ".env.example 신규 키 4종 (인프라)", "status": "completed"},
+    {"id": 5, "subject": "/문서시작 (기술문서/릴리즈노트)", "status": "in_progress"},
+    {"id": 6, "subject": "/커밋 — feature 브랜치, 0007_store_connections_global.py 제외 주의", "status": "pending"}
+  ],
+  "artifacts": [
+    "docs/테스트/버그리포트.md (재판정 통과 기록)",
+    "docs/설계/api-spec.md v1.5.1 / mobile-app.md v1.0.1",
+    ".env.example (EXPO_ACCESS_TOKEN/APP_SCHEME/MEALPLAN_GENERATION_TIMEOUT_MINUTES/REMINDER_SCHEDULER_*)"
+  ],
+  "key_findings": "7건 전부 수정·회귀 완료. 핵심 변화: ① regenerate 가 meals 0 failed 플랜에서 409 MEALPLAN_REGENERATE_EMPTY → 프론트 PlanCreateSheet 전환 ② processing 10분 타임아웃 수렴 ③ 원타임 코드 원자 소진 ④ 리마인더 최신 플랜 선선택 ⑤ 웹뷰 origin 완전 일치 ⑥ SYNC_REQUEST ⑦ 409 합류 completed 처리. mobile 은 npm install 완료 상태(node_modules 존재), jest 실기동 확인.",
+  "recommended_actions": "/문서시작 후 /커밋: feature/app-webview-push 브랜치, db: prefix(0008 포함), 검증용 0007_store_connections_global.py 커밋 제외, main 머지 순서는 global-region 선행. 잔여: 실서버 E2E(서버 정보 주입 시), 실기기 브리지 E2E, eas init(projectId)·앱 에셋·스토어 계정",
+  "pending_user_input": "없음 (문서화 자동 진행 중) — 이후 커밋 승인 필요"
+}

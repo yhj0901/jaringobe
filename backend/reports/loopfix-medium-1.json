@@ -1,0 +1,1209 @@
+{
+  "variant": "after",
+  "model": "claude-sonnet-5",
+  "runs": [
+    {
+      "effort_override": "medium",
+      "trial": 1,
+      "seconds": 53.1,
+      "meals": 21,
+      "unique_menus": 21,
+      "cost_krw": "67673.67",
+      "stocked_kinds": 28,
+      "ingredient_kinds": 28,
+      "stock_usage_ratio": 1.0,
+      "llm_errors": [],
+      "generation_source": "llm",
+      "llm_responses": [
+        {
+          "stop_reason": "end_turn",
+          "input_tokens": 1262,
+          "output_tokens": 6108
+        }
+      ],
+      "menu_counts": {
+        "계란말이와 밥": 1,
+        "순두부찌개": 1,
+        "고등어구이정식": 1,
+        "콩나물국밥": 1,
+        "시금치된장국": 1,
+        "돼지고기김치찌개": 1,
+        "감자계란볶음밥": 1,
+        "닭고기볶음": 1,
+        "무국": 1,
+        "김치볶음밥": 1,
+        "두부조림": 1,
+        "돼지고기감자조림": 1,
+        "계란찜": 1,
+        "시금치나물비빔밥": 1,
+        "닭볶음탕": 1,
+        "콩나물무침밥": 1,
+        "감자된장찌개": 1,
+        "고등어조림": 1,
+        "야채계란볶음밥": 1,
+        "돼지고기된장찌개": 1,
+        "순두부계란탕": 1
+      },
+      "drafts": [
+        {
+          "day": 1,
+          "meal_type": "breakfast",
+          "name": "계란말이와 밥",
+          "steps": "계란을 풀어 소금 간한다. 대파 넣고 식용유에 부쳐 만다. 밥과 곁들인다.",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "4",
+              "unit": "ea",
+              "est_cost": "920.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "62.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            },
+            {
+              "name": "소금",
+              "quantity": "2",
+              "unit": "g",
+              "est_cost": "4.40"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "meal_type": "lunch",
+          "name": "순두부찌개",
+          "steps": "다짐육 볶다가 양파 대파 넣고 육수 붓는다. 고춧가루 마늘 넣고 끓인다. 순두부 넣어 한소끔 더 끓인다.",
+          "time_minutes": 20,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "순두부",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "1285.71"
+            },
+            {
+              "name": "돼지고기 다짐육",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "384.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "62.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "570.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "meal_type": "dinner",
+          "name": "고등어구이정식",
+          "steps": "고등어에 소금 뿌려 식용유 두른 팬에 굽는다. 무는 채썰어 참기름 소금 대파로 무친다. 밥과 함께 낸다.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "고등어",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "6000.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "11.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "15",
+              "unit": "ml",
+              "est_cost": "68.00"
+            },
+            {
+              "name": "무",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "133.33"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "breakfast",
+          "name": "콩나물국밥",
+          "steps": "콩나물을 육수에 넣고 끓인다. 대파 마늘 고춧가루 소금으로 간한다. 밥을 말아 낸다.",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "콩나물",
+              "quantity": "210",
+              "unit": "g",
+              "est_cost": "994.74"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "500",
+              "unit": "ml",
+              "est_cost": "250.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "62.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "285.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "3",
+              "unit": "g",
+              "est_cost": "6.60"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "lunch",
+          "name": "시금치된장국",
+          "steps": "육수에 된장을 풀어 끓인다. 두부와 시금치 대파 마늘을 넣는다. 한소끔 끓여 밥과 낸다.",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "시금치",
+              "quantity": "110",
+              "unit": "g",
+              "est_cost": "880.00"
+            },
+            {
+              "name": "된장",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "135.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "500",
+              "unit": "ml",
+              "est_cost": "250.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "meal_type": "dinner",
+          "name": "돼지고기김치찌개",
+          "steps": "돼지고기와 김치를 볶는다. 육수 붓고 두부 양파 대파 넣는다. 고춧가루 마늘 넣고 끓인다.",
+          "time_minutes": 25,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "돼지고기 앞다리살",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "김치",
+              "quantity": "250",
+              "unit": "g",
+              "est_cost": "2000.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "62.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "570.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "breakfast",
+          "name": "감자계란볶음밥",
+          "steps": "감자를 잘게 썰어 식용유에 볶는다. 계란을 풀어 넣고 밥과 함께 볶는다. 대파 소금으로 간한다.",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "감자",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "825.00"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            },
+            {
+              "name": "소금",
+              "quantity": "3",
+              "unit": "g",
+              "est_cost": "6.60"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "lunch",
+          "name": "닭고기볶음",
+          "steps": "닭고기를 양파 당근과 함께 볶는다. 고추장 간장 마늘 넣어 조린다. 대파 넣고 마무리해 밥과 낸다.",
+          "time_minutes": 25,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "160.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "272.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "62.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "255.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "15",
+              "unit": "ml",
+              "est_cost": "136.05"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "meal_type": "dinner",
+          "name": "무국",
+          "steps": "무를 썰어 육수에 넣고 끓인다. 대파 마늘 소금으로 간한다. 계란을 풀어 넣고 밥과 낸다.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "무",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "600",
+              "unit": "ml",
+              "est_cost": "300.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "62.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "소금",
+              "quantity": "3",
+              "unit": "g",
+              "est_cost": "6.60"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "breakfast",
+          "name": "김치볶음밥",
+          "steps": "김치를 식용유에 볶는다. 밥을 넣고 함께 볶는다. 계란후라이를 올려 대파와 참기름으로 마무리한다.",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "김치",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1600.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "lunch",
+          "name": "두부조림",
+          "steps": "두부를 부쳐 간장 설탕 고춧가루 양념을 만든다. 두부에 양념을 끼얹어 조린다. 대파 마늘 넣고 밥과 낸다.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "두부",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "1600.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "설탕",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "12.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "285.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "대파",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "46.50"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "meal_type": "dinner",
+          "name": "돼지고기감자조림",
+          "steps": "돼지고기와 감자 당근 양파를 볶는다. 물과 간장 설탕 마늘을 넣고 조린다. 국물이 졸면 밥과 낸다.",
+          "time_minutes": 30,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "돼지고기 앞다리살",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "200",
+              "unit": "g",
+              "est_cost": "1100.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "272.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "60",
+              "unit": "g",
+              "est_cost": "120.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "설탕",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "12.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "물",
+              "quantity": "300",
+              "unit": "ml",
+              "est_cost": "0.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "breakfast",
+          "name": "계란찜",
+          "steps": "계란을 풀어 육수와 소금으로 간한다. 대파를 넣고 찜기에 찐다. 밥과 함께 낸다.",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "계란",
+              "quantity": "4",
+              "unit": "ea",
+              "est_cost": "920.00"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "100",
+              "unit": "ml",
+              "est_cost": "50.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "3",
+              "unit": "g",
+              "est_cost": "6.60"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "lunch",
+          "name": "시금치나물비빔밥",
+          "steps": "시금치 콩나물 당근을 데쳐 나물로 무친다. 밥 위에 나물과 계란을 올린다. 고추장 참기름 마늘로 비빈다.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            },
+            {
+              "name": "시금치",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "콩나물",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "473.68"
+            },
+            {
+              "name": "당근",
+              "quantity": "60",
+              "unit": "g",
+              "est_cost": "204.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "255.00"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "8",
+              "unit": "g",
+              "est_cost": "100.00"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "meal_type": "dinner",
+          "name": "닭볶음탕",
+          "steps": "닭고기와 감자 당근 양파를 넣고 볶는다. 고추장 고춧가루 간장 마늘과 물을 넣어 끓인다. 국물이 졸면 밥과 낸다.",
+          "time_minutes": 35,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "닭고기",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "825.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "80",
+              "unit": "g",
+              "est_cost": "272.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "60",
+              "unit": "g",
+              "est_cost": "120.00"
+            },
+            {
+              "name": "고추장",
+              "quantity": "20",
+              "unit": "g",
+              "est_cost": "340.00"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "570.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "15",
+              "unit": "ml",
+              "est_cost": "136.05"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "물",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "0.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "breakfast",
+          "name": "콩나물무침밥",
+          "steps": "콩나물을 데쳐 대파 마늘 참기름 소금으로 무친다. 밥과 계란후라이를 곁들인다.",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "콩나물",
+              "quantity": "110",
+              "unit": "g",
+              "est_cost": "521.05"
+            },
+            {
+              "name": "대파",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "31.00"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "참기름",
+              "quantity": "5",
+              "unit": "ml",
+              "est_cost": "132.81"
+            },
+            {
+              "name": "소금",
+              "quantity": "3",
+              "unit": "g",
+              "est_cost": "6.60"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "lunch",
+          "name": "감자된장찌개",
+          "steps": "육수에 된장을 풀고 감자 양파 애호박을 넣어 끓인다. 대파 마늘로 마무리한다. 밥과 낸다.",
+          "time_minutes": 20,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "된장",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "135.00"
+            },
+            {
+              "name": "감자",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "550.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "60",
+              "unit": "g",
+              "est_cost": "120.00"
+            },
+            {
+              "name": "애호박",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "600.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "46.50"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "500",
+              "unit": "ml",
+              "est_cost": "250.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "meal_type": "dinner",
+          "name": "고등어조림",
+          "steps": "고등어에 무와 양념장을 얹어 조린다. 고춧가루 간장 설탕 마늘을 넣는다. 대파 넣고 국물 졸이면 완성.",
+          "time_minutes": 25,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "고등어",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "6000.00"
+            },
+            {
+              "name": "무",
+              "quantity": "100",
+              "unit": "g",
+              "est_cost": "133.33"
+            },
+            {
+              "name": "고춧가루",
+              "quantity": "10",
+              "unit": "g",
+              "est_cost": "570.00"
+            },
+            {
+              "name": "간장",
+              "quantity": "20",
+              "unit": "ml",
+              "est_cost": "181.40"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "설탕",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "12.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "46.50"
+            },
+            {
+              "name": "물",
+              "quantity": "200",
+              "unit": "ml",
+              "est_cost": "0.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "breakfast",
+          "name": "야채계란볶음밥",
+          "steps": "당근 양파 대파를 식용유에 볶는다. 계란과 밥을 넣어 함께 볶는다. 소금으로 간한다.",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "당근",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "170.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "46.50"
+            },
+            {
+              "name": "식용유",
+              "quantity": "10",
+              "unit": "ml",
+              "est_cost": "45.33"
+            },
+            {
+              "name": "소금",
+              "quantity": "3",
+              "unit": "g",
+              "est_cost": "6.60"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "lunch",
+          "name": "돼지고기된장찌개",
+          "steps": "돼지고기를 볶다가 육수를 붓는다. 된장을 풀고 애호박 양파 두부를 넣는다. 대파 마늘로 마무리한다.",
+          "time_minutes": 25,
+          "difficulty": "normal",
+          "ingredients": [
+            {
+              "name": "돼지고기 앞다리살",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "2100.00"
+            },
+            {
+              "name": "된장",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "135.00"
+            },
+            {
+              "name": "애호박",
+              "quantity": "60",
+              "unit": "g",
+              "est_cost": "360.00"
+            },
+            {
+              "name": "양파",
+              "quantity": "50",
+              "unit": "g",
+              "est_cost": "100.00"
+            },
+            {
+              "name": "두부",
+              "quantity": "150",
+              "unit": "g",
+              "est_cost": "800.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "46.50"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "meal_type": "dinner",
+          "name": "순두부계란탕",
+          "steps": "육수를 끓이다가 순두부를 넣는다. 계란을 풀어 넣고 대파 마늘 소금으로 간한다. 밥과 낸다.",
+          "time_minutes": 15,
+          "difficulty": "easy",
+          "ingredients": [
+            {
+              "name": "순두부",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "1285.71"
+            },
+            {
+              "name": "계란",
+              "quantity": "2",
+              "unit": "ea",
+              "est_cost": "460.00"
+            },
+            {
+              "name": "대파",
+              "quantity": "15",
+              "unit": "g",
+              "est_cost": "46.50"
+            },
+            {
+              "name": "다진마늘",
+              "quantity": "5",
+              "unit": "g",
+              "est_cost": "62.50"
+            },
+            {
+              "name": "멸치육수",
+              "quantity": "400",
+              "unit": "ml",
+              "est_cost": "200.00"
+            },
+            {
+              "name": "소금",
+              "quantity": "3",
+              "unit": "g",
+              "est_cost": "6.60"
+            },
+            {
+              "name": "밥",
+              "quantity": "300",
+              "unit": "g",
+              "est_cost": "450.00"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

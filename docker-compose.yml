@@ -1,14 +1,26 @@
+# 로컬 개발용 compose (기본 파일) — 저장소 루트에서 실행한다.
+#   docker compose up -d --build
+#
+# 포트는 .env 로 조정한다 (한 머신에서 다른 프로젝트가 5432/8000 을 쓰는 경우 대비).
+#   POSTGRES_PORT / BACKEND_PORT
+# 백엔드 컨테이너는 기동 시 alembic upgrade head 를 자동 실행한다 (entrypoint).
+name: jaringobe
+
 services:
   db:
     image: postgres:16
+    container_name: jaringobe-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-jaringobe}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jaringobe}
       POSTGRES_DB: ${POSTGRES_DB:-jaringobe}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # 최초 초기화 시 테스트 DB(jaringobe_test) 자동 생성
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jaringobe}"]
       interval: 5s
@@ -17,12 +29,16 @@ services:
 
   backend:
     build: ./backend
+    container_name: jaringobe-backend
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
     environment:
+      # 컨테이너 내부에서는 항상 compose 네트워크의 db 를 본다 (.env 의 호스트용 값보다 우선)
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-jaringobe}:${POSTGRES_PASSWORD:-jaringobe}@db:5432/${POSTGRES_DB:-jaringobe}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy

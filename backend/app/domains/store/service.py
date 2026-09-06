@@ -24,7 +24,7 @@ async def build_cart(
     notes: list[str] = []
     settings = get_settings()
     if not (settings.naver_client_id and settings.naver_client_secret):
-        notes.append("네이버 API 키 미설정 — 검색 결과 없음(.env NAVER_CLIENT_ID/SECRET 필요)")
+        notes.append("PRICE_LOOKUP_UNAVAILABLE")
     if not settings.llm_enabled:
         notes.append("LLM 미설정 — 최저가 폴백으로 선택")
 

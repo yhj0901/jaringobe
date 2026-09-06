@@ -71,3 +71,15 @@ describe('RecipeSheet (FR-504)', () => {
     expect(within(dialog).getByText('Serves 3')).toBeInTheDocument();
   });
 });
+
+
+it.each([
+  ['ko', '샘플 레시피', '체험용 예시예요.', 'AI 추천 레시피'],
+  ['en', 'Sample recipe', 'This is a trial preview.', 'AI recipe'],
+] as const)('%s: 게스트 시트는 공통 예시임을 표시한다', (locale, badge, notice, aiBadge) => {
+  renderWithIntl(<RecipeSheet meal={{ slot: 'breakfast', name: 'Toast', isSample: true }} onClose={vi.fn()} />, locale);
+  const dialog = screen.getByRole('dialog');
+  expect(within(dialog).getByText(badge)).toBeInTheDocument();
+  expect(within(dialog).getByText(notice, { exact: false })).toBeInTheDocument();
+  expect(within(dialog).queryByText(aiBadge)).not.toBeInTheDocument();
+});

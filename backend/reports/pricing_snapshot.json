@@ -1,0 +1,834 @@
+[
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "breakfast",
+    "name": "밥",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "1125.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "breakfast",
+    "name": "계란",
+    "quantity": "3.000",
+    "unit": "ea",
+    "est_cost": "4476.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "breakfast",
+    "name": "당근",
+    "quantity": "30.000",
+    "unit": "g",
+    "est_cost": "252.90"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "breakfast",
+    "name": "대파",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "breakfast",
+    "name": "식용유",
+    "quantity": "10.000",
+    "unit": "ml",
+    "est_cost": "105.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "dinner",
+    "name": "대파",
+    "quantity": "20.000",
+    "unit": "g",
+    "est_cost": "166.60"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "dinner",
+    "name": "마늘",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "dinner",
+    "name": "양파",
+    "quantity": "100.000",
+    "unit": "g",
+    "est_cost": "355.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "dinner",
+    "name": "고추장",
+    "quantity": "30.000",
+    "unit": "g",
+    "est_cost": "273.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "dinner",
+    "name": "고춧가루",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "dinner",
+    "name": "돼지고기 앞다리살",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "1704.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "lunch",
+    "name": "물",
+    "quantity": "500.000",
+    "unit": "ml",
+    "est_cost": "5970.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "lunch",
+    "name": "감자",
+    "quantity": "100.000",
+    "unit": "g",
+    "est_cost": "1079.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "lunch",
+    "name": "대파",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "lunch",
+    "name": "된장",
+    "quantity": "30.000",
+    "unit": "g",
+    "est_cost": "322.50"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "lunch",
+    "name": "두부",
+    "quantity": "150.000",
+    "unit": "g",
+    "est_cost": "1354.50"
+  },
+  {
+    "plan_date": "2026-09-05",
+    "meal_type": "lunch",
+    "name": "애호박",
+    "quantity": "80.000",
+    "unit": "g",
+    "est_cost": "884.80"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "breakfast",
+    "name": "물",
+    "quantity": "500.000",
+    "unit": "ml",
+    "est_cost": "5970.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "breakfast",
+    "name": "밥",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "1125.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "breakfast",
+    "name": "계란",
+    "quantity": "2.000",
+    "unit": "ea",
+    "est_cost": "2984.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "breakfast",
+    "name": "콩나물",
+    "quantity": "150.000",
+    "unit": "g",
+    "est_cost": "897.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "breakfast",
+    "name": "다진마늘",
+    "quantity": "5.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "dinner",
+    "name": "소금",
+    "quantity": "5.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "dinner",
+    "name": "고등어",
+    "quantity": "2.000",
+    "unit": "ea",
+    "est_cost": "3020.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "dinner",
+    "name": "식용유",
+    "quantity": "10.000",
+    "unit": "ml",
+    "est_cost": "105.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "lunch",
+    "name": "물",
+    "quantity": "500.000",
+    "unit": "ml",
+    "est_cost": "5970.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "lunch",
+    "name": "대파",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "lunch",
+    "name": "두부",
+    "quantity": "150.000",
+    "unit": "g",
+    "est_cost": "1354.50"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "lunch",
+    "name": "돼지고기",
+    "quantity": "150.000",
+    "unit": "g",
+    "est_cost": "1665.00"
+  },
+  {
+    "plan_date": "2026-09-06",
+    "meal_type": "lunch",
+    "name": "배추김치",
+    "quantity": "200.000",
+    "unit": "g",
+    "est_cost": "1712.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "breakfast",
+    "name": "물",
+    "quantity": "600.000",
+    "unit": "ml",
+    "est_cost": "7164.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "breakfast",
+    "name": "쌀",
+    "quantity": "100.000",
+    "unit": "g",
+    "est_cost": "790.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "breakfast",
+    "name": "당근",
+    "quantity": "30.000",
+    "unit": "g",
+    "est_cost": "252.90"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "breakfast",
+    "name": "소금",
+    "quantity": "3.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "breakfast",
+    "name": "애호박",
+    "quantity": "30.000",
+    "unit": "g",
+    "est_cost": "331.80"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "dinner",
+    "name": "감자",
+    "quantity": "150.000",
+    "unit": "g",
+    "est_cost": "1618.50"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "dinner",
+    "name": "당근",
+    "quantity": "80.000",
+    "unit": "g",
+    "est_cost": "674.40"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "dinner",
+    "name": "양파",
+    "quantity": "80.000",
+    "unit": "g",
+    "est_cost": "284.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "dinner",
+    "name": "고추장",
+    "quantity": "30.000",
+    "unit": "g",
+    "est_cost": "273.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "dinner",
+    "name": "닭고기",
+    "quantity": "400.000",
+    "unit": "g",
+    "est_cost": "2684.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "dinner",
+    "name": "고춧가루",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "lunch",
+    "name": "밥",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "1125.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "lunch",
+    "name": "계란",
+    "quantity": "2.000",
+    "unit": "ea",
+    "est_cost": "2984.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "lunch",
+    "name": "당근",
+    "quantity": "40.000",
+    "unit": "g",
+    "est_cost": "337.20"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "lunch",
+    "name": "고추장",
+    "quantity": "20.000",
+    "unit": "g",
+    "est_cost": "182.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "lunch",
+    "name": "소고기",
+    "quantity": "100.000",
+    "unit": "g",
+    "est_cost": "884.00"
+  },
+  {
+    "plan_date": "2026-09-07",
+    "meal_type": "lunch",
+    "name": "시금치",
+    "quantity": "50.000",
+    "unit": "g",
+    "est_cost": "445.50"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "breakfast",
+    "name": "계란",
+    "quantity": "2.000",
+    "unit": "ea",
+    "est_cost": "2984.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "breakfast",
+    "name": "버터",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "breakfast",
+    "name": "식빵",
+    "quantity": "4.000",
+    "unit": "ea",
+    "est_cost": "5272.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "dinner",
+    "name": "물",
+    "quantity": "400.000",
+    "unit": "ml",
+    "est_cost": "4776.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "dinner",
+    "name": "계란",
+    "quantity": "1.000",
+    "unit": "ea",
+    "est_cost": "1492.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "dinner",
+    "name": "대파",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "dinner",
+    "name": "순두부",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "2265.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "dinner",
+    "name": "애호박",
+    "quantity": "50.000",
+    "unit": "g",
+    "est_cost": "553.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "dinner",
+    "name": "고춧가루",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "lunch",
+    "name": "밥",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "1125.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "lunch",
+    "name": "간장",
+    "quantity": "20.000",
+    "unit": "ml",
+    "est_cost": "169.40"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "lunch",
+    "name": "당근",
+    "quantity": "50.000",
+    "unit": "g",
+    "est_cost": "421.50"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "lunch",
+    "name": "당면",
+    "quantity": "100.000",
+    "unit": "g",
+    "est_cost": "1196.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "lunch",
+    "name": "소고기",
+    "quantity": "100.000",
+    "unit": "g",
+    "est_cost": "884.00"
+  },
+  {
+    "plan_date": "2026-09-08",
+    "meal_type": "lunch",
+    "name": "시금치",
+    "quantity": "50.000",
+    "unit": "g",
+    "est_cost": "445.50"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "breakfast",
+    "name": "감자",
+    "quantity": "200.000",
+    "unit": "g",
+    "est_cost": "2158.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "breakfast",
+    "name": "소금",
+    "quantity": "3.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "breakfast",
+    "name": "양파",
+    "quantity": "30.000",
+    "unit": "g",
+    "est_cost": "106.50"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "breakfast",
+    "name": "우유",
+    "quantity": "300.000",
+    "unit": "ml",
+    "est_cost": "1572.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "dinner",
+    "name": "무",
+    "quantity": "200.000",
+    "unit": "g",
+    "est_cost": "1146.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "dinner",
+    "name": "물",
+    "quantity": "600.000",
+    "unit": "ml",
+    "est_cost": "7164.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "dinner",
+    "name": "대파",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "dinner",
+    "name": "마늘",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "dinner",
+    "name": "소고기",
+    "quantity": "150.000",
+    "unit": "g",
+    "est_cost": "1326.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "lunch",
+    "name": "밥",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "1125.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "lunch",
+    "name": "당근",
+    "quantity": "50.000",
+    "unit": "g",
+    "est_cost": "421.50"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "lunch",
+    "name": "양파",
+    "quantity": "80.000",
+    "unit": "g",
+    "est_cost": "284.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "lunch",
+    "name": "고추장",
+    "quantity": "25.000",
+    "unit": "g",
+    "est_cost": "227.50"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "lunch",
+    "name": "오징어",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "3063.00"
+  },
+  {
+    "plan_date": "2026-09-09",
+    "meal_type": "lunch",
+    "name": "고춧가루",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "breakfast",
+    "name": "우유",
+    "quantity": "300.000",
+    "unit": "ml",
+    "est_cost": "1572.00"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "breakfast",
+    "name": "시리얼",
+    "quantity": "80.000",
+    "unit": "g",
+    "est_cost": "499.20"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "dinner",
+    "name": "간장",
+    "quantity": "30.000",
+    "unit": "ml",
+    "est_cost": "254.10"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "dinner",
+    "name": "대파",
+    "quantity": "15.000",
+    "unit": "g",
+    "est_cost": "124.95"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "dinner",
+    "name": "두부",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "2709.00"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "dinner",
+    "name": "식용유",
+    "quantity": "15.000",
+    "unit": "ml",
+    "est_cost": "157.50"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "dinner",
+    "name": "고춧가루",
+    "quantity": "5.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "lunch",
+    "name": "밥",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "1125.00"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "lunch",
+    "name": "간장",
+    "quantity": "30.000",
+    "unit": "ml",
+    "est_cost": "254.10"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "lunch",
+    "name": "마늘",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "lunch",
+    "name": "설탕",
+    "quantity": "10.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "lunch",
+    "name": "양파",
+    "quantity": "80.000",
+    "unit": "g",
+    "est_cost": "284.00"
+  },
+  {
+    "plan_date": "2026-09-10",
+    "meal_type": "lunch",
+    "name": "소고기",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "2652.00"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "breakfast",
+    "name": "김",
+    "quantity": "3.000",
+    "unit": "ea",
+    "est_cost": "5502.00"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "breakfast",
+    "name": "밥",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "1125.00"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "breakfast",
+    "name": "계란",
+    "quantity": "2.000",
+    "unit": "ea",
+    "est_cost": "2984.00"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "breakfast",
+    "name": "당근",
+    "quantity": "40.000",
+    "unit": "g",
+    "est_cost": "337.20"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "breakfast",
+    "name": "단무지",
+    "quantity": "40.000",
+    "unit": "g",
+    "est_cost": "135.20"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "breakfast",
+    "name": "시금치",
+    "quantity": "40.000",
+    "unit": "g",
+    "est_cost": "356.40"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "dinner",
+    "name": "삼치",
+    "quantity": "2.000",
+    "unit": "ea",
+    "est_cost": "2542.00"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "dinner",
+    "name": "소금",
+    "quantity": "5.000",
+    "unit": "g",
+    "est_cost": "100.00"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "dinner",
+    "name": "식용유",
+    "quantity": "10.000",
+    "unit": "ml",
+    "est_cost": "105.00"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "lunch",
+    "name": "감자",
+    "quantity": "80.000",
+    "unit": "g",
+    "est_cost": "863.20"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "lunch",
+    "name": "대파",
+    "quantity": "15.000",
+    "unit": "g",
+    "est_cost": "124.95"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "lunch",
+    "name": "애호박",
+    "quantity": "80.000",
+    "unit": "g",
+    "est_cost": "884.80"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "lunch",
+    "name": "멸치육수",
+    "quantity": "600.000",
+    "unit": "ml",
+    "est_cost": "2046.00"
+  },
+  {
+    "plan_date": "2026-09-11",
+    "meal_type": "lunch",
+    "name": "칼국수면",
+    "quantity": "300.000",
+    "unit": "g",
+    "est_cost": "1167.00"
+  }
+]

@@ -1,8 +1,11 @@
-"""mealplan 도메인 라우터 — /api/v1/mealplans (생성/조회/재생성)."""
+"""mealplan 도메인 라우터 — /api/v1/mealplans (생성/조회/재생성).
+
+v1.5: 생성/재생성은 202 Accepted + BackgroundTasks 비동기 (api-spec §3-2·3-5).
+"""
 
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
@@ -14,6 +17,7 @@ from app.domains.mealplan import service
 from app.domains.mealplan.schemas import (
     MealCompletionRequest,
     MealOut,
+    MealPlanAcceptedResponse,
     MealPlanCartRequest,
     MealPlanCartResponse,
     MealPlanCreateRequest,
@@ -34,16 +38,27 @@ async def _mealplan_rate_limit(user: User = Depends(get_current_user)) -> None:
 
 @router.post(
     "/mealplans",
-    response_model=MealPlanResponse,
-    status_code=status.HTTP_201_CREATED,
+    response_model=MealPlanAcceptedResponse,
+    status_code=status.HTTP_202_ACCEPTED,
     dependencies=[Depends(_mealplan_rate_limit)],
 )
 async def create_meal_plan(
     payload: MealPlanCreateRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> MealPlanResponse:
-    return await service.create_meal_plan(db, user, payload)
+) -> MealPlanAcceptedResponse:
+    """202 접수 후 백그라운드 생성 — 클라이언트는 GET /mealplans/{id} 폴링 (v1.5)."""
+    plan_id = await service.start_meal_plan_generation(db, user, payload)
+    background_tasks.add_task(
+        service.run_meal_plan_generation,
+        plan_id,
+        payload.days,
+        payload.meals_per_day,
+        payload.allergies,
+        payload.preferences,
+    )
+    return MealPlanAcceptedResponse(id=plan_id)
 
 
 # 주의: /mealplans/latest 는 /mealplans/{plan_id} 보다 먼저 선언 (uuid 파싱 충돌 방지)
@@ -82,16 +97,31 @@ async def set_meal_completion(
 
 @router.post(
     "/mealplans/{plan_id}/regenerate",
-    response_model=MealPlanResponse,
+    response_model=MealPlanAcceptedResponse,
+    status_code=status.HTTP_202_ACCEPTED,
     dependencies=[Depends(_mealplan_rate_limit)],
 )
 async def regenerate_meal_plan(
     plan_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     payload: RegenerateRequest | None = None,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-) -> MealPlanResponse:
-    return await service.regenerate_meal_plan(db, user, plan_id, payload or RegenerateRequest())
+) -> MealPlanAcceptedResponse:
+    """202 접수 후 백그라운드 재생성 — 폴링·완료 푸시는 생성과 동일 패턴 (v1.5)."""
+    req = payload or RegenerateRequest()
+    accepted_id, days, meals_per_day = await service.start_meal_plan_regeneration(
+        db, user, plan_id, req
+    )
+    background_tasks.add_task(
+        service.run_meal_plan_generation,
+        accepted_id,
+        days,
+        meals_per_day,
+        req.allergies,
+        req.preferences,
+    )
+    return MealPlanAcceptedResponse(id=accepted_id)
 
 
 async def _cart_rate_limit(user: User = Depends(get_current_user)) -> None:

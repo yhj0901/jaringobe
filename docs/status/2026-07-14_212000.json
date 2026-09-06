@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-07-14T21:20:00+09:00",
+  "session_topic": "앱 웹뷰 래핑 + 푸시 알림 — QA 완료 (GATE 4 불통과, High 3건)",
+  "command": "/QA시작 (병렬 3트랙)",
+  "agent": "agents/qa.md",
+  "status": "버그 7건 리포트 — 수정 명세 승인 대기 (High 3 / Medium 3 / Low 1)",
+  "tasks": [
+    {"id": 1, "subject": "기획/설계/인프라/구현 (GATE 1~3)", "status": "completed"},
+    {"id": 2, "subject": "QA 3트랙 병렬 검증 — 계약 11 PASS, i18n 4 PASS, 보안 8/10, 루프 8/12", "status": "completed"},
+    {"id": 3, "subject": "docs/테스트/ 3종 갱신 (버그리포트 BUG-001~007)", "status": "completed"},
+    {"id": 4, "subject": "수정 명세 승인 → [API] BUG-001/002/004/005, [UI] BUG-003/007, [설계+양측] BUG-006 수정", "status": "pending"},
+    {"id": 5, "subject": "회귀 재테스트 → GATE 4 재판정 → /문서시작 → /커밋", "status": "pending"}
+  ],
+  "artifacts": ["docs/테스트/버그리포트.md", "docs/테스트/테스트계획.md", "docs/테스트/보안테스트.md"],
+  "key_findings": "High 3건: BUG-001 좀비 processing 영구 409 잠금(재시작 시, stale 판정 부재), BUG-002 failed 재생성 시 mealsPerDay 1 붕괴(원 요청 미저장), BUG-003 웹뷰 오리진 startsWith 프리픽스 우회(CWE-345). Medium: BUG-004 코드 이중 소진 race, BUG-005 다중 플랜 리마인더 오발송(FR-006), BUG-006 초기 브리지 메시지 유실(SYNC_REQUEST 프로토콜 증보 필요 — 설계 변경). Low: BUG-007 409 합류 완료 오표시. 그 외 N-1~5 기록(냉장고 차감 브랜치 미머지 전제 불일치 등). 시나리오 E2E 는 서버 정보 미주입으로 미수행.",
+  "recommended_actions": "수정 명세: [API 에이전트] BUG-001(stale 판정+기동 정리)·002(요청 파라미터 보존)·004(원자 UPDATE RETURNING)·005(최신 플랜 선선택), [UI 에이전트] BUG-003(origin 완전 일치)·007(완료 처리)·006 웹측, [설계] BUG-006 브리지 프로토콜에 SYNC_REQUEST 증보(mobile-app.md 3장) 후 양측 구현. 수정 후 회귀(기존 스위트 + QA 탐침 케이스 정식 테스트화) → GATE 4 재판정",
+  "pending_user_input": "수정 명세 승인 (\"수정 진행\" 등)"
+}

@@ -37,6 +37,17 @@ export function deleteFridgeItem(id: string): Promise<ApiResult<void>> {
   return apiFetch<void>(`/api/v1/fridge/items/${id}`, { method: 'DELETE' });
 }
 
+/** PATCH /api/v1/fridge/items/{id} — 배송 자동등록분을 포함한 수량 보정. */
+export function updateFridgeQuantity(
+  id: string,
+  quantity: string,
+): Promise<ApiResult<FridgeItem>> {
+  return apiFetch<FridgeItem>(`/api/v1/fridge/items/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ quantity }),
+  });
+}
+
 /** 유통기한까지 남은 일수 (없으면 null) */
 export function daysUntil(expiresAt: string | null): number | null {
   if (!expiresAt) return null;
