@@ -1,4 +1,9 @@
-"""재료 가격 — PriceProvider. v1: DB 기준가(ingredient_price_refs) + 근사. 후속 store 교체."""
+"""식단 사용량의 추정 원가 — DB 기준가(ingredient_price_refs) + 미등록 재료 근사.
+
+현재 store 검색/장바구니 가격은 이 provider에 연결되지 않는다. 네이버 키가 있어도
+식단 원가와 생성 시 예산 판정에는 반영되지 않으며, 키가 없으면 store 검색도 불가하다.
+기준가는 실제 포장 구매액/배송비가 아닌 사용량 비용이다. 운영 및 근거: reports/pricing-review.md.
+"""
 
 from __future__ import annotations
 
