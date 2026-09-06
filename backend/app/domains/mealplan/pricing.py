@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.mealplan.models import IngredientPriceRef
+from app.domains.mealplan.pantry_prices import pantry_cost
 
 _CENT = Decimal("0.01")
 
@@ -42,12 +43,17 @@ class DBPriceProvider(PriceProvider):
             IngredientPriceRef.name == name,
             IngredientPriceRef.region == region,
             IngredientPriceRef.unit == unit,
+            IngredientPriceRef.currency == currency,
         )
         row = (await self.db.execute(stmt)).scalar_one_or_none()
         if row is not None and row.pack_qty and row.pack_qty > 0:
             return (row.unit_price * (quantity / row.pack_qty)).quantize(
                 _CENT, rounding=ROUND_HALF_UP
             )
+        # DB 기준가 우선. 무료 물/기본 양념은 시드가 없어도 난수와 최소 비용을 적용하지 않는다.
+        basic_cost = pantry_cost(name, quantity, unit, region, currency)
+        if basic_cost is not None:
+            return basic_cost.quantize(_CENT, rounding=ROUND_HALF_UP)
         # 기준가 미등록 재료: 수량 기반 근사 (재료당 고정 난수는 한 끼를 수만원으로 과대 계산)
         krw = currency == "KRW"
         unit_l = unit.lower()
