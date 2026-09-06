@@ -1,4 +1,9 @@
-"""재료 가격 — PriceProvider. v1: DB 기준가(ingredient_price_refs) + 근사. 후속 store 교체."""
+"""식단 사용량의 추정 원가 — DB 기준가(ingredient_price_refs) + 미등록 재료 근사.
+
+현재 store 검색/장바구니 가격은 이 provider에 연결되지 않는다. 네이버 키가 있어도
+식단 원가와 생성 시 예산 판정에는 반영되지 않으며, 키가 없으면 store 검색도 불가하다.
+기준가는 실제 포장 구매액/배송비가 아닌 사용량 비용이다. 운영 및 근거: reports/pricing-review.md.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.mealplan.models import IngredientPriceRef
+from app.domains.mealplan.pantry_prices import pantry_cost
 
 _CENT = Decimal("0.01")
 
@@ -37,12 +43,17 @@ class DBPriceProvider(PriceProvider):
             IngredientPriceRef.name == name,
             IngredientPriceRef.region == region,
             IngredientPriceRef.unit == unit,
+            IngredientPriceRef.currency == currency,
         )
         row = (await self.db.execute(stmt)).scalar_one_or_none()
         if row is not None and row.pack_qty and row.pack_qty > 0:
             return (row.unit_price * (quantity / row.pack_qty)).quantize(
                 _CENT, rounding=ROUND_HALF_UP
             )
+        # DB 기준가 우선. 무료 물/기본 양념은 시드가 없어도 난수와 최소 비용을 적용하지 않는다.
+        basic_cost = pantry_cost(name, quantity, unit, region, currency)
+        if basic_cost is not None:
+            return basic_cost.quantize(_CENT, rounding=ROUND_HALF_UP)
         # 기준가 미등록 재료: 수량 기반 근사 (재료당 고정 난수는 한 끼를 수만원으로 과대 계산)
         krw = currency == "KRW"
         unit_l = unit.lower()
