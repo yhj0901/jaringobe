@@ -22,6 +22,7 @@ from app.domains.budget.models import BudgetPlan
 from app.domains.budget.schemas import MoneyOut
 from app.domains.fridge import service as fridge_service
 from app.domains.fridge.schemas import FridgeItemCreate, NeededItem as FridgeNeed
+from app.domains.fridge.shelf_life import estimate_expires_at
 from app.domains.mealplan.models import Meal, MealPlan
 from app.domains.order.models import Order, OrderItem
 from app.domains.order.schemas import (
@@ -907,7 +908,7 @@ async def mark_inbound(
             name=row.name,
             quantity=row.quantity,
             unit=row.unit,
-            expires_at=None,
+            expires_at=estimate_expires_at(row.name, now.astimezone(UTC).date()),
             source="delivery",
         )
         for row in rows

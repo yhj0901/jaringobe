@@ -298,7 +298,8 @@ async def test_post_defers_inbound_until_delivery_and_is_idempotent(client, db, 
     assert len(delivery_rows) == 1
     assert delivery_rows[0]["name"] == "계란"
     assert delivery_rows[0]["quantity"] == "10"
-    assert delivery_rows[0]["expiresAt"] is None
+    inbound_day = date.fromisoformat(delivered.json()["inboundAt"][:10])
+    assert delivery_rows[0]["expiresAt"] == (inbound_day + timedelta(days=21)).isoformat()
     onion_total = sum(Decimal(i["quantity"]) for i in fridge if i["name"] == "양파")
     assert onion_total == Decimal("3")
     egg_total = sum(Decimal(i["quantity"]) for i in fridge if i["name"] == "계란")
