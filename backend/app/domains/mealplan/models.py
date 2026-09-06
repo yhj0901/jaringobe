@@ -45,6 +45,8 @@ class MealPlan(Base):
         UUID(as_uuid=True), ForeignKey("budget_plans.id", ondelete="CASCADE"), nullable=False
     )
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ready")
+    # 0013: llm | fallback. 과거 행의 출처는 추정하지 않고 NULL 로 보존한다.
+    generation_source: Mapped[str | None] = mapped_column(String(16), nullable=True)
     total_cost: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
     region: Mapped[str] = mapped_column(CHAR(2), nullable=False)

@@ -94,6 +94,18 @@ orders 1 ──── N order_items        (needed/covered 라인 스냅샷)
 - 상세 명세는 리비전 파일(`0002_mealplan.py`)과 models.py 가 원본 — 본 문서는 요약 유지
 - `meal_plans.period_end`는 주간·월간 모두 **종료일 제외**이며, `[period_start, period_end)`의 일수는 두 날짜의 차이로 계산한다.
 
+### 식단 생성 출처 (리비전 0013)
+
+| 컬럼 | 타입 | 제약 | 의미 |
+|------|------|------|------|
+| `meal_plans.generation_source` | varchar(16) | NULL 허용, 기본값 없음, DB CHECK 없음 | `llm`: LLM 생성, `fallback`: 하드코딩 폴백, NULL: 출처를 알 수 없음 |
+
+- 기존 행은 **백필하지 않고 NULL 로 보존**한다. 레시피 이름 등 휴리스틱으로 과거 출처를 추정하지 않는다.
+- CHECK 는 두지 않는다. 향후 생성 경로 추가 시 DB 마이그레이션과 애플리케이션 배포의 결합을 줄이고, 기존 `fridge_items.source`와 같은 애플리케이션 검증 방식을 따른다. 대신 허용값 검증은 애플리케이션이 유일한 방어선이며, DB 는 길이만 제한하므로 다른 문자열도 저장할 수 있다.
+- FK·CASCADE·인덱스 변경은 없다. 기존 조회에 출처를 함께 반환하는 목적이므로 별도 인덱스는 추가하지 않는다.
+- `upgrade`는 nullable 컬럼만 추가하고, `downgrade`는 해당 컬럼을 제거한다. 롤백하면 기록한 출처는 소실되며 재적용해도 NULL 이므로 복원되지 않는다.
+- 모델 선언은 인프라 범위에서 동기화한다. 생성 시 값 저장과 응답 노출은 백엔드 워커의 별도 변경이다.
+
 ## 2-6. household + budget 확장 (리비전 0004 — GATE 3 대상)
 
 **`household_members` 신규**
@@ -368,7 +380,19 @@ orders 1 ──── N fridge_items         (order_id, ON DELETE SET NULL — �
 - `user_cycle_settings` 에 자격증명·금액 컬럼 없음
 - `fridge_items.order_id` 는 SET NULL — 주문 이력이 지워져도 냉장고 재고는 남는다(사용자가 실제로 가진 재료이므로)
 
+## 3-C. 식단 생성 출처 마이그레이션 (0013)
+
+| 파일 | revision / down_revision | 내용 | 검증 |
+|------|--------------------------|------|------|
+| `0013_mealplan_generation_source.py` | `0013` / `0012` | `meal_plans.generation_source` nullable varchar(16), 기본값·백필·CHECK 없음 | 2026-09-06 전용 DB `jaringobe_infra_0013`에서 upgrade head → downgrade base → upgrade head PASS, 단일 head `0013`, `compare_metadata` schema_diffs=0 |
+
+- `0012_cycle_links.py`의 실제 revision ID 는 `0012`다. 파일명을 down_revision 으로 사용하지 않는다.
+- 기존 행을 둔 `0012 → 0013 → 0012 → 0013` 왕복에서도 NULL 보존·다른 컬럼 불변·출처 컬럼 제거를 검증했다. `llm`/`fallback`/NULL 저장과 커밋 후 조회도 통과했다.
+- `compare_metadata`는 전체 도메인 모델을 등록하고 타입 비교를 활성화했다. 기존 모델의 서버 기본값 차이는 Alembic 기본 동작에 따라 비교하지 않으며, 신규 컬럼의 DB 기본값 없음은 별도로 검사했다.
+- 운영 DB 적용은 main 머지 후 별도 승인 대상이다.
+
 ## 변경 이력
+- 2026-09-06: **0013** — 식단 생성 출처 `generation_source` nullable varchar(16) 추가, 기존 행 NULL 보존·백필 없음·CHECK 미사용 근거 및 전용 DB 왕복 검증 기록
 - 2026-09-04: **v1.9** — 구현 정합 표기 정정(DDL 변경 없음). 2-8 `orders.confirmed_at` **NOT NULL → NULL** (리비전 **0011** `DROP NOT NULL`, v1.8 문서 누락분) + `next_suggested_at` 산식 구현 기준 정정, 2-10 에 `confirmed_at` 변경 행·`failed` 예약 상태 명시, 3-B 0011 요약·리비전 번호 확정(0011·0012)·downgrade 파괴성 리스크 행 추가
 - 2026-08-15: **v1.6** — 2-8 `orders`+`order_items` (리비전 **0009_orders**, down_revision=**0008**). fridge source `order` 는 코드만. 설계 토론 5라운드 합의
 - 2026-08-30: **v1.8** — 주간 자동 사이클: 2-9 `user_cycle_settings` 신규, 2-10 `orders` 확장(컬럼 9종·CHECK 확장·부분 유니크 2종·**`inbound_at` 백필 필수**), 2-11 `fridge_items.order_id` + `source` `order`→`delivery` 통합, 2-12 `users.last_seen_at`, 2-13 `notification_settings` type CHECK **재정의 필요 확인**. 리비전 **0011·0012**(잠정, 브랜치 머지 후 인프라 확정). 설계 토론 5라운드 합의
