@@ -27,6 +27,7 @@ from app.domains.budget import service as budget_service
 from app.domains.budget.models import BudgetPlan
 from app.domains.budget.schemas import MoneyOut
 from app.domains.mealplan.generator import generate_meals
+from app.domains.mealplan.generation_source import GenerationSource
 from app.domains.mealplan.fridge_hint import build_fridge_hint
 from app.domains.mealplan.models import Meal, MealIngredient, MealPlan
 from app.domains.mealplan.pricing import DBPriceProvider
@@ -182,6 +183,8 @@ async def _generate_within_budget(
 
 
 def _apply_drafts(plan: MealPlan, drafts: list[dict], start, days: int, currency: str) -> None:
+    # 출처는 최종 채택된 결과와 함께 저장한다. 예전/외부 주입 리스트는 미상으로 둔다.
+    plan.generation_source = getattr(drafts, "generation_source", None)
     for m in drafts:
         day = max(1, min(int(m["day"]), days))
         difficulty = m.get("difficulty")
@@ -245,6 +248,9 @@ def _serialize(plan: MealPlan, budget: BudgetPlan | None, notes: list[str]) -> M
     ]
     return MealPlanResponse(
         id=plan.id, status="ready" if within_budget else "over_budget",
+        generation_source=(
+            GenerationSource(plan.generation_source) if plan.generation_source else None
+        ),
         region=plan.region, currency=plan.currency,
         period_start=plan.period_start, period_end=plan.period_end,
         budget_summary=summary, meals=meals, notes=notes,
@@ -551,6 +557,7 @@ async def start_meal_plan_regeneration(
     # (평균 round 방식은 중복 제거 등으로 끼니가 빠졌을 때 아래로 왜곡될 수 있음)
     meals_per_day = max(Counter(m.plan_date for m in plan.meals).values())
     plan.status = "processing"
+    plan.generation_source = None
     plan.created_at = utcnow()  # stale 판정 기준 = 이번 생성 시작 시점 (BUG-001)
     await db.commit()
     return plan.id, days, meals_per_day

@@ -8,8 +8,8 @@ from __future__ import annotations
 import json
 import logging
 from decimal import Decimal
-from typing import Literal
 
+from app.domains.mealplan.generation_source import GenerationSource
 from app.domains.mealplan.llm import get_llm
 
 MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack", "supper"]
@@ -19,16 +19,19 @@ logger = logging.getLogger(__name__)
 class MealDrafts(list[dict]):
     """리스트 호환 생성 결과에 출처를 실어 재시도/동시 요청 간 혼동을 방지한다."""
 
-    def __init__(self, meals: list[dict], source: Literal["llm", "fallback"]) -> None:
+    def __init__(self, meals: list[dict], source: GenerationSource) -> None:
         super().__init__(meals)
-        self.generation_source = source
+        self.generation_source = GenerationSource(source)
 
 
 def _log_fallback(error: Exception) -> None:
     # SDK 예외의 str/body/traceback에는 요청/응답 본문이 섞일 수 있다.
     # JSON 파서의 표준 오류 문구만 허용하고 그 외는 타입/상태별 안전한 요약을 쓴다.
     status = getattr(error, "status_code", None)
-    if isinstance(error, json.JSONDecodeError):
+    stop_reason = getattr(error, "stop_reason", None)
+    if stop_reason == "max_tokens":
+        message = "LLM output reached max_tokens before completion"
+    elif isinstance(error, json.JSONDecodeError):
         message = f"{error.msg} (line {error.lineno}, column {error.colno})"
     elif isinstance(status, int):
         message = f"LLM API returned HTTP {status}"
@@ -37,9 +40,10 @@ def _log_fallback(error: Exception) -> None:
     else:
         message = "LLM generation failed; exception body omitted"
     logger.warning("mealplan_generation_fallback", extra={
-        "event": "mealplan_generation_fallback", "generation_source": "fallback",
+        "event": "mealplan_generation_fallback", "generation_source": GenerationSource.FALLBACK,
         "error_type": type(error).__name__, "error_message": message,
         "http_status": status if isinstance(status, int) else None,
+        "stop_reason": "max_tokens" if stop_reason == "max_tokens" else None,
     })
 
 _RECIPES: dict[str, list[dict]] = {
@@ -161,6 +165,17 @@ def _prompt(
         lines.append(budget_hint)
     if fridge_hint:
         lines.append(fridge_hint)
+    lines.append(
+        "MEAL COMPLETENESS: Each entry must be a full meal with a staple and main, "
+        "never a side dish alone. Quantities are TOTAL for the entire household above, "
+        "not per person; do not shrink portions to fit fridge stock. "
+        "EVERY ingredient required by the dish or used in steps, including water and "
+        "seasonings, MUST appear in ingredients with its full quantity. "
+        "The ingredients list is the shopping order: unlisted ingredients will not be delivered. "
+        "Cross-check steps against that list; add missing quantities or rewrite the step. "
+        "Use ONLY listed ingredients in steps; include broth/water for boiling and oil for frying. "
+        "Keep ingredient names identical to fridge names when reusing stock."
+    )
     # 21끼 상세 JSON이 60초 호출 상한을 넘지 않도록 불필요한 출력량을 줄인다.
     # 식단 다양성/재고 우선순위/필수 재료 수량은 바꾸지 않는다.
     lines.append(
@@ -189,10 +204,10 @@ async def generate_meals(
     llm = get_llm()
     if not llm.enabled:
         logger.info("mealplan_generation_fallback", extra={
-            "event": "mealplan_generation_fallback", "generation_source": "fallback",
+            "event": "mealplan_generation_fallback", "generation_source": GenerationSource.FALLBACK,
             "error_type": "LLMDisabled", "error_message": "LLM is not configured",
         })
-        return MealDrafts(_mock(region, days, meals_per_day), "fallback")
+        return MealDrafts(_mock(region, days, meals_per_day), GenerationSource.FALLBACK)
 
     try:
         data = await llm.complete_json(
@@ -204,7 +219,7 @@ async def generate_meals(
     except Exception as exc:
         # api-spec v1.1 §3-2: LLM 실패(타임아웃 포함)는 5xx 가 아니라 규칙 기반 폴백 생성
         _log_fallback(exc)
-        return MealDrafts(_mock(region, days, meals_per_day), "fallback")
+        return MealDrafts(_mock(region, days, meals_per_day), GenerationSource.FALLBACK)
 
 
 def _parse_meals(data: dict | list, days: int, meals_per_day: int) -> MealDrafts:
@@ -254,4 +269,4 @@ def _parse_meals(data: dict | list, days: int, meals_per_day: int) -> MealDrafts
             continue
         seen.add(key)
         unique.append(d)
-    return MealDrafts(unique[: days * meals_per_day], "llm")
+    return MealDrafts(unique[: days * meals_per_day], GenerationSource.LLM)

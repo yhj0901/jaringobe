@@ -157,7 +157,9 @@ async def test_invalid_compact_shape_preserves_fallback(monkeypatch, caplog):
     assert caplog.records[-1].error_type == "ValueError"
 
 
-@pytest.mark.parametrize("model,expected", [("claude-sonnet-5", {"effort": "low"}), ("claude-haiku-4-5", None)])
+@pytest.mark.parametrize(
+    "model,expected", [("claude-sonnet-5", {"effort": "low"}), ("claude-haiku-4-5", None)]
+)
 async def test_effort_only_sent_to_supported_model(model, expected):
     from app.core.config import Settings
 
@@ -167,9 +169,174 @@ async def test_effort_only_sent_to_supported_model(model, expected):
     async def create(**kwargs):
         assert kwargs.get("output_config") == expected
         return SimpleNamespace(
-            stop_reason="end_turn", usage=SimpleNamespace(output_tokens=1),
-            content=[SimpleNamespace(type="text", text='{}')],
+            stop_reason="end_turn",
+            usage=SimpleNamespace(output_tokens=1),
+            content=[SimpleNamespace(type="text", text="{}")],
         )
 
     client._client = SimpleNamespace(messages=SimpleNamespace(create=create))
     assert await client.complete_json("system", "user") == {}
+
+
+async def test_output_limit_is_explicit_even_when_partial_json_is_parseable(monkeypatch, caplog):
+    client = LLMClient()
+
+    async def create(**kwargs):
+        return SimpleNamespace(
+            stop_reason="max_tokens",
+            usage=SimpleNamespace(output_tokens=8000),
+            content=[SimpleNamespace(type="text", text='{"meals": []}')],
+        )
+
+    client._client = SimpleNamespace(messages=SimpleNamespace(create=create))
+    monkeypatch.setattr(generator, "get_llm", lambda: client)
+    with caplog.at_level(logging.INFO):
+        result = await generator.generate_meals("KR", 2, "balanced", 14, 3, [], [])
+    assert result.generation_source == "fallback"
+    assert len(result) == 42
+    record = next(r for r in caplog.records if r.message == "mealplan_generation_fallback")
+    assert record.stop_reason == "max_tokens"
+    assert record.error_type == "LLMOutputLimitError"
+
+
+@pytest.mark.parametrize("value", ["manual", "LLM", "", "unexpected"])
+def test_model_rejects_unknown_generation_source(value):
+    from app.domains.mealplan.models import MealPlan
+
+    with pytest.raises(ValueError):
+        MealPlan(generation_source=value)
+    plan = MealPlan(generation_source="llm")
+    with pytest.raises(ValueError):
+        plan.generation_source = value
+    assert plan.generation_source == "llm"
+
+
+@pytest.mark.parametrize("source", ["llm", "fallback", None])
+async def test_generation_source_persists_and_round_trips_api(
+    client, db, respx_mock, monkeypatch, source
+):
+    from uuid import UUID
+
+    from app.core.ratelimit import mealplan_user_limiter
+    from app.domains.mealplan.generation_source import GenerationSource
+    from app.domains.mealplan.models import MealPlan
+    from tests.conftest import login
+    from tests.test_mealplan import _create_budget, _create_plan
+
+    mealplan_user_limiter.reset()
+    await login(client, respx_mock)
+    await _create_budget(client, amount="1000000")
+    if source == "llm":
+
+        class SuccessLLM:
+            enabled = True
+
+            async def complete_json(self, *args):
+                return {
+                    "meals": [
+                        [1, "breakfast", "두부구이", "두부 굽기", 10, "easy", [["두부", 300, "g"]]]
+                    ]
+                }
+
+        monkeypatch.setattr(generator, "get_llm", lambda: SuccessLLM())
+    body = await _create_plan(client, {"days": 1, "mealsPerDay": 1})
+    if source is None:
+        plan = await db.get(MealPlan, UUID(body["id"]))
+        plan.generation_source = None  # 기존 출처 미상 행의 조회 동작
+        await db.commit()
+    else:
+        assert body["generationSource"] == GenerationSource(source).value
+    db.expire_all()
+    persisted = await db.get(MealPlan, UUID(body["id"]))
+    assert persisted.generation_source == source
+    for path in (f"/api/v1/mealplans/{body['id']}", "/api/v1/mealplans/latest"):
+        fetched = await client.get(path)
+        assert fetched.status_code == 200
+        assert fetched.json()["generationSource"] == source
+
+
+async def test_regeneration_replaces_source_and_processing_clears_old_source(
+    client, db, respx_mock, monkeypatch
+):
+    from uuid import UUID
+
+    from app.core.ratelimit import mealplan_user_limiter
+    from app.domains.mealplan import service
+    from app.domains.mealplan.models import MealPlan
+    from tests.conftest import login
+    from tests.test_mealplan import _create_budget, _create_plan
+
+    mealplan_user_limiter.reset()
+    await login(client, respx_mock)
+    await _create_budget(client, amount="1000000")
+    body = await _create_plan(client, {"days": 1, "mealsPerDay": 1})
+    assert body["generationSource"] == "fallback"
+
+    class SuccessLLM:
+        enabled = True
+
+        async def complete_json(self, *args):
+            return {
+                "meals": [
+                    [1, "breakfast", "두부구이", "두부 굽기", 10, "easy", [["두부", 300, "g"]]]
+                ]
+            }
+
+    monkeypatch.setattr(generator, "get_llm", lambda: SuccessLLM())
+    regenerated = await client.post(
+        f"/api/v1/mealplans/{body['id']}/regenerate", json={"scope": "all"}
+    )
+    assert regenerated.status_code == 202
+    current = await client.get(f"/api/v1/mealplans/{body['id']}")
+    assert current.json()["generationSource"] == "llm"
+
+    async def pending(*args, **kwargs):
+        pass
+
+    monkeypatch.setattr(service, "run_meal_plan_generation", pending)
+    processing = await client.post(
+        f"/api/v1/mealplans/{body['id']}/regenerate", json={"scope": "all"}
+    )
+    assert processing.status_code == 202
+    current = await client.get(f"/api/v1/mealplans/{body['id']}")
+    assert current.json()["status"] == "processing"
+    assert current.json()["generationSource"] is None
+    db.expire_all()
+    plan = await db.get(MealPlan, UUID(body["id"]))
+    assert plan.generation_source is None
+
+
+async def test_rejected_model_parameters_are_logged_and_fallback(monkeypatch, caplog):
+    class Rejected(Exception):
+        status_code = 400
+
+    class RejectedLLM:
+        enabled = True
+
+        async def complete_json(self, *args):
+            raise Rejected("sensitive provider body")
+
+    monkeypatch.setattr(generator, "get_llm", lambda: RejectedLLM())
+    result = await generator.generate_meals("KR", 2, "balanced", 1, 1, [], [])
+    assert result.generation_source == "fallback"
+    assert caplog.records[-1].http_status == 400
+    assert "sensitive" not in JsonFormatter().format(caplog.records[-1])
+
+
+def test_complete_meal_prompt_preserves_household_and_order_contract():
+    prompt = generator._prompt(
+        "KR",
+        2,
+        "balanced",
+        7,
+        3,
+        [],
+        [],
+        "TOTAL PLAN BUDGET: 102666.67 KRW",
+        household_desc="adult male (age 35), adult female (age 33)",
+    )
+    assert "Household size: 2" in prompt
+    assert "adult male (age 35), adult female (age 33)" in prompt
+    assert "never a side dish alone" in prompt
+    assert "Quantities are TOTAL for the entire household above" in prompt
+    assert "unlisted ingredients will not be delivered" in prompt

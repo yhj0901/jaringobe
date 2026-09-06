@@ -26,7 +26,9 @@ from app.domains.mealplan.llm import LLMClient
 from app.domains.mealplan.service import _price
 
 
-async def main(variant: str, trials: int, credentials: Path) -> None:
+async def main(
+    variant: str, trials: int, credentials: Path, output: Path | None, effort: str | None
+) -> None:
     # 운영 DATABASE_URL 등 다른 설정은 절대 로드하지 않는다.
     secrets = dotenv_values(credentials)
     for key in ("ANTHROPIC_API_KEY", "LLM_MODEL"):
@@ -61,6 +63,8 @@ async def main(variant: str, trials: int, credentials: Path) -> None:
     create_message = llm._client.messages.create
 
     async def observed_message(**kwargs):
+        if effort is not None:
+            kwargs["output_config"] = {"effort": effort}
         response = await create_message(**kwargs)
         responses.append(
             {
@@ -120,6 +124,7 @@ async def main(variant: str, trials: int, credentials: Path) -> None:
                 names = {i["name"].strip().casefold() for m in meals for i in m["ingredients"]}
                 stocked = names & {n.strip().casefold() for n in fixture["stock_names"]}
                 result = {
+                    "effort_override": effort,
                     "trial": trial,
                     "seconds": round(time.monotonic() - started, 2),
                     "meals": len(meals),
@@ -129,12 +134,13 @@ async def main(variant: str, trials: int, credentials: Path) -> None:
                     "ingredient_kinds": len(names),
                     "stock_usage_ratio": len(stocked) / len(names),
                     "llm_errors": list(failures),
+                    "generation_source": getattr(meals, "generation_source", None),
                     "llm_responses": list(responses),
                     "menu_counts": dict(Counter(m["name"] for m in meals)),
                     "drafts": meals,
                 }
                 results.append(result)
-                Path(f"reports/loopfix-{variant}.json").write_text(
+                (output or Path(f"reports/loopfix-{variant}.json")).write_text(
                     json.dumps(
                         {"variant": variant, "model": settings.llm_model, "runs": results},
                         ensure_ascii=False,
@@ -161,5 +167,7 @@ if __name__ == "__main__":
     parser.add_argument("--allow-paid-llm", action="store_true", required=True)
     parser.add_argument("--trials", type=int, choices=range(1, 4), default=3)
     parser.add_argument("--credentials", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--effort", choices=("low", "medium"))
     args = parser.parse_args()
-    asyncio.run(main(args.variant, args.trials, args.credentials))
+    asyncio.run(main(args.variant, args.trials, args.credentials, args.output, args.effort))

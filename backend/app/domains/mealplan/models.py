@@ -21,9 +21,10 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.core.db import Base
+from app.domains.mealplan.generation_source import GenerationSource
 
 
 def _utcnow() -> datetime:
@@ -33,6 +34,10 @@ def _utcnow() -> datetime:
 class MealPlan(Base):
     __tablename__ = "meal_plans"
     __table_args__ = (Index("ix_meal_plans_user_created", "user_id", "created_at"),)
+
+    @validates("generation_source")
+    def _validate_generation_source(self, _key: str, value: str | None) -> str | None:
+        return GenerationSource(value).value if value is not None else None
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
