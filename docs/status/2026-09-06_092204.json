@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-09-06T09:22:04.422752+09:00",
+  "session_topic": "재료 기준가 및 기본 재료 원가 보정",
+  "command": "dispatched pricing task",
+  "agent": "agents/backend.md",
+  "status": "가격 경로 및 운영 SELECT 확인, 시드 방식 승인 대기",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "무료 및 양념 가격 회귀 수정",
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "subject": "기준가 시드 및 실측 전후 검증",
+      "status": "in_progress"
+    }
+  ],
+  "artifacts": [
+    "backend/reports/pricing_snapshot.json"
+  ],
+  "key_findings": "기준가 0건, 21끼 40종, 저장 총액 132882.60 KRW; 운영 DB 변경 금지",
+  "pending_user_input": "멱등 애플리케이션 시드 방식"
+}

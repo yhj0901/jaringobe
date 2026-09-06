@@ -1,0 +1,133 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.14.4, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Volumes/Development/App/.development/OrcaWorkspaces/jaringobe/jaringobe/수정-재료가격/backend
+configfile: pyproject.toml
+plugins: cov-7.1.0, anyio-4.14.1, asyncio-1.4.0, respx-0.23.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 384 items
+
+tests/test_auth_app_login.py ...................                         [  4%]
+tests/test_auth_oauth.py ...........................                     [ 11%]
+tests/test_auth_session.py .............                                 [ 15%]
+tests/test_budget.py ...................................                 [ 24%]
+tests/test_cycle.py ..............                                       [ 28%]
+tests/test_cycle_scheduler.py .............                              [ 31%]
+tests/test_fridge.py ........                                            [ 33%]
+tests/test_household.py ........................                         [ 39%]
+tests/test_mealplan.py ................................................. [ 52%]
+....                                                                     [ 53%]
+tests/test_mealplan_budget_period.py .........                           [ 55%]
+tests/test_mealplan_fridge_hint.py ...                                   [ 56%]
+tests/test_middleware.py .............                                   [ 60%]
+tests/test_notification.py ................................              [ 68%]
+tests/test_notification_scheduler.py ..............                      [ 72%]
+tests/test_notification_sender.py .........................              [ 78%]
+tests/test_order_cycle.py ...........                                    [ 81%]
+tests/test_orders.py ............                                        [ 84%]
+tests/test_security_unit.py .......................                      [ 90%]
+tests/test_shopping_flow.py ...                                          [ 91%]
+tests/test_store.py ..                                                   [ 91%]
+tests/test_store_connections.py ..................                       [ 96%]
+tests/test_user_region.py .............                                  [100%]
+
+=============================== warnings summary ===============================
+tests/test_auth_app_login.py: 13 warnings
+tests/test_auth_oauth.py: 22 warnings
+tests/test_auth_session.py: 8 warnings
+tests/test_budget.py: 31 warnings
+tests/test_cycle.py: 8 warnings
+tests/test_fridge.py: 7 warnings
+tests/test_household.py: 22 warnings
+tests/test_mealplan.py: 41 warnings
+tests/test_mealplan_budget_period.py: 9 warnings
+tests/test_middleware.py: 2 warnings
+tests/test_notification.py: 28 warnings
+tests/test_notification_scheduler.py: 8 warnings
+tests/test_notification_sender.py: 8 warnings
+tests/test_order_cycle.py: 10 warnings
+tests/test_orders.py: 12 warnings
+tests/test_security_unit.py: 7 warnings
+tests/test_shopping_flow.py: 2 warnings
+tests/test_store.py: 1 warning
+tests/test_store_connections.py: 16 warnings
+tests/test_user_region.py: 12 warnings
+  /Volumes/Development/App/.development/venvs/jaringobe-pricing/lib/python3.14/site-packages/jwt/api_jwt.py:147: InsecureKeyLengthWarning: The HMAC key is 15 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+    return self._jws.encode(
+
+tests/test_auth_app_login.py: 13 warnings
+tests/test_auth_oauth.py: 21 warnings
+tests/test_auth_session.py: 8 warnings
+tests/test_budget.py: 32 warnings
+tests/test_cycle.py: 9 warnings
+tests/test_fridge.py: 8 warnings
+tests/test_household.py: 22 warnings
+tests/test_mealplan.py: 41 warnings
+tests/test_mealplan_budget_period.py: 9 warnings
+tests/test_middleware.py: 2 warnings
+tests/test_notification.py: 28 warnings
+tests/test_notification_scheduler.py: 8 warnings
+tests/test_notification_sender.py: 8 warnings
+tests/test_order_cycle.py: 10 warnings
+tests/test_orders.py: 12 warnings
+tests/test_security_unit.py: 8 warnings
+tests/test_shopping_flow.py: 2 warnings
+tests/test_store.py: 1 warning
+tests/test_store_connections.py: 16 warnings
+tests/test_user_region.py: 12 warnings
+  /Volumes/Development/App/.development/venvs/jaringobe-pricing/lib/python3.14/site-packages/jwt/api_jwt.py:368: InsecureKeyLengthWarning: The HMAC key is 15 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+    decoded = self.decode_complete(
+
+tests/test_auth_app_login.py: 1 warning
+tests/test_budget.py: 21 warnings
+tests/test_cycle.py: 1 warning
+tests/test_household.py: 14 warnings
+tests/test_mealplan.py: 6 warnings
+tests/test_notification.py: 14 warnings
+tests/test_order_cycle.py: 2 warnings
+tests/test_orders.py: 1 warning
+tests/test_store_connections.py: 1 warning
+tests/test_user_region.py: 7 warnings
+  /Volumes/Development/App/.development/venvs/jaringobe-pricing/lib/python3.14/site-packages/starlette/_exception_handler.py:59: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    response = await handler(conn, exc)  # type: ignore[arg-type]
+
+tests/test_security_unit.py::TestAccessToken::test_wrong_signature_rejected
+  /Volumes/Development/App/.development/venvs/jaringobe-pricing/lib/python3.14/site-packages/jwt/api_jwt.py:147: InsecureKeyLengthWarning: The HMAC key is 12 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+    return self._jws.encode(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.14.4-final-0 _______________
+
+Name                                    Stmts   Miss  Cover
+-----------------------------------------------------------
+app/core/logging.py                        33      2    94%
+app/domains/auth/service.py               112      4    96%
+app/domains/budget/service.py              83      2    98%
+app/domains/cycle/policy.py               101      5    95%
+app/domains/cycle/scheduler.py            131     50    62%
+app/domains/cycle/service.py              335     22    93%
+app/domains/fridge/service.py              83      2    98%
+app/domains/mealplan/fridge_hint.py        75      8    89%
+app/domains/mealplan/generator.py          63      4    94%
+app/domains/mealplan/llm.py                36     14    61%
+app/domains/mealplan/pricing.py            34      3    91%
+app/domains/mealplan/router.py             44      2    95%
+app/domains/mealplan/schemas.py            63      1    98%
+app/domains/mealplan/service.py           337     17    95%
+app/domains/notification/scheduler.py      52      3    94%
+app/domains/notification/schemas.py        64      2    97%
+app/domains/notification/sender.py         68      1    99%
+app/domains/notification/service.py       101      5    95%
+app/domains/order/router.py                57      2    96%
+app/domains/order/schemas.py               47      2    96%
+app/domains/order/service.py              410     51    88%
+app/domains/store/naver.py                 43      7    84%
+app/domains/store/router.py                14      1    93%
+app/domains/store/selector.py              30     16    47%
+app/domains/store/service.py               36      3    92%
+app/main.py                                64      1    98%
+-----------------------------------------------------------
+TOTAL                                    3614    230    94%
+
+51 files skipped due to complete coverage.
+================= 384 passed, 606 warnings in 88.85s (0:01:28) =================
