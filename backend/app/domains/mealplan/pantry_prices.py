@@ -8,7 +8,20 @@ US 값은 환율 변환이 아닌 독립적인 초기 추정치이며 실시간 
 from dataclasses import dataclass
 from decimal import Decimal
 
-FREE_WATER_NAMES = frozenset({"물", "수돗물", "water", "tap water", "cooking water"})
+FREE_WATER_NAMES = frozenset(
+    {
+        "물",
+        "수돗물",
+        "데침물",
+        "삶는물",
+        "삶는 물",
+        "조리용 물",
+        "water",
+        "tap water",
+        "cooking water",
+        "blanching water",
+    }
+)
 
 
 def normalize_name(name: str) -> str:
@@ -53,7 +66,15 @@ PANTRY_PRICES = (
         Decimal("4"),
     ),
     PantryPrice(
-        ("식용유", "콩기름", "vegetable oil", "cooking oil", "soybean oil"),
+        (
+            "식용유",
+            "콩기름",
+            "카놀라유",
+            "vegetable oil",
+            "cooking oil",
+            "soybean oil",
+            "canola oil",
+        ),
         "ml",
         Decimal("1500"),
         Decimal("6800"),
@@ -62,6 +83,51 @@ PANTRY_PRICES = (
     ),
     PantryPrice(
         ("참기름", "sesame oil"), "ml", Decimal("320"), Decimal("8500"), Decimal("7"), Decimal("3")
+    ),
+    # E: 일반 올리브유 500ml 포장 8000원/US $7 자체 추정(콩기름과 분리).
+    PantryPrice(
+        ("올리브유", "olive oil"),
+        "ml",
+        Decimal("500"),
+        Decimal("8000"),
+        Decimal("7"),
+        Decimal("5"),
+    ),
+    # E: 2026-09-08 자체 초기 추정, 실시간 조회/특정 상품 가격 아님.
+    # 카레분 100g 4인분 소매 포장 2500원/US $3, 국간장 1L 10000원/US $8.
+    # 국간장은 진간장과 용도·염도가 달라 별도 이름/기준가로 유지한다.
+    PantryPrice(
+        ("카레가루", "카레 가루", "카레분말", "카레분", "고형카레", "curry powder", "curry roux"),
+        "g",
+        Decimal("100"),
+        Decimal("2500"),
+        Decimal("3"),
+        Decimal("25"),
+    ),
+    PantryPrice(
+        ("국간장", "국 간장", "조선간장", "soup soy sauce"),
+        "ml",
+        Decimal("1000"),
+        Decimal("10000"),
+        Decimal("8"),
+        Decimal("5"),
+    ),
+    # E: 양조식초 900ml 2000원/US $2, 볶은 참깨 100g 3000원/US $3 포장 가정.
+    PantryPrice(
+        ("식초", "양조식초", "vinegar", "rice vinegar"),
+        "ml",
+        Decimal("900"),
+        Decimal("2000"),
+        Decimal("2"),
+        Decimal("5"),
+    ),
+    PantryPrice(
+        ("깨", "참깨", "통깨", "깨소금", "sesame seeds"),
+        "g",
+        Decimal("100"),
+        Decimal("3000"),
+        Decimal("3"),
+        Decimal("1"),
     ),
 )
 

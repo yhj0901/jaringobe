@@ -1,0 +1,42 @@
+[
+  {
+    "variant": "before",
+    "call": 1
+  },
+  {
+    "variant": "before",
+    "call": 2
+  },
+  {
+    "variant": "before",
+    "call": 3
+  },
+  {
+    "variant": "before",
+    "call": 4
+  },
+  {
+    "variant": "after",
+    "call": 5
+  },
+  {
+    "variant": "after",
+    "call": 6
+  },
+  {
+    "variant": "after",
+    "call": 7
+  },
+  {
+    "variant": "after",
+    "call": 8
+  },
+  {
+    "variant": "after",
+    "call": 9
+  },
+  {
+    "variant": "after",
+    "call": 10
+  }
+]

@@ -1,0 +1,686 @@
+[
+  {
+    "variant": "before",
+    "trial": 1,
+    "missing_count": 12,
+    "nonpositive_count": 4,
+    "topup_count": 8,
+    "measured_cost": "56748.30",
+    "price_only_cost": "56748.30",
+    "paired_repaired_cost": "63506.58",
+    "repair_cost_increase": "6758.28",
+    "paired_over_budget": false,
+    "rule_ms": 12.52,
+    "nonpositive_ingredients": [
+      {
+        "meal": 17,
+        "dish": "순두부계란찜",
+        "name": "순두부",
+        "quantity": "0",
+        "unit": "g",
+        "est_cost": "0.00"
+      },
+      {
+        "meal": 20,
+        "dish": "콩나물무침밥",
+        "name": "콩나물",
+        "quantity": "0",
+        "unit": "g",
+        "est_cost": "0.00"
+      },
+      {
+        "meal": 21,
+        "dish": "돼지고기무국",
+        "name": "돼지고기 앞다리살",
+        "quantity": "0",
+        "unit": "g",
+        "est_cost": "0.00"
+      },
+      {
+        "meal": 21,
+        "dish": "돼지고기무국",
+        "name": "무",
+        "quantity": "0",
+        "unit": "g",
+        "est_cost": "0.00"
+      }
+    ],
+    "findings": [
+      {
+        "meal": 1,
+        "dish": "두부계란국밥",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 2,
+        "dish": "콩나물밥과 된장국",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "400.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 3,
+        "dish": "고등어구이 정식",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 4,
+        "dish": "시금치된장국밥",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 6,
+        "dish": "닭고기감자조림",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 8,
+        "dish": "순두부찌개",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 8,
+        "dish": "순두부찌개",
+        "kind": "missing",
+        "name": "소금",
+        "quantity": "2",
+        "unit": "g",
+        "reason": "soup_seasoning"
+      },
+      {
+        "meal": 10,
+        "dish": "콩나물국밥",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 10,
+        "dish": "콩나물국밥",
+        "kind": "missing",
+        "name": "소금",
+        "quantity": "2",
+        "unit": "g",
+        "reason": "soup_seasoning"
+      },
+      {
+        "meal": 11,
+        "dish": "애호박된장찌개",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 12,
+        "dish": "닭볶음탕",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "600.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 14,
+        "dish": "돼지고기다짐육된장국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 15,
+        "dish": "고등어조림",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 16,
+        "dish": "시금치나물밥",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "1000.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 16,
+        "dish": "시금치나물밥",
+        "kind": "missing",
+        "name": "식용유",
+        "quantity": "10",
+        "unit": "ml",
+        "reason": "pan_fat"
+      },
+      {
+        "meal": 17,
+        "dish": "순두부계란찜",
+        "kind": "zero_quantity_repair",
+        "name": "순두부",
+        "quantity": "300",
+        "unit": "g",
+        "reason": "nonpositive_quantity"
+      },
+      {
+        "meal": 17,
+        "dish": "순두부계란찜",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 19,
+        "dish": "계란찜과 밥",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 20,
+        "dish": "콩나물무침밥",
+        "kind": "zero_quantity_repair",
+        "name": "콩나물",
+        "quantity": "200",
+        "unit": "g",
+        "reason": "nonpositive_quantity"
+      },
+      {
+        "meal": 20,
+        "dish": "콩나물무침밥",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "1000.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 21,
+        "dish": "돼지고기무국",
+        "kind": "zero_quantity_repair",
+        "name": "돼지고기 앞다리살",
+        "quantity": "300",
+        "unit": "g",
+        "reason": "nonpositive_quantity"
+      },
+      {
+        "meal": 21,
+        "dish": "돼지고기무국",
+        "kind": "zero_quantity_repair",
+        "name": "무",
+        "quantity": "200",
+        "unit": "g",
+        "reason": "nonpositive_quantity"
+      },
+      {
+        "meal": 21,
+        "dish": "돼지고기무국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 21,
+        "dish": "돼지고기무국",
+        "kind": "missing",
+        "name": "소금",
+        "quantity": "2",
+        "unit": "g",
+        "reason": "soup_seasoning"
+      }
+    ]
+  },
+  {
+    "variant": "before",
+    "trial": 2,
+    "missing_count": 5,
+    "nonpositive_count": 0,
+    "topup_count": 10,
+    "measured_cost": "72670.62",
+    "price_only_cost": "73558.12",
+    "paired_repaired_cost": "73603.45",
+    "repair_cost_increase": "45.33",
+    "paired_over_budget": false,
+    "rule_ms": 6.663,
+    "nonpositive_ingredients": [],
+    "findings": [
+      {
+        "meal": 1,
+        "dish": "계란밥과 시금치나물",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "1000.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 2,
+        "dish": "순두부찌개",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 6,
+        "dish": "김치찌개",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 6,
+        "dish": "김치찌개",
+        "kind": "missing",
+        "name": "식용유",
+        "quantity": "10",
+        "unit": "ml",
+        "reason": "pan_fat"
+      },
+      {
+        "meal": 7,
+        "dish": "애호박된장국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 8,
+        "dish": "닭볶음탕",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "300.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 9,
+        "dish": "시금치두부국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 10,
+        "dish": "계란찜과 밥",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 12,
+        "dish": "콩나물무침과 고등어구이",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "1000.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 13,
+        "dish": "무국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 16,
+        "dish": "계란국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 18,
+        "dish": "시금치된장국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 19,
+        "dish": "콩나물밥",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 20,
+        "dish": "고등어조림",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 21,
+        "dish": "닭고기죽",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "200",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      }
+    ]
+  },
+  {
+    "variant": "before",
+    "trial": 3,
+    "missing_count": 14,
+    "nonpositive_count": 0,
+    "topup_count": 9,
+    "measured_cost": "56661.57",
+    "price_only_cost": "56661.57",
+    "paired_repaired_cost": "56897.02",
+    "repair_cost_increase": "235.45",
+    "paired_over_budget": false,
+    "rule_ms": 7.227,
+    "nonpositive_ingredients": [],
+    "findings": [
+      {
+        "meal": 1,
+        "dish": "계란장조림밥",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "1200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 2,
+        "dish": "된장찌개",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 3,
+        "dish": "돼지고기김치찌개",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 3,
+        "dish": "돼지고기김치찌개",
+        "kind": "missing",
+        "name": "식용유",
+        "quantity": "10",
+        "unit": "ml",
+        "reason": "pan_fat"
+      },
+      {
+        "meal": 4,
+        "dish": "시금치된장국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 5,
+        "dish": "콩나물국밥",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "1000.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 5,
+        "dish": "콩나물국밥",
+        "kind": "missing",
+        "name": "소금",
+        "quantity": "2",
+        "unit": "g",
+        "reason": "soup_seasoning"
+      },
+      {
+        "meal": 6,
+        "dish": "닭볶음탕",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "600.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 9,
+        "dish": "순두부찌개",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 9,
+        "dish": "순두부찌개",
+        "kind": "missing",
+        "name": "소금",
+        "quantity": "2",
+        "unit": "g",
+        "reason": "soup_seasoning"
+      },
+      {
+        "meal": 10,
+        "dish": "무국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 11,
+        "dish": "돼지불고기덮밥",
+        "kind": "missing",
+        "name": "식용유",
+        "quantity": "10",
+        "unit": "ml",
+        "reason": "pan_fat"
+      },
+      {
+        "meal": 12,
+        "dish": "콩나물무침밥",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "1000.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 14,
+        "dish": "애호박된장국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 15,
+        "dish": "닭고기감자조림",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 15,
+        "dish": "닭고기감자조림",
+        "kind": "missing",
+        "name": "식용유",
+        "quantity": "10",
+        "unit": "ml",
+        "reason": "pan_fat"
+      },
+      {
+        "meal": 16,
+        "dish": "두부계란국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 17,
+        "dish": "시금치나물비빔밥",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "1000.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 17,
+        "dish": "시금치나물비빔밥",
+        "kind": "missing",
+        "name": "식용유",
+        "quantity": "10",
+        "unit": "ml",
+        "reason": "pan_fat"
+      },
+      {
+        "meal": 18,
+        "dish": "고등어무조림",
+        "kind": "missing",
+        "name": "물",
+        "quantity": "200.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 20,
+        "dish": "콩나물국",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "100.0",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 21,
+        "dish": "김치찜",
+        "kind": "quantity_topup",
+        "name": "물",
+        "quantity": "600",
+        "unit": "ml",
+        "reason": "cooking_liquid"
+      },
+      {
+        "meal": 21,
+        "dish": "김치찜",
+        "kind": "missing",
+        "name": "식용유",
+        "quantity": "10",
+        "unit": "ml",
+        "reason": "pan_fat"
+      }
+    ]
+  },
+  {
+    "variant": "after",
+    "trial": 1,
+    "missing_count": 0,
+    "nonpositive_count": 0,
+    "topup_count": 0,
+    "measured_cost": "60085.84",
+    "price_only_cost": "60085.84",
+    "paired_repaired_cost": "60085.84",
+    "repair_cost_increase": "0.00",
+    "paired_over_budget": false,
+    "rule_ms": 6.325,
+    "nonpositive_ingredients": [],
+    "findings": []
+  },
+  {
+    "variant": "after",
+    "trial": 2,
+    "missing_count": 0,
+    "nonpositive_count": 0,
+    "topup_count": 0,
+    "measured_cost": "80266.75",
+    "price_only_cost": "80266.75",
+    "paired_repaired_cost": "80266.75",
+    "repair_cost_increase": "0.00",
+    "paired_over_budget": false,
+    "rule_ms": 6.213,
+    "nonpositive_ingredients": [],
+    "findings": []
+  },
+  {
+    "variant": "after",
+    "trial": 3,
+    "missing_count": 0,
+    "nonpositive_count": 0,
+    "topup_count": 0,
+    "measured_cost": "64211.89",
+    "price_only_cost": "64211.89",
+    "paired_repaired_cost": "64211.89",
+    "repair_cost_increase": "0.00",
+    "paired_over_budget": false,
+    "rule_ms": 6.104,
+    "nonpositive_ingredients": [],
+    "findings": []
+  }
+]

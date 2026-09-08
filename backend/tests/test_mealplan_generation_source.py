@@ -139,7 +139,10 @@ async def test_compact_wire_format_restores_public_draft(monkeypatch):
         "steps": "두부를 굽는다.",
         "time_minutes": 10,
         "difficulty": "easy",
-        "ingredients": [{"name": "두부", "quantity": 300, "unit": "g"}],
+        "ingredients": [
+            {"name": "두부", "quantity": 300, "unit": "g"},
+            {"name": "식용유", "quantity": 10, "unit": "ml"},
+        ],
     }
 
 

@@ -1,0 +1,95 @@
+{
+  "counting_unit": "끼니별 재료 1종; 수량 과잉은 누락과 분리; 조리 지식에 따른 직접 검토이며 실제 조리 실험 아님",
+  "before_additional_misses": [
+    [],
+    [],
+    []
+  ],
+  "initial_after_misses": [
+    [],
+    [
+      {
+        "meal": 3,
+        "dish": "고등어구이 정식",
+        "ingredient": "물",
+        "evidence": "steps에 시금치나물, 목록에는 생 시금치 110g, 데침 액체 없음"
+      }
+    ],
+    []
+  ],
+  "initial_after_over_repairs": [
+    [
+      {
+        "meal": 2,
+        "ingredient": "물",
+        "evidence": "콩나물 재료명을 별도 나물 공정으로 오분류하여 1200ml 추가"
+      },
+      {
+        "meal": 2,
+        "ingredient": "식용유",
+        "evidence": "계란국의 계란을 콩나물밥의 프라이 고명으로 오분류"
+      },
+      {
+        "meal": 10,
+        "ingredient": "물",
+        "evidence": "육수에 데치는 국밥에 별도 데침물 1L 추가"
+      }
+    ],
+    [
+      {
+        "meal": 2,
+        "ingredient": "물",
+        "evidence": "콩나물밥의 찜을 별도 데침으로 오분류하여 1L 추가"
+      },
+      {
+        "meal": 11,
+        "ingredient": "물",
+        "evidence": "콩나물국밥의 콩나물에서 나물 데침을 잘못 유도"
+      }
+    ],
+    [
+      {
+        "meal": 4,
+        "ingredient": "물",
+        "evidence": "콩나물국밥의 콩나물에서 나물 데침을 잘못 유도"
+      },
+      {
+        "meal": 11,
+        "ingredient": "물",
+        "evidence": "콩나물밥의 찜을 별도 데침으로 오분류하여 1L 추가"
+      }
+    ]
+  ],
+  "final_after_misses": [
+    [
+      {
+        "meal": 3,
+        "dish": "고등어구이정식",
+        "ingredient": "물/국물",
+        "evidence": "steps는 무국을 준비한다; 목록은 고등어/밥/김치/무/기름/소금뿐, 액체 없음"
+      }
+    ],
+    [],
+    []
+  ],
+  "final_after_over_repairs": [
+    [],
+    [
+      {
+        "meal": 11,
+        "dish": "돼지고기김치찜",
+        "ingredient": "물",
+        "evidence": "멸치육수 300ml가 조림 하한 200ml를 충족하지만 steps의 물 언급에 기본 600ml를 다시 추가; 총 액체 900ml",
+        "cost_increase_krw": "0.00"
+      }
+    ],
+    []
+  ],
+  "unscored_observations": [
+    "완성 밥만 있는데 밥을 짓는다는 단계",
+    "steps에 고명 계란 익히는 법 누락",
+    "소량 양수 재료의 1인분 충분성",
+    "일부 단독 반찬/주식 없는 끼니",
+    "상품 구성/알레르기 또는 실제 조리 미검증"
+  ]
+}
