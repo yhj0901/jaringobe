@@ -11,6 +11,7 @@ from decimal import Decimal
 
 from app.domains.mealplan.generation_source import GenerationSource
 from app.domains.mealplan.llm import get_llm
+from app.domains.mealplan.ingredient_requirements import repair_meal_ingredients
 
 MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack", "supper"]
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ class MealDrafts(list[dict]):
     def __init__(self, meals: list[dict], source: GenerationSource) -> None:
         super().__init__(meals)
         self.generation_source = GenerationSource(source)
+        self.ingredient_allergy_conflicts: set[str] = set()
 
 
 def _log_fallback(error: Exception) -> None:
@@ -201,13 +203,20 @@ async def generate_meals(
     household_desc: str = "",
     fridge_hint: str = "",
 ) -> list[dict]:
+    def finish(drafts: MealDrafts) -> MealDrafts:
+        # 보완 재료도 service의 알레르기 검사→원가/예산 판정→저장에 포함된다.
+        for meal in drafts:
+            repairs = repair_meal_ingredients(meal, region, household_size, allergies)
+            drafts.ingredient_allergy_conflicts.update(repairs.allergy_conflicts)
+        return drafts
+
     llm = get_llm()
     if not llm.enabled:
         logger.info("mealplan_generation_fallback", extra={
             "event": "mealplan_generation_fallback", "generation_source": GenerationSource.FALLBACK,
             "error_type": "LLMDisabled", "error_message": "LLM is not configured",
         })
-        return MealDrafts(_mock(region, days, meals_per_day), GenerationSource.FALLBACK)
+        return finish(MealDrafts(_mock(region, days, meals_per_day), GenerationSource.FALLBACK))
 
     try:
         data = await llm.complete_json(
@@ -215,11 +224,11 @@ async def generate_meals(
             _prompt(region, household_size, meal_direction, days, meals_per_day,
                     allergies, preferences, budget_hint, household_desc, fridge_hint),
         )
-        return _parse_meals(data, days, meals_per_day)
+        return finish(_parse_meals(data, days, meals_per_day))
     except Exception as exc:
         # api-spec v1.1 §3-2: LLM 실패(타임아웃 포함)는 5xx 가 아니라 규칙 기반 폴백 생성
         _log_fallback(exc)
-        return MealDrafts(_mock(region, days, meals_per_day), GenerationSource.FALLBACK)
+        return finish(MealDrafts(_mock(region, days, meals_per_day), GenerationSource.FALLBACK))
 
 
 def _parse_meals(data: dict | list, days: int, meals_per_day: int) -> MealDrafts:

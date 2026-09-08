@@ -73,7 +73,8 @@ async def _get_budget(db: AsyncSession, user: User) -> BudgetPlan:
 
 def _check_allergies(drafts: list[dict], allergies: list[str]) -> list[str]:
     allergs = [a.lower().strip() for a in (allergies or []) if a.strip()]
-    found: set[str] = set()
+    # 추가하지 못한 필수 재료도 그 식단의 부적합 신호: 기존 재시도/경고 정책에 합류.
+    found: set[str] = set(getattr(drafts, "ingredient_allergy_conflicts", ()))
     for meal in drafts:
         for ing in meal["ingredients"]:
             nl = ing["name"].lower()
