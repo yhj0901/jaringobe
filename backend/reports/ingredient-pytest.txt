@@ -1,0 +1,168 @@
+........................................................................ [ 13%]
+........................................................................ [ 27%]
+........................................................................ [ 41%]
+........................................................................ [ 55%]
+........................................................................ [ 69%]
+........................................................................ [ 83%]
+........................................................................ [ 97%]
+............                                                             [100%]
+=============================== warnings summary ===============================
+tests/test_auth_app_login.py: 13 warnings
+tests/test_auth_oauth.py: 22 warnings
+tests/test_auth_session.py: 8 warnings
+tests/test_budget.py: 31 warnings
+tests/test_cycle.py: 8 warnings
+tests/test_delivery_expiry.py: 2 warnings
+tests/test_fridge.py: 7 warnings
+tests/test_household.py: 22 warnings
+tests/test_mealplan.py: 41 warnings
+tests/test_mealplan_budget_period.py: 9 warnings
+tests/test_mealplan_generation_source.py: 4 warnings
+tests/test_middleware.py: 2 warnings
+tests/test_notification.py: 28 warnings
+tests/test_notification_scheduler.py: 8 warnings
+tests/test_notification_sender.py: 8 warnings
+tests/test_order_cycle.py: 10 warnings
+tests/test_orders.py: 12 warnings
+tests/test_security_unit.py: 7 warnings
+tests/test_shopping_flow.py: 2 warnings
+tests/test_store.py: 1 warning
+tests/test_store_connections.py: 16 warnings
+tests/test_user_region.py: 12 warnings
+  /Volumes/Development/App/.development/OrcaWorkspaces/jaringobe/jaringobe/수정-재료일관성/backend/.venv/lib/python3.14/site-packages/jwt/api_jwt.py:147: InsecureKeyLengthWarning: The HMAC key is 15 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+    return self._jws.encode(
+
+tests/test_auth_app_login.py: 13 warnings
+tests/test_auth_oauth.py: 21 warnings
+tests/test_auth_session.py: 8 warnings
+tests/test_budget.py: 32 warnings
+tests/test_cycle.py: 9 warnings
+tests/test_delivery_expiry.py: 4 warnings
+tests/test_fridge.py: 7 warnings
+tests/test_household.py: 22 warnings
+tests/test_mealplan.py: 41 warnings
+tests/test_mealplan_budget_period.py: 9 warnings
+tests/test_mealplan_generation_source.py: 4 warnings
+tests/test_middleware.py: 2 warnings
+tests/test_notification.py: 28 warnings
+tests/test_notification_scheduler.py: 8 warnings
+tests/test_notification_sender.py: 8 warnings
+tests/test_order_cycle.py: 10 warnings
+tests/test_orders.py: 12 warnings
+tests/test_security_unit.py: 8 warnings
+tests/test_shopping_flow.py: 2 warnings
+tests/test_store.py: 1 warning
+tests/test_store_connections.py: 16 warnings
+tests/test_user_region.py: 12 warnings
+  /Volumes/Development/App/.development/OrcaWorkspaces/jaringobe/jaringobe/수정-재료일관성/backend/.venv/lib/python3.14/site-packages/jwt/api_jwt.py:368: InsecureKeyLengthWarning: The HMAC key is 15 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+    decoded = self.decode_complete(
+
+tests/test_auth_app_login.py: 1 warning
+tests/test_budget.py: 21 warnings
+tests/test_cycle.py: 1 warning
+tests/test_household.py: 14 warnings
+tests/test_mealplan.py: 6 warnings
+tests/test_notification.py: 14 warnings
+tests/test_order_cycle.py: 2 warnings
+tests/test_orders.py: 1 warning
+tests/test_store_connections.py: 1 warning
+tests/test_user_region.py: 7 warnings
+  /Volumes/Development/App/.development/OrcaWorkspaces/jaringobe/jaringobe/수정-재료일관성/backend/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py:59: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    response = await handler(conn, exc)  # type: ignore[arg-type]
+
+tests/test_security_unit.py::TestAccessToken::test_wrong_signature_rejected
+  /Volumes/Development/App/.development/OrcaWorkspaces/jaringobe/jaringobe/수정-재료일관성/backend/.venv/lib/python3.14/site-packages/jwt/api_jwt.py:147: InsecureKeyLengthWarning: The HMAC key is 12 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+    return self._jws.encode(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.14.4-final-0 _______________
+
+Name                                              Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------------
+app/__init__.py                                       0      0   100%
+app/api/__init__.py                                   0      0   100%
+app/api/v1/__init__.py                                0      0   100%
+app/api/v1/router.py                                 24      0   100%
+app/core/__init__.py                                  0      0   100%
+app/core/config.py                                   55      0   100%
+app/core/db.py                                       11      0   100%
+app/core/deps.py                                     21      0   100%
+app/core/errors.py                                   18      0   100%
+app/core/logging.py                                  33      2    94%   70-71
+app/core/ratelimit.py                                27      0   100%
+app/core/schema.py                                    7      0   100%
+app/core/security.py                                 59      0   100%
+app/domains/__init__.py                               0      0   100%
+app/domains/auth/__init__.py                          0      0   100%
+app/domains/auth/adapters/__init__.py                 0      0   100%
+app/domains/auth/adapters/base.py                    12      0   100%
+app/domains/auth/adapters/google.py                  41      0   100%
+app/domains/auth/adapters/kakao.py                   45      0   100%
+app/domains/auth/models.py                           50      0   100%
+app/domains/auth/router.py                           99      0   100%
+app/domains/auth/schemas.py                           7      0   100%
+app/domains/auth/service.py                         112      4    96%   68, 105, 143, 204
+app/domains/budget/__init__.py                        0      0   100%
+app/domains/budget/models.py                         23      0   100%
+app/domains/budget/router.py                         25      0   100%
+app/domains/budget/schemas.py                        42      0   100%
+app/domains/budget/service.py                        83      2    98%   60, 64
+app/domains/cycle/__init__.py                         0      0   100%
+app/domains/cycle/models.py                          27      0   100%
+app/domains/cycle/policy.py                         101      5    95%   84, 86-88, 123
+app/domains/cycle/router.py                          22      0   100%
+app/domains/cycle/scheduler.py                      131     50    62%   61-73, 105, 110, 127-131, 154, 164, 193-197, 221, 233-237, 243-248, 257-274
+app/domains/cycle/schemas.py                         48      0   100%
+app/domains/cycle/service.py                        335     22    93%   92, 101, 275, 279, 281, 288, 290, 574-578, 613-622, 668, 793, 795
+app/domains/fridge/__init__.py                        0      0   100%
+app/domains/fridge/models.py                         22      0   100%
+app/domains/fridge/router.py                         30      0   100%
+app/domains/fridge/schemas.py                        31      0   100%
+app/domains/fridge/service.py                        83      2    98%   100, 158
+app/domains/fridge/shelf_life.py                      9      0   100%
+app/domains/household/__init__.py                     0      0   100%
+app/domains/household/models.py                      17      0   100%
+app/domains/household/router.py                      14      0   100%
+app/domains/household/schemas.py                     16      0   100%
+app/domains/household/service.py                     25      0   100%
+app/domains/mealplan/__init__.py                      0      0   100%
+app/domains/mealplan/fridge_hint.py                  75      8    89%   54, 56, 71, 100, 103-105, 150
+app/domains/mealplan/generation_source.py             4      0   100%
+app/domains/mealplan/generator.py                   101      2    98%   250-251
+app/domains/mealplan/ingredient_requirements.py     161      3    98%   248, 373, 380
+app/domains/mealplan/llm.py                          48      2    96%   42-44
+app/domains/mealplan/models.py                       64      0   100%
+app/domains/mealplan/pantry_prices.py                22      1    95%   143
+app/domains/mealplan/price_catalog.py                 8      0   100%
+app/domains/mealplan/pricing.py                      38      2    95%   64, 69
+app/domains/mealplan/router.py                       44      2    95%   36, 130
+app/domains/mealplan/schemas.py                      65      1    98%   116
+app/domains/mealplan/seed_prices.py                  32      3    91%   48-49, 53
+app/domains/mealplan/service.py                     340     12    96%   348, 352, 386, 391-393, 452, 516, 542, 544, 576, 578
+app/domains/notification/__init__.py                  0      0   100%
+app/domains/notification/models.py                   45      0   100%
+app/domains/notification/router.py                   30      0   100%
+app/domains/notification/scheduler.py                52      3    94%   62, 112, 124
+app/domains/notification/schemas.py                  64      2    97%   97, 112
+app/domains/notification/sender.py                   68      1    99%   113
+app/domains/notification/service.py                 101      5    95%   212-213, 226, 234-235
+app/domains/order/__init__.py                         0      0   100%
+app/domains/order/models.py                          52      0   100%
+app/domains/order/router.py                          57      2    96%   41, 45
+app/domains/order/schemas.py                         47      2    96%   113, 116
+app/domains/order/service.py                        411     51    88%   77, 90, 124, 165-167, 218-230, 287, 344, 379, 475, 484, 573, 577, 590, 610-612, 636-637, 668-670, 685, 761, 765-768, 772, 776, 793, 814, 839-848, 939, 980, 1034-1035
+app/domains/store/__init__.py                         0      0   100%
+app/domains/store/connection_models.py               18      0   100%
+app/domains/store/connection_router.py               14      0   100%
+app/domains/store/connection_schemas.py              13      0   100%
+app/domains/store/connection_service.py              26      0   100%
+app/domains/store/naver.py                           43      7    84%   33, 50-51, 53-54, 56, 65
+app/domains/store/router.py                          14      1    93%   18
+app/domains/store/schemas.py                         23      0   100%
+app/domains/store/selector.py                        30     16    47%   25-26, 39-56
+app/domains/store/service.py                         36      3    92%   27, 49-50
+app/main.py                                          64      1    98%   36
+-------------------------------------------------------------------------------
+TOTAL                                              3915    217    94%
+516 passed, 619 warnings in 109.18s (0:01:49)
