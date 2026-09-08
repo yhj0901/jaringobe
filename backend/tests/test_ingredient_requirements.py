@@ -1,12 +1,28 @@
 """산문에서 빠진 조리 전제·실 누락·멱등성·원가/재고 연결 회귀."""
 
+import json
 from copy import deepcopy
 from decimal import Decimal
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from app.domains.mealplan.ingredient_requirements import repair_meal_ingredients
+
+
+@pytest.fixture
+def final_samples():
+    path = Path(__file__).resolve().parents[1] / "reports/ingredients-after.json"
+    return json.loads(path.read_text())["runs"]
+
+
+@pytest.fixture
+def final_sample_meals(final_samples):
+    """최종 실측의 보완 전 원문을 파싱한다. 유료 호출/이미 보완된 draft 역산 없음."""
+    from app.domains.mealplan.generator import _parse_meals
+
+    return [_parse_meals(json.loads(run["raw_responses"][0][0]), 7, 3) for run in final_samples]
 
 
 def meal(name, ingredients=(), steps="재료를 익혀 낸다."):
@@ -23,6 +39,121 @@ def meal(name, ingredients=(), steps="재료를 익혀 낸다."):
 
 def quantities(draft):
     return {i["name"]: i["quantity"] for i in draft["ingredients"]}
+
+
+def test_observed_braise_explicit_water_counts_existing_broth(final_sample_meals):
+    draft = final_sample_meals[1][10]
+    assert draft["name"] == "돼지고기김치찜"
+    assert quantities(draft)["멸치육수"] == 300
+    assert "물" not in quantities(draft)
+    steps = draft["steps"]
+    repair_meal_ingredients(draft, "KR", 2)
+    assert quantities(draft)["물"] == 300
+    assert quantities(draft)["물"] + quantities(draft)["멸치육수"] == 600
+    assert draft["steps"] == steps
+    assert repair_meal_ingredients(draft, "KR", 2) == []
+
+
+def test_observed_set_meal_soup_only_in_steps_gets_liquid(final_sample_meals):
+    draft = final_sample_meals[0][2]
+    assert draft["name"] == "고등어구이정식"
+    assert "무국을 준비한다" in draft["steps"]
+    steps = draft["steps"]
+    assert repair_meal_ingredients(draft, "KR", 2) == [
+        {"name": "물", "quantity": Decimal(600), "unit": "ml", "reason": "cooking_liquid"}
+    ]
+    assert quantities(draft)["물"] == 600
+    assert draft["steps"] == steps
+    assert repair_meal_ingredients(draft, "KR", 2) == []
+
+
+@pytest.mark.parametrize("trial", [1, 2, 3])
+def test_final_samples_replay_changes_only_two_observed_meals(
+    final_samples, final_sample_meals, trial
+):
+    drafts = final_sample_meals[trial - 1]
+    expected = deepcopy(final_samples[trial - 1]["drafts"])
+    assert len(drafts) == len(expected) == 21
+    if trial == 1:
+        expected[2]["ingredients"].append({"name": "물", "quantity": "600", "unit": "ml"})
+    elif trial == 2:
+        next(i for i in expected[10]["ingredients"] if i["name"] == "물")["quantity"] = "300"
+    for draft, prior in zip(drafts, expected, strict=True):
+        repair_meal_ingredients(draft, "KR", 2)
+        for ingredient in prior["ingredients"]:
+            ingredient.pop("est_cost", None)
+            ingredient["quantity"] = Decimal(ingredient["quantity"])
+        assert draft == prior
+        assert repair_meal_ingredients(draft, "KR", 2) == []
+
+
+@pytest.mark.parametrize(
+    "steps",
+    [
+        "무국을 준비한다",
+        "갈비탕을 끓인다",
+        "두부찌개를 만든다",
+        "국을 끓인다",
+        "무국 준비한다",
+        "국수는 생략한다;무국을 준비한다",
+    ],
+)
+def test_step_soup_requires_cooking_context(steps):
+    draft = meal("정식", [("소금", 2, "g")], steps)
+    repair_meal_ingredients(draft, "KR", 2)
+    assert quantities(draft)["물"] == 600
+
+
+@pytest.mark.parametrize(
+    "steps",
+    [
+        "국수를 준비한다",
+        "비빔국수를 만든다",
+        "국물볶음을 준비한다",
+        "국물볶음용 양념을 끓인다",
+        "국간장을 넣어 볶는다",
+        "설탕을 끓인다",
+        "흑설탕을 끓인다",
+        "사탕을 만든다",
+        "무국은 선택으로 준비한다",
+        "무국을 준비하지 않는다",
+        "무국을 끓이는 과정은 생략한다",
+        "무국을 곁들인다",
+        "즉석 무국을 데운다",
+    ],
+)
+def test_step_soup_boundaries_do_not_add_cooking_liquid(steps):
+    draft = meal("정식", [("소금", 2, "g")], steps)
+    repair_meal_ingredients(draft, "KR", 2)
+    assert "물" not in quantities(draft)
+
+
+@pytest.mark.parametrize("name", ["비빔국수", "국물볶음"])
+def test_soup_name_boundaries_still_exclude_noodles_and_brothy_stir_fry(name):
+    draft = meal(name, [("소금", 2, "g")], "재료를 준비한다")
+    repair_meal_ingredients(draft, "KR", 2)
+    assert "물" not in quantities(draft)
+
+
+@pytest.mark.parametrize("broth", [0, 300, 600, 800])
+def test_explicit_water_fallback_subtracts_broth_and_existing_water(broth):
+    ingredients = [("물", 100, "ml")]
+    if broth:
+        ingredients.append(("멸치육수", broth, "ml"))
+    draft = meal(
+        "정식",
+        ingredients,
+        "물을 넣는다",
+    )
+    repair_meal_ingredients(draft, "KR", 2)
+    assert quantities(draft)["물"] == max(100, 600 - broth)
+    assert repair_meal_ingredients(draft, "KR", 2) == []
+
+
+def test_step_soup_does_not_replace_separate_noodle_boiling_water():
+    draft = meal("정식", [("소면", 200, "g"), ("멸치육수", 300, "ml")], "무국을 준비한다")
+    repair_meal_ingredients(draft, "KR", 2)
+    assert quantities(draft)["물"] == 2300
 
 
 @pytest.mark.parametrize(

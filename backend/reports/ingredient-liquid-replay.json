@@ -1,0 +1,105 @@
+{
+  "base_commit": "a35b93d77ff79c44b85170960b96d40cc31f42ff",
+  "source": "backend/reports/ingredients-after.json",
+  "source_sha256": "7e12f6a4725c7b1dad8cee23c1f775fe5fd81c24ebc7c1693dcce8674931886b",
+  "method": "최종 후 3회 raw_responses를 실제 _parse_meals로 파싱하고 새 규칙을 적용해 저장 drafts와 비교; 가격 필드만 비교에서 제외",
+  "paid_llm_calls": 0,
+  "database_access": false,
+  "counting_scope": "기존 독립 수기 판정 2건의 액체 하한 및 63끼 전체 동일성 검증; 일반 조리 충분성 검출률 아님",
+  "totals": {
+    "meals": 63,
+    "changed_meals": 2,
+    "unchanged_meals": 61,
+    "observed_missing_before": 1,
+    "observed_missing_after": 0,
+    "observed_over_repairs_before": 1,
+    "observed_over_repairs_after": 0,
+    "unexpected_changes": 0,
+    "idempotent_meals": 63,
+    "cost_delta_krw": "0.00"
+  },
+  "saved_drafts_note": "기존 양을 줄이지 않으므로 저장 drafts 직접 재적용은 무국 물만 추가하며 기존 김치찜의 900ml는 유지된다; 원문부터 생성 보완 시 총 600ml",
+  "runs": [
+    {
+      "trial": 1,
+      "meals": 21,
+      "changed_meals": [
+        {
+          "meal": 3,
+          "dish": "고등어구이정식",
+          "steps": "고등어를 굽는다;밥과 김치를 곁들인다;무국을 준비한다",
+          "before_liquids_ml": {},
+          "after_liquids_ml": {
+            "물": "600.0"
+          },
+          "before_total_liquid_ml": 0,
+          "after_total_liquid_ml": "600.0",
+          "cost_delta_krw": "0.00"
+        }
+      ],
+      "unchanged_meals": 20,
+      "observed_missing_before": 1,
+      "observed_missing_after": 0,
+      "observed_over_repairs_before": 0,
+      "observed_over_repairs_after": 0,
+      "unexpected_changes": 0,
+      "idempotent_meals": 21,
+      "direct_reapply_to_saved_drafts_changes": [
+        {
+          "meal": 3,
+          "changes": [
+            {
+              "name": "물",
+              "quantity": "600.0",
+              "unit": "ml",
+              "reason": "cooking_liquid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "meals": 21,
+      "changed_meals": [
+        {
+          "meal": 11,
+          "dish": "돼지고기김치찜",
+          "steps": "돼지고기와 김치를 냄비에 넣는다;물을 넣고 조린다;두부를 곁들인다",
+          "before_liquids_ml": {
+            "멸치육수": "300",
+            "물": "600"
+          },
+          "after_liquids_ml": {
+            "멸치육수": "300",
+            "물": "300"
+          },
+          "before_total_liquid_ml": "900",
+          "after_total_liquid_ml": "600",
+          "cost_delta_krw": "0.00"
+        }
+      ],
+      "unchanged_meals": 20,
+      "observed_missing_before": 0,
+      "observed_missing_after": 0,
+      "observed_over_repairs_before": 1,
+      "observed_over_repairs_after": 0,
+      "unexpected_changes": 0,
+      "idempotent_meals": 21,
+      "direct_reapply_to_saved_drafts_changes": []
+    },
+    {
+      "trial": 3,
+      "meals": 21,
+      "changed_meals": [],
+      "unchanged_meals": 21,
+      "observed_missing_before": 0,
+      "observed_missing_after": 0,
+      "observed_over_repairs_before": 0,
+      "observed_over_repairs_after": 0,
+      "unexpected_changes": 0,
+      "idempotent_meals": 21,
+      "direct_reapply_to_saved_drafts_changes": []
+    }
+  ]
+}

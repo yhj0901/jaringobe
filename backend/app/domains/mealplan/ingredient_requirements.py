@@ -342,6 +342,15 @@ def repair_meal_ingredients(
     soup = bool(re.search(r"(?:국|탕|찌개)(?:$|[+와과&]|정식|과밥)", name)) or _has(
         name, ("soup", "stew", "국밥")
     )
+    # 정식의 별도 국도 직접 조리하는 절만 인정한다. 국수/국물볶음, 당류의 탕은 제외.
+    soup = soup or any(
+        not dish.endswith(("설탕", "사탕"))
+        for clause in re.split(r"[;；.。\n]", steps)
+        if not _has(_norm(clause), ("선택", "생략", "없이", "않", "optional", "without", "omit"))
+        for dish in re.findall(
+            r"([가-힣]*(?:국|탕|찌개))(?:[을를]\s*|\s+)(?:준비|끓|만[들든])", clause
+        )
+    )
     braise = _has(name, ("조림", "찜닭", "김치찜", "braised")) or _has(
         _norm(steps), ("조린", "졸인", "조리다")
     )
@@ -377,7 +386,7 @@ def repair_meal_ingredients(
     rice_water = Decimal("0") if porridge else _amount(ingredients, RAW_RICE, "g") * Decimal("1.5")
     required_water = cooking_water + boiling_water + rice_water
     if "water" in explicit and required_water == 0:
-        required_water = 300 * people
+        required_water = max(Decimal("0"), 300 * people - _amount(ingredients, BROTHS, "ml"))
     add(
         "water",
         "cooking_liquid",
